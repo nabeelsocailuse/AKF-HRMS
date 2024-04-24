@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-28 12:53:00.636685",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_g4vy",
+  "employee_id",
+  "employee_name",
+  "departmentprogram",
+  "company",
+  "start_date_and_time",
+  "end_date_and_time",
+  "column_break_kbnb",
+  "amended_from",
+  "head_of_department",
+  "purpose",
+  "address_at_which_home_based_working_would_take_place",
+  "hods_recommendations_signature",
+  "ed_recommendations_and_signature",
+  "secretary_general_remarks",
+  "approval_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_g4vy",
+   "fieldtype": "Section Break",
+   "label": "Home Based Working Application Form"
+  },
+  {
+   "fieldname": "employee_id",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Employee ID",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee_id.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee_id.department",
+   "fieldname": "departmentprogram",
+   "fieldtype": "Data",
+   "label": "Department/Program"
+  },
+  {
+   "fetch_from": "employee_id.company",
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "start_date_and_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Start Date and Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date_and_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "End Date and Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_kbnb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Work From Home Request",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "employee_id.custom_head_of_department_hod_id",
+   "fieldname": "head_of_department",
+   "fieldtype": "Data",
+   "label": "Head of Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Data",
+   "label": "Purpose"
+  },
+  {
+   "fieldname": "address_at_which_home_based_working_would_take_place",
+   "fieldtype": "Data",
+   "label": "Address at which home based working would take place"
+  },
+  {
+   "fieldname": "hods_recommendations_signature",
+   "fieldtype": "Data",
+   "label": "HODs Recommendations Signature",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "ed_recommendations_and_signature",
+   "fieldtype": "Data",
+   "label": "ED Recommendations and Signature",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "secretary_general_remarks",
+   "fieldtype": "Data",
+   "label": "Secretary General Remarks",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "label": "Approval Status",
+   "options": "\nPending\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the HR Manager\nRejected by the HR Manager",
+   "permlevel": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-04-24 18:53:37.982487",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Work From Home Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

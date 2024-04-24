@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-28 12:15:21.360060",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_2uqn",
+  "date",
+  "meter_reading",
+  "km_covered",
+  "name_of_person",
+  "verified_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_2uqn",
+   "fieldtype": "Section Break",
+   "label": "Detail of Travelling (In Case of Drivers Only)"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date"
+  },
+  {
+   "fieldname": "meter_reading",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Meter Reading"
+  },
+  {
+   "fieldname": "km_covered",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "KM Covered"
+  },
+  {
+   "fieldname": "name_of_person",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Name of Person",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "verified_by",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Verified By"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-04-24 18:54:45.786744",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Details of Travelling-Drivers Only",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
