@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-28 12:11:10.721465",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_8gls",
+  "date",
+  "starting_time",
+  "ending_time",
+  "hours_worked",
+  "description_of_work_donejourney",
+  "total_hours_worked"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_8gls",
+   "fieldtype": "Section Break",
+   "label": "Detail of Overtime"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date"
+  },
+  {
+   "fieldname": "starting_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Starting Time"
+  },
+  {
+   "fieldname": "ending_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Ending Time"
+  },
+  {
+   "fieldname": "hours_worked",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Hours Worked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description_of_work_donejourney",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description of Work Done/Journey"
+  },
+  {
+   "fieldname": "total_hours_worked",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Total Hours Worked",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-04-24 18:54:39.354209",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Details of OT",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
