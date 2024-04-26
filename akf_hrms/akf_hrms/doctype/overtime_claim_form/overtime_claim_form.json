@@ -63,6 +63,7 @@
    "fieldname": "column_break_l4dw",
    "fieldtype": "Column Break"
   },
+ 
   {
    "fieldname": "detail_of_overtime_section",
    "fieldtype": "Section Break",
@@ -164,7 +165,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-25 18:43:26.901929",
+ "modified": "2024-04-24 18:53:58.157499",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Overtime Claim Form",
