@@ -159,7 +159,6 @@
    "fieldname": "employee_info_html",
    "fieldtype": "HTML",
    "label": "Employee Info"
-
   }
  ],
  "index_web_pages_for_search": 1,
