@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Overtime Claim Form", {
-	refresh(frm) 
+	refresh(frm) {
 		acf.set_queries(frm);
     acf.employee_info(frm);
 	},
