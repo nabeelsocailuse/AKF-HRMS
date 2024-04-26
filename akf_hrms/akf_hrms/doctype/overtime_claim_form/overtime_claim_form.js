@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("Overtime Claim Form", {
 	refresh(frm) {
+		acf.set_queries(frm);
         acf.employee_info(frm);
 	},
 	employee_id: function(frm){
@@ -15,9 +16,7 @@ acf = {
 		frm.set_query("employee_id", function(){
 			return {
 				filters: {
-					// : d.company,
-					// root_type: ["in", ["Asset", "Liability"]],
-					// is_group: 0
+					"custom_overtime_allowed": 1,
 				}
 			}
 		})
