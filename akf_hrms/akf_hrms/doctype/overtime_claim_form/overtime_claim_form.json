@@ -1,0 +1,216 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-28 11:32:30.925752",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_b7xt",
+  "year",
+  "month",
+  "employee_id",
+  "column_break_l4dw",
+  "employee_name",
+  "company",
+  "designation",
+  "departmentprogram",
+  "detail_of_overtime_section",
+  "detail_of_overtime",
+  "total_hours_worked",
+  "detail_of_travelling_in_case_of_drivers_only",
+  "calculation_of_overtime_section",
+  "grand_totalhours_worked",
+  "rate",
+  "column_break_fcwe",
+  "amountfigures",
+  "amount_words",
+  "remarks_section",
+  "requested_by",
+  "recommended_by",
+  "column_break_xgts",
+  "approval_by",
+  "general_manager_finance",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_b7xt",
+   "fieldtype": "Section Break",
+   "label": "Emloyee Information"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Year",
+   "options": "\n2024\n2025\n2026\n2027\n2028\n2029\n2030\n2031\n2032\n2033\n2034\n2035",
+   "reqd": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month",
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee ID",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_l4dw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee_id.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee_id.company",
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee_id.designation",
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee_id.department",
+   "fieldname": "departmentprogram",
+   "fieldtype": "Data",
+   "label": "Department/Program",
+   "read_only": 1
+  },
+  {
+   "fieldname": "detail_of_overtime_section",
+   "fieldtype": "Section Break",
+   "label": "Detail of Overtime"
+  },
+  {
+   "fieldname": "detail_of_overtime",
+   "fieldtype": "Table",
+   "label": "Detail of Overtime",
+   "options": "Details of OT"
+  },
+  {
+   "fieldname": "total_hours_worked",
+   "fieldtype": "Data",
+   "label": "Total Hours Worked"
+  },
+  {
+   "fieldname": "detail_of_travelling_in_case_of_drivers_only",
+   "fieldtype": "Table",
+   "label": "Detail of Travelling (In Case of Drivers Only)",
+   "options": "Details of Travelling-Drivers Only"
+  },
+  {
+   "fieldname": "calculation_of_overtime_section",
+   "fieldtype": "Section Break",
+   "label": "Calculation of Overtime"
+  },
+  {
+   "fieldname": "grand_totalhours_worked",
+   "fieldtype": "Data",
+   "label": "Grand Total(Hours Worked)"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate"
+  },
+  {
+   "fieldname": "column_break_fcwe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amountfigures",
+   "fieldtype": "Currency",
+   "label": "Amount(Figures)"
+  },
+  {
+   "fieldname": "amount_words",
+   "fieldtype": "Data",
+   "label": "Amount (Words)"
+  },
+  {
+   "fieldname": "remarks_section",
+   "fieldtype": "Section Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Data",
+   "label": "Requested By"
+  },
+  {
+   "fieldname": "recommended_by",
+   "fieldtype": "Data",
+   "label": "Recommended By"
+  },
+  {
+   "fieldname": "column_break_xgts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approval_by",
+   "fieldtype": "Select",
+   "label": "Approval Status",
+   "options": "\nPending\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the HR Manager\nRejected by the HR Manager\nApproved by the Executive Director\nRejected by the Executive Director",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "general_manager_finance",
+   "fieldtype": "Date",
+   "label": "General Manager Finance"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Overtime Claim Form",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-04-24 18:53:58.157499",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Overtime Claim Form",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
