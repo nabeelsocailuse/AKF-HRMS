@@ -6,4 +6,11 @@ from frappe.model.document import Document
 
 
 class OvertimeClaimForm(Document):
-	pass
+    # pass
+	def autoname(self):
+		from frappe.model.naming import make_autoname
+		self.name = make_autoname(self.naming_series%{
+			"employee_id": self.employee_id, 
+			"month": self.month, 
+			"year": self.year
+			})

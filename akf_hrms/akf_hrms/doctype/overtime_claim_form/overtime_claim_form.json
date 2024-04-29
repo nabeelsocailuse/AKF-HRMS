@@ -1,11 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2024-03-28 11:32:30.925752",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_b7xt",
+  "naming_series",
   "year",
   "month",
   "employee_id",
@@ -159,15 +161,22 @@
    "fieldname": "employee_info_html",
    "fieldtype": "HTML",
    "label": "Employee Info"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "OCF-%(employee_id)s-%(month)s-%(year)s-.#####"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-24 18:53:58.157499",
+ "modified": "2024-04-29 15:00:01.167229",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Overtime Claim Form",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
