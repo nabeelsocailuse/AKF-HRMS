@@ -4,7 +4,7 @@
 frappe.ui.form.on("Overtime Claim Form", {
 	refresh(frm) {
 		acf.set_queries(frm);
-    acf.employee_info(frm);
+		acf.employee_info(frm);
 	},
 	employee_id: function(frm){
 		acf.employee_info(frm);
