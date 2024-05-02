@@ -146,7 +146,7 @@ def get_attendance_list(filters):
 		ifnull(out_time ,  "0:00:00") as check_out_time,
 		(case when custom_hours_worked="" then "0:00:00" else  custom_hours_worked end) as hours_worked
 		from tabAttendance 
-		where docstatus = 0 %s order by employee, attendance_date""" % conditions, filters, as_dict=1)
+		where docstatus = 1 %s order by employee, attendance_date""" % conditions, filters, as_dict=1)
 	att_map = {}
 	# frappe.throw(frappe.as_json(attendance_list))
 	for d in attendance_list:
