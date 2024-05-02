@@ -119,6 +119,8 @@ doctype_js = {
 
 override_doctype_class = {
     # "ToDo": "custom_app.overrides.CustomToDo",
+    "Attendance": "akf_hrms.overrides.attendance.Attendance",
+    "Attendance Request": "akf_hrms.overrides.attendance_request.AttendanceRequest",
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
 }

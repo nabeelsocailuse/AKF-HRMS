@@ -1,20 +1,6 @@
 frappe.ui.form.on("Staffing Plan", {
-  //   onload: function (frm) {
-  //     frm.get_field("get_job_requisitions").$input.off("click");
-
-  //     frm.get_field("get_job_requisitions").$input.on("click", function (e) {
-  //       e.stopImmediatePropagation();
-
-  //       frappe.msgprint({
-  //         title: __("Custom Handler"),
-  //         indicator: "green",
-  //         message: __(
-  //           "The original modal will not be shown, this is the custom behavior."
-  //         ),
-  //       });
-  //     });
-  //   },
   get_job_requisitions: function (frm) {
+    console.log("override file! ");
     new frappe.ui.form.MultiSelectDialog({
       doctype: "Job Requisition",
       target: frm,
@@ -55,3 +41,19 @@ frappe.ui.form.on("Staffing Plan", {
     });
   },
 });
+
+//   onload: function (frm) {
+//     frm.get_field("get_job_requisitions").$input.off("click");
+
+//     frm.get_field("get_job_requisitions").$input.on("click", function (e) {
+//       e.stopImmediatePropagation();
+
+//       frappe.msgprint({
+//         title: __("Custom Handler"),
+//         indicator: "green",
+//         message: __(
+//           "The original modal will not be shown, this is the custom behavior."
+//         ),
+//       });
+//     });
+//   },
