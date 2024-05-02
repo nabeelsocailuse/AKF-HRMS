@@ -36,6 +36,7 @@ def get_columns(filters):
 
 	for days in get_days_in_month(filters):
 		columns.append(str(frappe.utils.formatdate(str(days), "dd-MMM")) +"::80")
+	# frappe.msgprint(frappe.as_json(len(columns)))
 	return columns
 
 def get_data(filters):
@@ -54,7 +55,8 @@ def get_data(filters):
 		"On Leave": "<font color='blue'><center><b>L</b></center></font>", 
 		"None": "<font color='red'><center><b>A</b></center></font>",
 		"Absent": "<font color='red'><center><b>A</b></center></font>", 
-		"Holiday":"<center><b>H</b></center>"
+		"Holiday":"<center><b>H</b></center>",
+		"Work From Home": "<b>WFH</b>"
 	}
 	""" end """
 
@@ -77,6 +79,7 @@ def get_data(filters):
 		outlist = []
 		hwlist= []
 		for day in days_list:
+			
 			# convert string date of month to object
 			month_date = datetime.strptime(str(day), "%Y-%m-%d").date()
 			# day_number = str(frappe.utils.formatdate(str(day), "dd"))
@@ -94,7 +97,7 @@ def get_data(filters):
 				if emp_holiday_list in holiday_map and day in holiday_map[emp_holiday_list]:
 					status = "Holiday"
 			# 
-			if status in ["None" , "Absent", "Holiday","On Leave"]:
+			if status in ["None" , "Absent", "Holiday","On Leave", "Work From Home"]:
 				# condition to verify employee have attendance in Attendance Doctype
 				status_value= status_map[status_data[0]] if today_date >= month_date else ""		
 				inlist += [status_value]
@@ -125,17 +128,20 @@ def get_data(filters):
 					total_leaves += 0.5
 				# append in list
 				hours_worked_time_list.append(status_data[3])		
-		
+			else:
+				inlist += [status]
+				outlist += [status]
+				hwlist += [status]
 		# Init 3 rows for employee {in, out, hours work}
 		working_hours = get_total_hours_worked(hours_worked_time_list)
 		row1 = [employee_id, employee_data.employee_name, employee_data.branch, employee_data.department, employee_data.designation, total_days_worked, working_hours, float(total_present), float(total_leaves), float(total_absent), "<b>In</b>"] + inlist
-		row2 = ["", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
-		row3 = ["", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
+		# row2 = ["", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
+		# row3 = ["", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
 		
 		data.append(row1)
-		data.append(row2)
-		data.append(row3)
-
+		# data.append(row2)
+		# data.append(row3)
+	
 	return data
 
 def get_attendance_list(filters):
@@ -144,7 +150,7 @@ def get_attendance_list(filters):
 	attendance_list = frappe.db.sql("""select employee, attendance_date as day_of_month,
 		status, ifnull(in_time, "0:00:00") as check_in_time, 
 		ifnull(out_time ,  "0:00:00") as check_out_time,
-		(case when custom_hours_worked="" then "0:00:00" else  custom_hours_worked end) as hours_worked
+		(case when (custom_hours_worked="" or custom_hours_worked is null) then "0:00:00" else  custom_hours_worked end) as hours_worked
 		from tabAttendance 
 		where docstatus = 1 %s order by employee, attendance_date""" % conditions, filters, as_dict=1)
 	att_map = {}
