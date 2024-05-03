@@ -1,3 +1,4 @@
+frappe.ui.form.off("Staffing Plan", "get_job_requisitions");
 frappe.ui.form.on("Staffing Plan", {
   get_job_requisitions: function (frm) {
     console.log("override file! ");
