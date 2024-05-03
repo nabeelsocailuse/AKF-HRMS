@@ -12,19 +12,19 @@ from frappe import _
 class WorkFromHomeRequest(Document):
     def validate(self):
         # self.validate_dates()
-        self.check_employment_type()
+        # self.check_employment_type()
         self.count_total_days()
-        if self.employee:
-            exceed_wfh_limit = frappe.db.get_value(
-                "Employee", self.employee, "exceed_wfh_limit"
-            )
-            if not exceed_wfh_limit:
-                self.check_limit_per_month()
+        # if self.employee:
+        #     exceed_wfh_limit = frappe.db.get_value(
+        #         "Employee", self.employee, "exceed_wfh_limit"
+        #     )
+        #     if not exceed_wfh_limit:
+        #         self.check_limit_per_month()
 
-    def check_employment_type(self):
-        allow_wfh = frappe.db.get_value("Employee", self.employee, "allow_wfh")
-        if self.employment_type != "Full-time" and not allow_wfh:
-            frappe.throw(_("You are not allowed to Apply for Work From Home Request"))
+    # def check_employment_type(self):
+    #     allow_wfh = frappe.db.get_value("Employee", self.employee, "allow_wfh")
+    #     if self.employment_type != "Full-time" and not allow_wfh:
+    #         frappe.throw(_("You are not allowed to Apply for Work From Home Request"))
 
     def count_total_days(self):
         self.total_days = 0.0

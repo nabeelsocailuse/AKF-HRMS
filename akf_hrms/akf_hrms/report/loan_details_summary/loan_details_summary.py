@@ -19,8 +19,14 @@ def get_columns():
         _("Company") + ":Link/Company:140",
         _("Employee ID") + ":Dynamic Link/Employee:140",
         _("Employee Name") + ":Data:140",
-        _("Loan Application") + ":Link/Loan Application:140",
+        _("Branch") + ":Link/Branch:140",
+        _("Loan Application ID") + ":Link/Loan Application:140",
+        _("Loan ID") + ":Data:140",
         _("Loan Type") + ":Link/Loan Category:140",
+        _("Principal Amount") + ":Currency:140",
+        _("Amount Paid") + ":Currency:140",
+        _("Pending Amount") + ":Currency:140",
+        _("Loan Status") + ":Select:140",
     ]
     return columns
 
@@ -50,9 +56,15 @@ def get_query_result(filters):
         SELECT 
 			company,
 			applicant,
-			applicant_name, 
+			applicant_name,
+            branch, 
             loan_application,
-            loan_category
+            name,
+            loan_category,
+            total_payment,
+            total_amount_paid,
+            (total_payment-total_amount_paid),
+            status
         FROM 
             `tabLoan`
         {0}
