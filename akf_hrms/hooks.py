@@ -12,6 +12,10 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/akf_hrms/css/akf_hrms.css"
 # app_include_js = "/assets/akf_hrms/js/akf_hrms.js"
+app_include_js = [
+     "/assets/akf_hrms/js/jquery.imputmask.min.js",
+     "/assets/akf_hrms/js/jquery.mask.js",
+    ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/akf_hrms/css/akf_hrms.css"
@@ -31,6 +35,9 @@ app_license = "mit"
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
 #     }
+doctype_js = {
+    "Employee" : "public/js/custom_doctype_js/identity_validations.js",
+    }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -119,6 +126,9 @@ app_license = "mit"
 # override_doctype_class = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
+override_doctype_class = {
+	"Employee": "akf_hrms.overrides.custom_employee.CusEmployee"
+}
 
 # Document Events
 # ---------------
