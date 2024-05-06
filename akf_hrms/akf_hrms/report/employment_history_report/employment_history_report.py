@@ -25,13 +25,6 @@ def get_columns():
             "width": 120
         },
         {
-            "fieldname": "employment_type",
-            "label": _("Description"),
-            "fieldtype": "Link",
-            "options": "Employment Type",
-            "width": 120
-        },
-        {
             "fieldname": "employee",
             "label": _("Employee"),
             "fieldtype": "Data",
@@ -63,6 +56,13 @@ def get_columns():
             "fieldname": "date_of_joining",
             "label": _("Date of Joining"),
             "fieldtype": "Date",
+            "options": "",
+            "width": 120
+        },
+        {
+            "fieldname": "custom_total_duration",
+            "label": _("Total Duration"),
+            "fieldtype": "Data",
             "options": "",
             "width": 120
         },
@@ -109,6 +109,13 @@ def get_columns():
             "width": 120
         },
         {
+            "fieldname": "employment_type",
+            "label": _("Description"),
+            "fieldtype": "Link",
+            "options": "Employment Type",
+            "width": 120
+        },
+        {
             "fieldname": "designation",
             "label": _("Designation"),
             "fieldtype": "Link",
@@ -140,30 +147,6 @@ def get_columns():
 
     return columns
 
-
-# def get_data(filters):
-    data = []
-    result = get_query_result(filters)
-    history_details = {}
-    unique_emp = {row.employee for row in result}
-    frappe.msgprint(f"Unique Employees are: {unique_emp}")
-    for emp in unique_emp:
-        history_details[emp] = [d for d in result if (d.name==emp)]
-    frappe.msgprint(f"Employee history details are: {history_details}")
-    unique_employees = set()
-    for d in result:
-        if d.name not in unique_employees:
-            temp = [d.company, d.employee, d.first_name, d.date_of_joining, d.scheduled_confirmation_date,d.final_confirmation_date,d.contract_end_date,d.status] + ['-' for i in range(5)]
-            data.append(temp)
-            history_list = history_details.get(d.employee)
-            for history in history_list:
-                temp = ['-' for i in range(8)] + [history.get('branch'), history.get('department'), 
-                        history.get('designation'), history.get('base'), history.get('from_date')]
-                data.append(temp)
-            unique_employees.add(d.employee)
-    return result
-
-
 def get_data(filters):
     data = []
     result = get_query_result(filters)
@@ -188,10 +171,10 @@ def get_data(filters):
     for d in result:
         if d.employee not in unique_employees:
             temp = [
-                d.company, d.employment_type, d.employee, d.first_name, d.custom_father_name,
-                d.cell_number, d.date_of_joining, d.scheduled_confirmation_date,
+                d.company, d.employee, d.first_name, d.custom_father_name,
+                d.cell_number, d.date_of_joining, d.custom_total_duration, d.scheduled_confirmation_date,
                 d.final_confirmation_date, d.contract_end_date, d.status,
-                d.branch, d.department, d.designation, d.from_date, d.custom_salary,
+                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date, d.custom_salary,
                 d.custom_increment_amount
             ]
             # Add the latest salary for the employee and highlight it if it's the latest
@@ -211,7 +194,7 @@ def get_data(filters):
         else:
             temp = [
                 '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
-                d.branch, d.department, d.designation, d.from_date, d.custom_salary,
+                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date, d.custom_salary,
                 d.custom_increment_amount
             ]
             data.append(temp)
@@ -236,57 +219,24 @@ def get_conditions(filters):
 
     return " AND ".join(conditions) if conditions else ""
 
-
-# def get_query_result(filters):
-#     conditions = get_conditions(filters)
-#     if conditions:
-#         conditions = " WHERE " + conditions
-
-#     result = frappe.db.sql(
-#         """
-#         SELECT 
-#             emp.company,
-#             emp.employee, 	
-#             emp.first_name,
-#             emp.custom_father_name,
-#             emp.cell_number,
-#             emp.date_of_joining,
-#             emp.scheduled_confirmation_date, 
-#             emp.final_confirmation_date, 
-#             emp.contract_end_date, 		
-#             emp.status,
-#             history.branch,
-#             history.department,
-#             history.designation,
-#             history.custom_salary,
-#             history.custom_increment_amount
-#         FROM 
-#             `tabEmployee` emp
-#         JOIN
-#             `tabEmployee Internal Work History` history ON emp.name = history.parent
-#         GROUP BY emp.employee,history.branch,history.department,history.designation
-#         %s
-#         """ % conditions, filters, as_dict=1)
-#     return result
-
-
 def get_query_result(filters):
     conditions = get_conditions(filters)
     query = """
         SELECT 
             emp.company,
-            emp.employment_type,
             emp.employee, 	
             emp.first_name,
             emp.custom_father_name,
             emp.cell_number,
             emp.date_of_joining,
+            emp.custom_total_duration,
             emp.scheduled_confirmation_date, 
             emp.final_confirmation_date, 
             emp.contract_end_date, 		
             emp.status,
             history.branch,
             history.department,
+            history.custom_employment_type,
             history.designation,
             history.from_date,
             history.custom_salary,
