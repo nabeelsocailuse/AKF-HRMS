@@ -257,4 +257,3 @@ def get_query_result(filters):
 
         
 
-

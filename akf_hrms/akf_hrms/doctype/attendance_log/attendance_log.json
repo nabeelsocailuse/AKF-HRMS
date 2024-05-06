@@ -27,6 +27,7 @@
    "fieldname": "log",
    "fieldtype": "Datetime",
    "in_list_view": 1,
+
    "label": "Log"
   },
   {
@@ -107,7 +108,9 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-06 14:43:01.143590",
+
+ "modified": "2024-05-03 18:49:27.301434",
+
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Log",
