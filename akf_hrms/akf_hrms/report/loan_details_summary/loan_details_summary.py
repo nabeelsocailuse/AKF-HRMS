@@ -67,9 +67,11 @@ def get_query_result(filters):
             status
         FROM 
             `tabLoan`
+        WHERE
+            docstatus != 2
         {0}
     """.format(
-            "WHERE " + conditions if conditions else ""
+            conditions if conditions else ""
         ),
         filters,
         as_dict=0,

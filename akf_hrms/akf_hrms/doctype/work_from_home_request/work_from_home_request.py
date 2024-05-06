@@ -11,7 +11,8 @@ from frappe import _
 
 class WorkFromHomeRequest(Document):
     def validate(self):
-        # self.validate_dates()
+        self.validate_dates()
+        self.wfh_for_samedates()
         # self.check_employment_type()
         self.count_total_days()
         # if self.employee:
@@ -26,6 +27,21 @@ class WorkFromHomeRequest(Document):
     #     if self.employment_type != "Full-time" and not allow_wfh:
     #         frappe.throw(_("You are not allowed to Apply for Work From Home Request"))
 
+    def wfh_for_samedates(self):
+        get_previos_data = frappe.db.sql(
+            """ select ifnull(sum(total_days),0) from `tabWork From Home Request` where docstatus=1
+                and from_date between %s and %s and to_date between %s and %s and employee=%s """,
+            (
+                str(self.to_date),
+                str(self.from_date),
+                str(self.to_date),
+                str(self.from_date),
+                self.employee,
+            ),
+        )
+        if get_previos_data:
+            frappe.throw(_("You have already Work From Home Request for same dates"))
+
     def count_total_days(self):
         self.total_days = 0.0
         self.total_days += float(date_diff(self.to_date, self.from_date)) + 1.0
@@ -35,23 +51,31 @@ class WorkFromHomeRequest(Document):
         self.year = year
         self.month = month
 
-    # def validate_dates(self):
-    # 	#if 'HR Manager' in frappe.get_roles(frappe.session.user):
-    # 	#	pass
-    # 	#else:
-    # 	wfh_on_back_days = frappe.db.get_value("Employee", self.employee, "allow_wfh_on_back_days")
-    # 	if (getdate(self.from_date) <= getdate(self.posting_date)) and not wfh_on_back_days:
-    # 		frappe.throw(_("You can request for future dates only"))
-    # 	if self.from_date and self.to_date and (getdate(self.to_date) < getdate(self.from_date)):
-    # 		frappe.throw(_("To date cannot be before from date"))
+    def validate_dates(self):
+        # if 'HR Manager' in frappe.get_roles(frappe.session.user):
+        # 	pass
+        # else:
+        # wfh_on_back_days = frappe.db.get_value(
+        #     "Employee", self.employee, "allow_wfh_on_back_days"
+        # )
+        # if (
+        #     getdate(self.from_date) <= getdate(self.posting_date)
+        # ) and not wfh_on_back_days:
+        #     frappe.throw(_("You can request for future dates only"))
+        if (
+            self.from_date
+            and self.to_date
+            and (getdate(self.to_date) < getdate(self.from_date))
+        ):
+            frappe.throw(_("To date cannot be less than from date"))
 
     def check_limit_per_month(self):
         month_first_date = frappe.utils.get_first_day(self.from_date)
         month_last_date = frappe.utils.get_last_day(self.from_date)
         total_ = 0.0
         get_previos_data = frappe.db.sql(
-            """ select ifnull(sum(total_days),0) from `tabWork From Home Request` where docstatus=1 
-							and from_date between %s and %s and employee=%s """,
+            """ select ifnull(sum(total_days),0) from `tabWork From Home Request` where docstatus=1
+                and from_date between %s and %s and employee=%s """,
             (str(month_first_date), str(month_last_date), self.employee),
         )
         if get_previos_data:
@@ -79,13 +103,13 @@ class WorkFromHomeRequest(Document):
         return holidays
 
 
-@frappe.whitelist()
-def chk_dublication(employee, doc_name):
-    name_ = ""
-    wfh_name = frappe.db.sql(
-        """ select name from `tabAttendance Request` where employee=%s and work_from_home_request=%s and docstatus!=2 """,
-        (employee, doc_name),
-    )
-    if wfh_name:
-        name_ = wfh_name[0][0]
-    return name_
+# @frappe.whitelist()
+# def chk_dublication(employee, doc_name):
+#     name_ = ""
+#     wfh_name = frappe.db.sql(
+#         """ select name from `tabAttendance Request` where employee=%s and work_from_home_request=%s and docstatus!=2 """,
+#         (employee, doc_name),
+#     )
+#     if wfh_name:
+#         name_ = wfh_name[0][0]
+#     return name_

@@ -42,19 +42,3 @@ frappe.ui.form.on("Staffing Plan", {
     });
   },
 });
-
-//   onload: function (frm) {
-//     frm.get_field("get_job_requisitions").$input.off("click");
-
-//     frm.get_field("get_job_requisitions").$input.on("click", function (e) {
-//       e.stopImmediatePropagation();
-
-//       frappe.msgprint({
-//         title: __("Custom Handler"),
-//         indicator: "green",
-//         message: __(
-//           "The original modal will not be shown, this is the custom behavior."
-//         ),
-//       });
-//     });
-//   },
