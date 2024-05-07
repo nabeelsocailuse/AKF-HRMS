@@ -1,3 +1,5 @@
+frappe.ui.form.off("Employee Separation", "refresh");
+
 frappe.ui.form.on("Employee Separation", {
   refresh: function (frm) {
     if (frm.doc.docstatus == 1) {
