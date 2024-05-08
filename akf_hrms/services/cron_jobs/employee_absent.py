@@ -78,11 +78,11 @@ def send_absent_employee_notification():
             """.format(employee.get('employee', ''), employee.get('employee_name', ''), employee.get('department', ''), employee.get('designation', ''), absent_dates_str, absent_days_str)
             employee_rows += employee_row
         html_content = table_header_absentees%employee.employee_name + employee_rows + "</tbody></table><br>"
-        frappe.throw(html_content)
+        # frappe.throw(html_content)
 
         if html_content:
             frappe.sendmail(
                 recipients=['maarijsiddiqui01@gmail.com'],
-                subject=(' Notification of the Absence of the Employee: {employee} - {employee_name} '),
+                subject=(' Notification of the Absence of the Employee:'),
                 message=html_content,
             )

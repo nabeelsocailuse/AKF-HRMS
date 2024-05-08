@@ -35,8 +35,10 @@ app_include_js = [
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
 #     }
 doctype_js = {
-    "Employee" : "public/js/custom_doctype_js/identity_validations.js",
-    "Employee" : "public/js/custom_doctype_js/emp_total_duration.js"
+    "Employee" : [
+        "public/js/custom_doctype_js/identity_validations.js",
+        "public/js/custom_doctype_js/emp_total_duration.js"
+        ]
     }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
