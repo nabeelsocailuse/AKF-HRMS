@@ -34,7 +34,7 @@ def send_absent_employee_notification():
             <table class="table table-bordered" style="border: 2px solid black; background-color: #f6151;">
                 <thead style="background-color: #0b4d80; color: white; text-align: left;">
                 <tr>
-                    <th style="border: 1px solid black;">Employee</th>
+                    <th style="border: 1px solid black;">Employee ID</th>
                     <th style="border: 1px solid black;">Employee Name</th>
                     <th style="border: 1px solid black;">Department</th>
                     <th style="border: 1px solid black;">Designation</th>
@@ -43,6 +43,7 @@ def send_absent_employee_notification():
                 </tr>
                 </thead>
                 <tbody>
+                
         """
 
         employee_rows = ""
@@ -77,12 +78,24 @@ def send_absent_employee_notification():
                         </tr>
             """.format(employee.get('employee', ''), employee.get('employee_name', ''), employee.get('department', ''), employee.get('designation', ''), absent_dates_str, absent_days_str)
             employee_rows += employee_row
-        html_content = table_header_absentees%employee.employee_name + employee_rows + "</tbody></table><br>"
-        # frappe.throw(html_content)
+            routing_message = "<p>The email is routed for any further necessary action please.</p>"
+        html_content = table_header_absentees%employee.employee_name + employee_rows + "</tbody></table><br>" + routing_message
+        frappe.throw(html_content)
 
+        # Fetching email addresses of HR Manager and HR User
+        hr_manager_email = frappe.get_value("User", {"role_profile_name": "HR Manager"}, "email")
+        hr_user_email = frappe.get_value("User", {"role_profile_name": "HR User"}, "email")
+
+        # Adding email addresses to the recipients list
+        recipients = []
+        if hr_manager_email:
+            recipients.append(hr_manager_email)
+        if hr_user_email:
+            recipients.append(hr_user_email)
+        
         if html_content:
             frappe.sendmail(
-                recipients=['maarijsiddiqui01@gmail.com'],
-                subject=(' Notification of the Absence of the Employee:'),
+                recipients=recipients,
+                subject=(' Notification of the Absence of the Employee'),
                 message=html_content,
             )
