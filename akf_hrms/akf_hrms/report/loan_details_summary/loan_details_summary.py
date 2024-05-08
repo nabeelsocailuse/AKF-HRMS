@@ -27,6 +27,7 @@ def get_columns():
         _("Amount Paid") + ":Currency:140",
         _("Pending Amount") + ":Currency:140",
         _("Loan Status") + ":Select:140",
+        _("Repayment Start Date") + ":Date:140",
     ]
     return columns
 
@@ -45,18 +46,10 @@ def get_conditions(filters):
         conditions += " AND applicant = %(applicant)s"
     if filters.get("branch"):
         conditions += " AND branch = %(branch)s"
-    # if filters.get("repayment_status"):
-    #     conditions += " AND repayment_status = %(status)s"
-    # if filters.get("form_date"):
-    #     if conditions:
-    #         conditions += " AND "
-    #     conditions += "from_date = %()s"
-    # if filters.get("to_date"):
-    #     if conditions:
-    #         conditions += " AND "
-    #     conditions += "to_date = %()s"
-    if filters.get(" AND loan_type"):
-        conditions += "loan_type = %(loan_category)s"
+    if filters.get("loan_type"):
+        conditions += " AND loan_type = %(loan_category)s"
+    if filters.get("repayment_start_date"):
+        conditions += " AND repayment_start_date = %(repayment_start_date)s"
 
     return conditions
 
@@ -76,7 +69,8 @@ def get_query_result(filters):
             total_payment,
             total_amount_paid,
             (total_payment-total_amount_paid),
-            status
+            status,
+            repayment_start_date
         FROM 
             `tabLoan`
         WHERE
@@ -88,6 +82,4 @@ def get_query_result(filters):
         filters,
         as_dict=0,
     )
-
-    # frappe.msgprint(f"Result from get_query_result: {result}")
     return result

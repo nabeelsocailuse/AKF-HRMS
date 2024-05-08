@@ -21,29 +21,17 @@ frappe.query_reports["Loan Details Summary"] = {
       fieldtype: "Link",
       options: "Branch",
     },
-    // {
-    //   fieldname: "repayment_status",
-    //   label: __("Repayment Status"),
-    //   fieldtype: "Select",
-    //   options: ["", "Paid", "unpaid"],
-    // },
-    // {
-    //   fieldname: "from_date",
-    //   label: __("From Date"),
-    //   fieldtype: "Date",
-    //   options: "",
-    // },
-    // {
-    //   fieldname: "to_date",
-    //   label: __("To Date"),
-    //   fieldtype: "Date",
-    //   options: "",
-    // },
     {
       fieldname: "loan_type",
       label: __("Loan Type"),
       fieldtype: "Link",
       options: "Loan Category",
+    },
+    {
+      fieldname: "repayment_start_date",
+      label: __("Repayment Start Date"),
+      fieldtype: "Date",
+      options: "",
     },
   ],
 };
