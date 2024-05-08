@@ -92,6 +92,10 @@ def send_absent_employee_notification():
             recipients.append(hr_manager_email)
         if hr_user_email:
             recipients.append(hr_user_email)
+        # Concatenating email addresses into a comma-separated string
+        recipient_emails = ", ".join(recipients)
+
+        frappe.throw(recipient_emails)
         
         if html_content:
             frappe.sendmail(
