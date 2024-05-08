@@ -31,15 +31,21 @@ app_include_js = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
+doctype_js = {
+    # "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js",
+    "Staffing Plan": "public/js/staffing_plan.js",
+    "Loan": "public/js/loan.js",
+    "Loan Application": "public/js/loan_application.js",
+    "Employee Separation": "public/js/employee_separation.js",
+    "Employee" : [
+          "public/js/custom_doctype_js/identity_validations.js",
+          "public/js/custom_doctype_js/emp_total_duration.js"
+      ]
+}
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
 #     }
-doctype_js = {
-    "Employee" : [
-        "public/js/custom_doctype_js/identity_validations.js",
-        "public/js/custom_doctype_js/emp_total_duration.js"
-        ]
-    }
+
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -125,12 +131,15 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
+
 # override_doctype_class = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 override_doctype_class = {
 	"Employee": "akf_hrms.extends.employee.XEmployee",
-    "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
+  "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
+  "Employee Onboarding": "akf_hrms.doc_events.employee_onboarding.EmployeeOnboarding",
+  "Employee Separation": "akf_hrms.doc_events.employee_separation.EmployeeSeparation",
 }
 
 # Document Events
@@ -138,11 +147,17 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-	}
+    # "*": {
+    #     # 		"on_update": "method",
+    #     # 		"on_cancel": "method",
+    #     # 		"on_trash": "method"
+    # },
+    "Employee Onboarding": {
+        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+    },
+    "Employee Separation": {
+        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+    },
 }
 
 # Scheduled Tasks

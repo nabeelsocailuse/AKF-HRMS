@@ -1,77 +1,193 @@
 {
- "actions": [],
- "allow_rename": 1,
- "creation": "2024-03-28 12:53:00.636685",
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-04-27 11:24:58.673301",
+ "description": "Apply / Approve WFH",
  "doctype": "DocType",
+ "document_type": "Document",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_g4vy",
-  "employee_id",
+  "naming_series",
+  "employee",
   "employee_name",
-  "departmentprogram",
+  "employment_type",
+  "holiday_list",
+  "column_break_4",
+  "department",
+  "branch",
   "company",
-  "start_date_and_time",
-  "end_date_and_time",
-  "column_break_kbnb",
-  "amended_from",
-  "head_of_department",
-  "purpose",
-  "address_at_which_home_based_working_would_take_place",
-  "hods_recommendations_signature",
-  "ed_recommendations_and_signature",
-  "secretary_general_remarks",
-  "approval_status"
+  "section_break_5",
+  "from_date",
+  "total_days",
+  "column_break_10",
+  "to_date",
+  "posting_date",
+  "year",
+  "month",
+  "section_break_7",
+  "approver",
+  "leave_approver_name",
+  "column_break_18",
+  "status",
+  "section_break_21",
+  "tasks",
+  "amended_from"
  ],
  "fields": [
   {
-   "fieldname": "section_break_g4vy",
-   "fieldtype": "Section Break",
-   "label": "Home Based Working Application Form"
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "no_copy": 1,
+   "options": "HR-WFH-.YYYY.-",
+   "print_hide": 1,
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
-   "fieldname": "employee_id",
+   "fieldname": "employee",
    "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Employee ID",
-   "options": "Employee"
+   "in_global_search": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "search_index": 1
   },
   {
-   "fetch_from": "employee_id.employee_name",
+   "fetch_from": "employee.employee_name",
+   "fetch_if_empty": 1,
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "in_global_search": 1,
    "label": "Employee Name",
    "read_only": 1
   },
   {
-   "fetch_from": "employee_id.department",
-   "fieldname": "departmentprogram",
-   "fieldtype": "Data",
-   "label": "Department/Program"
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "employee_id.company",
-   "fieldname": "company",
-   "fieldtype": "Data",
-   "label": "Company",
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
    "read_only": 1
   },
   {
-   "fieldname": "start_date_and_time",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "label": "Start Date and Time",
-   "reqd": 1
+   "fetch_from": "employee.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "read_only": 1
   },
   {
-   "fieldname": "end_date_and_time",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "label": "End Date and Time",
-   "reqd": 1
+   "fetch_from": "employee.company",
+   "fetch_if_empty": 1,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
   },
   {
-   "fieldname": "column_break_kbnb",
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_standard_filter": 1,
+   "label": "From Date",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_7",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "leave_approver_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Approver Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_18",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Open\nApproved\nRejected\nCancelled",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "no_copy": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_days",
+   "fieldtype": "Float",
+   "label": "Total Days",
+   "no_copy": 1,
+   "precision": "1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Month",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Approver",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_21",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "tasks",
+   "fieldtype": "Text Editor",
+   "label": "List of Tasks to be performed"
   },
   {
    "fieldname": "amended_from",
@@ -80,62 +196,37 @@
    "no_copy": 1,
    "options": "Work From Home Request",
    "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fetch_from": "employee_id.custom_head_of_department_hod_id",
-   "fieldname": "head_of_department",
-   "fieldtype": "Data",
-   "label": "Head of Department",
    "read_only": 1
   },
   {
-   "fieldname": "purpose",
-   "fieldtype": "Data",
-   "label": "Purpose"
+   "fetch_from": "employee.employment_type",
+   "fieldname": "employment_type",
+   "fieldtype": "Link",
+   "label": "Employment Type",
+   "options": "Employment Type",
+   "read_only": 1
   },
   {
-   "fieldname": "address_at_which_home_based_working_would_take_place",
-   "fieldtype": "Data",
-   "label": "Address at which home based working would take place"
-  },
-  {
-   "fieldname": "hods_recommendations_signature",
-   "fieldtype": "Data",
-   "label": "HODs Recommendations Signature",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "ed_recommendations_and_signature",
-   "fieldtype": "Data",
-   "label": "ED Recommendations and Signature",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "secretary_general_remarks",
-   "fieldtype": "Data",
-   "label": "Secretary General Remarks",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "approval_status",
-   "fieldtype": "Select",
-   "label": "Approval Status",
-   "options": "\nPending\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the HR Manager\nRejected by the HR Manager",
-   "permlevel": 1
+   "fetch_from": "employee.holiday_list",
+   "fieldname": "holiday_list",
+   "fieldtype": "Link",
+   "label": "Holiday List",
+   "options": "Holiday List",
+   "read_only": 1
   }
  ],
- "index_web_pages_for_search": 1,
+ "icon": "fa fa-calendar",
  "is_submittable": 1,
- "links": [],
- "modified": "2024-04-24 18:53:37.982487",
- "modified_by": "Administrator",
+ "max_attachments": 3,
+ "modified": "2023-05-05 14:50:30.638958",
+ "modified_by": "u.farooq@micromerger.com",
  "module": "Akf Hrms",
  "name": "Work From Home Request",
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -143,13 +234,59 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HR Manager",
+   "set_user_permissions": 1,
    "share": 1,
    "submit": 1,
    "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "set_user_permissions": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Leave Approver",
+   "write": 1
   }
  ],
+ "search_fields": "employee,employee_name,from_date,to_date",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "timeline_field": "employee",
+ "title_field": "employee_name",
+ "track_changes": 1
 }
