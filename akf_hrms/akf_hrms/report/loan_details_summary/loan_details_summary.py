@@ -40,11 +40,23 @@ def get_conditions(filters):
     conditions = ""
 
     if filters.get("company"):
-        conditions += "company = %(company)s"
-    # if filters.get("probability"):
+        conditions += " AND company = %(company)s"
+    if filters.get("applicant"):
+        conditions += " AND applicant = %(applicant)s"
+    if filters.get("branch"):
+        conditions += " AND branch = %(branch)s"
+    # if filters.get("repayment_status"):
+    #     conditions += " AND repayment_status = %(status)s"
+    # if filters.get("form_date"):
     #     if conditions:
     #         conditions += " AND "
-    #     conditions += "probability = %(probability)s"
+    #     conditions += "from_date = %()s"
+    # if filters.get("to_date"):
+    #     if conditions:
+    #         conditions += " AND "
+    #     conditions += "to_date = %()s"
+    if filters.get(" AND loan_type"):
+        conditions += "loan_type = %(loan_category)s"
 
     return conditions
 
