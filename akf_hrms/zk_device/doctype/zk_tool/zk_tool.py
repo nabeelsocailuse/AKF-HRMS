@@ -93,17 +93,20 @@ def marking_attendance(self, ignore_links=False, ignore_mandatory=False):
 					year = str(date).split('-')[0]
 					signle_year = multi_years[year] if (year in multi_years) else []
 					# signle_year = list(signle_year).sort()
+					signle_year = sorted(list(signle_year))
 					for log in signle_year:
 						if (date in log):
 							
 							attendance_date = str(log).split(" ")[0]
 							_log_ = get_datetime(log)
-							# frappe.throw(f"{_log_}")
+							default_shift = d.get("default_shift")
+							shift = default_shift if (default_shift or default_shift!="") else fetch_shift(self.company, d.get("employee"), log) 
+							
 							args = {
 								'doctype': 'Attendance Log',
 								'employee': d.get("employee"),
 								'device_id': d.get("attendance_device_id"),
-								'shift': d.get("default_shift"),
+								'shift': shift,
 								'device_ip': self.device_ip,
 								'device_port': self.device_port,
 								'log_type': self.log_type,
@@ -135,6 +138,19 @@ def get_dates_list(from_date, to_date):
 		dates_list.append(new_date)
 	return dates_list
 
+def fetch_shift(company, employee, log):
+	
+	shift_assignment = frappe.db.sql(""" 
+			select shift_type
+			from `tabShift Assignment`
+			where docstatus=0
+			and status="Active"
+			and company='{0}'
+			and employee = '{1}'
+			and cast('{2}' as date) between start_date and end_date
+			""".format(company, employee, log))
+	
+	return shift_assignment[0][0] if(shift_assignment) else None
 
 @frappe.whitelist()
 def remove_records():

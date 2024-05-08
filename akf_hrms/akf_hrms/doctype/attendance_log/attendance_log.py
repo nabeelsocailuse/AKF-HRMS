@@ -49,7 +49,7 @@ class AttendanceLog(Document):
 			return False
 		doc = frappe.get_doc("Shift Type", self.shift)
 		
-		if(not doc.enable_auto_attendance): 
+		if(not doc.enable_auto_attendance or not doc.custom_grace_in_time): 
 			return False
 		
 		log = get_datetime(self.log)
@@ -63,7 +63,7 @@ class AttendanceLog(Document):
 			return False
 		doc = frappe.get_doc("Shift Type", self.shift)
 		
-		if(not doc.enable_auto_attendance): 
+		if(not doc.enable_auto_attendance or not doc.custom_grace_out_time): 
 			return False
 		
 		log = get_datetime(self.log)
