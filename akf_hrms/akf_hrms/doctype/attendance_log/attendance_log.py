@@ -24,7 +24,7 @@ class AttendanceLog(Document):
 					"employee": self.employee,
 					"attendance_date": self.attendance_date,
 				}, ["name", "in_time"], as_dict=1)
-	
+
 	def update_attendance(self, attendance):
 		frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
 		frappe.db.set_value("Attendance", attendance.name, "custom_hours_worked", self.cal_hours_worked(attendance.in_time))
@@ -32,7 +32,7 @@ class AttendanceLog(Document):
 
 	def cal_hours_worked(self, in_time):
 		return time_diff(str(self.log), str(in_time))
-	
+
 	def create_attendance(self):
 		args = {
 				"doctype": "Attendance",

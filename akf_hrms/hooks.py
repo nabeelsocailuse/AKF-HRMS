@@ -124,7 +124,7 @@ doctype_js = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 override_doctype_class = {
-	"Employee": "akf_hrms.overrides.custom_employee.CusEmployee",
+	"Employee": "akf_hrms.extends.employee.XEmployee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
 }
 
@@ -143,7 +143,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron": {
+		"0 0 * * *": [
+			"akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
+		],
+	},
 # 	"all": [
 # 		"akf_hrms.tasks.all"
 # 	],
@@ -159,7 +164,7 @@ doc_events = {
 # 	"monthly": [
 # 		"akf_hrms.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
