@@ -12,10 +12,6 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/akf_hrms/css/akf_hrms.css"
 # app_include_js = "/assets/akf_hrms/js/akf_hrms.js"
-app_include_js = [
-     "/assets/akf_hrms/js/jquery.imputmask.min.js",
-     "/assets/akf_hrms/js/jquery.mask.js",
-    ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/akf_hrms/css/akf_hrms.css"
@@ -37,6 +33,7 @@ app_include_js = [
 #     }
 doctype_js = {
     "Employee" : "public/js/custom_doctype_js/identity_validations.js",
+    "Employee" : "public/js/custom_doctype_js/emp_total_duration.js"
     }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -127,7 +124,8 @@ doctype_js = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 override_doctype_class = {
-	"Employee": "akf_hrms.overrides.custom_employee.CusEmployee"
+	"Employee": "akf_hrms.extends.employee.XEmployee",
+    "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
 }
 
 # Document Events
@@ -145,7 +143,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron": {
+		"0 0 * * *": [
+			"akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
+		],
+	},
 # 	"all": [
 # 		"akf_hrms.tasks.all"
 # 	],
@@ -161,7 +164,7 @@ doc_events = {
 # 	"monthly": [
 # 		"akf_hrms.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------

@@ -97,8 +97,6 @@ def marking_attendance(self, ignore_links=False, ignore_mandatory=False):
 						if (date in log):
 							
 							attendance_date = str(log).split(" ")[0]
-							frappe.msgprint(f"{attendance_date}")
-							
 							_log_ = get_datetime(log)
 							# frappe.throw(f"{_log_}")
 							args = {
