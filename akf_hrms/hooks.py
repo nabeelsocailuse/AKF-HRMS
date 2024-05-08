@@ -10,7 +10,7 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/akf_hrms/css/akf_hrms.css"
+# app_include_css = "/assets/akf_hrms/css/akf_hrms.css
 app_include_js = [
     "/assets/akf_hrms/js/jquery.inputmask.min.js",
     "/assets/akf_hrms/js/jquery.mask.js",
