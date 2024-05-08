@@ -10,8 +10,11 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/akf_hrms/css/akf_hrms.css"
-# app_include_js = "/assets/akf_hrms/js/akf_hrms.js"
+# app_include_css = "/assets/akf_hrms/css/akf_hrms.css
+app_include_js = [
+    "/assets/akf_hrms/js/jquery.inputmask.min.js",
+    "/assets/akf_hrms/js/jquery.mask.js",
+    ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/akf_hrms/css/akf_hrms.css"
@@ -34,7 +37,15 @@ doctype_js = {
     "Loan": "public/js/loan.js",
     "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
+    "Employee" : [
+          "public/js/custom_doctype_js/identity_validations.js",
+          "public/js/custom_doctype_js/emp_total_duration.js"
+      ]
 }
+# doctype_js = {
+#     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
+#     }
+
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -120,12 +131,15 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
+
+# override_doctype_class = {
+# 	"ToDo": "custom_app.overrides.CustomToDo"
+# }
 override_doctype_class = {
-    # "ToDo": "custom_app.overrides.CustomToDo",
-    # "Attendance": "akf_hrms.overrides.attendance.Attendance",
-    # "Attendance Request": "akf_hrms.overrides.attendance_request.AttendanceRequest",
-    "Employee Onboarding": "akf_hrms.doc_events.employee_onboarding.EmployeeOnboarding",
-    "Employee Separation": "akf_hrms.doc_events.employee_separation.EmployeeSeparation",
+	"Employee": "akf_hrms.extends.employee.XEmployee",
+  "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
+  "Employee Onboarding": "akf_hrms.doc_events.employee_onboarding.EmployeeOnboarding",
+  "Employee Separation": "akf_hrms.doc_events.employee_separation.EmployeeSeparation",
 }
 
 # Document Events
@@ -149,7 +163,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron": {
+		"0 0 * * *": [
+			"akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
+		],
+	},
 # 	"all": [
 # 		"akf_hrms.tasks.all"
 # 	],
@@ -165,7 +184,7 @@ doc_events = {
 # 	"monthly": [
 # 		"akf_hrms.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------

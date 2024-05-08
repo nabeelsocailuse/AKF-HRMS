@@ -3,15 +3,18 @@ from zk import ZK, const
 
 def get_attendance_zk_teco():
     print('start')
-    zk = ZK('103.27.22.130', port=4370, timeout=500, password=0, force_udp=True, ommit_ping=True)
+    zk = ZK('103.27.22.130', port=4370, timeout=500, password=0, force_udp=False, ommit_ping=False)
     conn = None
     try:
-        # print(zk)
+        print(zk)
         # connect to device
         conn = zk.connect()
         # print(conn)
-        users = conn.get_users()
-        print(users)
+        # users = conn.get_users()
+        # print(users)
+        
+        attendance = conn.get_attendance()
+        print(attendance)
     except Exception as e:
         print ("Process terminate : {}".format(e))
     finally:
