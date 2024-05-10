@@ -65,6 +65,7 @@
    "fieldtype": "Date",
    "label": "Last working day",
    "permlevel": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -89,8 +90,7 @@
    "fieldname": "supervisor",
    "fieldtype": "Link",
    "label": "Supervisor",
-   "options": "User",
-   "read_only": 1
+   "options": "User"
   },
   {
    "fieldname": "column_break_10",
@@ -207,7 +207,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-05-15 14:34:31.474991",
+ "modified": "2024-05-10 13:42:29.075100",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Employee Resignation",
