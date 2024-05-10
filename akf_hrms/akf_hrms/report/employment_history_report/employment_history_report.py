@@ -8,11 +8,9 @@ from frappe import _
 
 @frappe.whitelist(allow_guest=True)
 def execute(filters=None):
-    # frappe.msgprint("execute")
     columns, data = [], []
     columns = get_columns()
     data = get_data(filters)
-    # frappe.throw(f'The data is: {data}')
     return columns, data
 
 def get_columns():
@@ -55,7 +53,7 @@ def get_columns():
         {
             "fieldname": "date_of_joining",
             "label": _("Date of Joining"),
-            "fieldtype": "Date",
+            "fieldtype": "Data",
             "options": "",
             "width": 120
         },
@@ -159,12 +157,12 @@ def get_data(filters):
         # Populate the latest salary for each employee based on from_date
         if d.employee not in latest_salary:
             latest_salary[d.employee] = {
-                'salary': d.custom_salary,
+                'salary': str(d.custom_salary),
                 'from_date': d.from_date
             }
         elif d.from_date and (not latest_salary[d.employee]['from_date'] or d.from_date > latest_salary[d.employee]['from_date']):
             latest_salary[d.employee] = {
-                'salary': d.custom_salary,
+                'salary': str(d.custom_salary),
                 'from_date': d.from_date
             }
 
@@ -174,18 +172,16 @@ def get_data(filters):
                 d.company, d.employee, d.first_name, d.custom_father_name,
                 d.cell_number, d.date_of_joining, d.custom_total_duration, d.scheduled_confirmation_date,
                 d.final_confirmation_date, d.contract_end_date, d.status,
-                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date, d.custom_salary,
+                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date, d.custom_salary if d.employee not in latest_salary or latest_salary[d.employee]['salary'] != str(d.custom_salary) else f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>",
                 d.custom_increment_amount
             ]
             # Add the latest salary for the employee and highlight it if it's the latest
             if d.employee in latest_salary and latest_salary[d.employee]['salary'] == d.custom_salary:
-                temp.append({
-                    'value': d.custom_salary,
-                    'color': 'green'  # Highlight the latest salary with green color
-                })
+                temp.append(f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>")
                 temp.append(latest_salary[d.employee]['from_date'])
+                # frappe.msgprint(f"Employee: {d.employee}, Latest Salary: {d.custom_salary}")
             else:
-                temp.append(d.custom_salary)
+                temp.append(d.custom_salary or '')
                 temp.append(d.from_date)
 
             temp.append(d.custom_increment_amount)
@@ -200,10 +196,6 @@ def get_data(filters):
             data.append(temp)
 
     return data
-
-
-
-
 
 def get_conditions(filters):
     conditions = []
@@ -252,8 +244,3 @@ def get_query_result(filters):
 
     result = frappe.db.sql(query, filters, as_dict=1)
     return result
-
-
-
-        
-

@@ -20,9 +20,11 @@
   "column_break_sbus",
   "to_date",
   "logs_detail_section",
-  "logs_table",
   "employee_detail",
-  "logs_json"
+  "employee_html",
+  "log_details_section",
+  "logs_json",
+  "logs_table"
  ],
  "fields": [
   {
@@ -88,9 +90,10 @@
    "label": "To Date"
   },
   {
+   "collapsible": 1,
    "fieldname": "logs_detail_section",
    "fieldtype": "Section Break",
-   "label": "Logs Detail"
+   "label": "Employee Details"
   },
   {
    "fieldname": "logs_table",
@@ -100,12 +103,14 @@
   {
    "fieldname": "logs_json",
    "fieldtype": "Long Text",
+   "hidden": 1,
    "label": "Logs Json",
    "read_only": 1
   },
   {
    "fieldname": "employee_detail",
    "fieldtype": "Long Text",
+   "hidden": 1,
    "label": "Employee Detail",
    "read_only": 1
   },
@@ -114,13 +119,24 @@
    "fieldtype": "Text",
    "label": "Progress Message",
    "read_only": 1
+  },
+  {
+   "fieldname": "employee_html",
+   "fieldtype": "HTML",
+   "label": "Employee Html"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "log_details_section",
+   "fieldtype": "Section Break",
+   "label": "Log Details"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-03 16:56:17.794586",
+ "modified": "2024-05-09 19:08:56.557082",
  "modified_by": "Administrator",
  "module": "ZK Device",
  "name": "ZK Tool",

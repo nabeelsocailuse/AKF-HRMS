@@ -8,6 +8,7 @@
  "field_order": [
   "employee_detail_section",
   "employee",
+  "company",
   "device_id",
   "column_break_zswl",
   "employee_name",
@@ -102,11 +103,19 @@
    "fieldname": "attendance_date",
    "fieldtype": "Date",
    "label": "Attendance Date"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-08 13:45:30.675468",
+ "modified": "2024-05-09 15:34:35.546179",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Log",
