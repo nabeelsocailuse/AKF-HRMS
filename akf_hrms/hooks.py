@@ -87,7 +87,7 @@ doctype_js = {
 # ------------
 
 # before_install = "akf_hrms.install.before_install"
-# after_install = "akf_hrms.install.after_install"
+after_install = "akf_hrms.install.after_install"
 
 # Uninstallation
 # ------------
@@ -140,8 +140,8 @@ doctype_js = {
 override_doctype_class = {
     "Employee": "akf_hrms.extends.employee.XEmployee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
-    "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
-    "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
+    "Employee Onboarding": "akf_hrms.doc_events.employee_onboarding.EmployeeOnboarding",
+    "Employee Separation": "akf_hrms.doc_events.employee_separation.EmployeeSeparation",
 }
 
 # Document Events
@@ -155,10 +155,10 @@ doc_events = {
     #     # 		"on_trash": "method"
     # },
     "Employee Onboarding": {
-        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
     },
     "Employee Separation": {
-        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
     },
 }
 
@@ -264,4 +264,4 @@ scheduler_events = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
-fixtures = ["Custom Field"]
+# fixtures = ["Custom Field"]
