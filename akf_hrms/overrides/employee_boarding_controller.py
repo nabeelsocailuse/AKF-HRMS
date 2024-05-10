@@ -25,7 +25,12 @@ class OverrideEmployeeBoardingController(Document):
                 activity.task = ""
 
     def on_submit(self):
-        pass
+        self.db_set("boarding_status", "Completed")
+        self.reload()
+        # pass
+
+        # core-file code below !!!
+
         # create the project for the given employee onboarding
         # project_name = _(self.doctype) + " : "
         # if self.doctype == "Employee Onboarding":
