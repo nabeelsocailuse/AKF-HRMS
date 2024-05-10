@@ -85,15 +85,6 @@ def send_absent_employee_notification():
 
         #Populating the recipients list (HR Manager, Reports_to and Absent Employee User ID)
         recipients = []
-<<<<<<< HEAD
-        if hr_manager_email:
-            recipients.append(hr_manager_email)
-        if hr_user_email:
-            recipients.append(hr_user_email)
-            
-        # Concatenating email addresses into a comma-separated string
-        recipient_emails = ", ".join(recipients)
-=======
 
         # Extracting email addresses of absent employees, their reporting managers, and HR Managers
         for employee in absent_employees:
@@ -102,10 +93,11 @@ def send_absent_employee_notification():
                 recipients.append(employee.get('user_id'))
             # Add email address of the reporting manager
             if employee.get('reports_to'):
-                recipients.append(employee.get('reports_to'))
->>>>>>> 3c82d97 (Attendance module completed. zk tool upgrade tables of employee and log details.)
+                reporting_manager_email = frappe.db.get_value("Employee", {"user_id": employee.get('reports_to')}, "user_id")
+                if reporting_manager_email:
+                    recipients.append(reporting_manager_email)
         
-        # Fetch HR Manager's email addresses
+        # Fetching HR Manager's email addresses
         hr_manager_email = frappe.db.sql("""
             SELECT u.email 
             FROM `tabUser` AS u 
@@ -115,18 +107,11 @@ def send_absent_employee_notification():
             GROUP BY u.name
         """, as_dict=False)
 
-        # Extracting email addresses from the result
         recipients.extend([row[0] for row in hr_manager_email])
-
-        # Remove duplicates from the recipients list
         recipients = list(set(recipients))
-
-        # Convert recipients list to a formatted string
         recipients_str = "<br>".join(recipients)
 
-        # Display recipients using frappe.msgprint
         frappe.msgprint(f"Recipients:<br>{recipients_str}")
-        # Send email only if there are recipients and html content
         if recipients and html_content:
             frappe.sendmail(
                 recipients=recipients,
