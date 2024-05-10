@@ -109,15 +109,22 @@ def get_data(filters):
 			elif status in ["Present", "Half Day"]:
 				total_days_worked += 1
 				# 
-				check_in_time = str(status_data[1]).split(':')
-				check_out_time = str(status_data[2]).split(':')
-				hours_worked = str(status_data[3]).split(':')
+				# check_in_time = str(status_data[1]).split(':')
+				# check_out_time = str(status_data[2]).split(':')
+				# hours_worked = str(status_data[3]).split(':')
+				check_in_time = str(status_data[1])
+				check_out_time = str(status_data[2])
+				hours_worked = str(status_data[3])
 				# frappe.throw(frappe.as_json(hours_worked))
 				if status == "Present":
-					inlist += [check_in_time[0] + ":" + check_in_time[1] if (check_in_time) else ""]
-					outlist += [check_out_time[0] + ":" + check_out_time[1] if (check_out_time) else ""]
-					hwlist += [hours_worked[0] + ":" + hours_worked[1] if(hours_worked) else ""]
+					# inlist += [check_in_time[0] + ":" + check_in_time[1] if (check_in_time) else ""]
+					# outlist += [check_out_time[0] + ":" + check_out_time[1] if (check_out_time) else ""]
+					# hwlist += [hours_worked[0] + ":" + hours_worked[1] if(hours_worked) else ""]
 					# total present sum
+
+					inlist += [check_in_time if (check_in_time) else ""]
+					outlist += [check_out_time if (check_out_time) else ""]
+					hwlist += [hours_worked if(hours_worked) else ""]
 					total_present += 1
 				elif status == "Half Day":
 					inlist += ["HD " + check_in_time[0] + ":" +check_in_time[1] if (check_in_time) else ""]
@@ -154,7 +161,7 @@ def get_attendance_list(filters):
 		from tabAttendance 
 		where docstatus = 1 %s order by employee, attendance_date""" % conditions, filters, as_dict=1)
 	att_map = {}
-	# frappe.throw(frappe.as_json(attendance_list))
+	frappe.throw(frappe.as_json(attendance_list))
 	for d in attendance_list:
 		att_map.setdefault(d.employee, frappe._dict()).setdefault(d.day_of_month, "")
 		# hours_worked = time_diff(d.out_time, d.in_time)
@@ -176,6 +183,7 @@ def get_times_split(_time_):
 	_time_ = str(_time_).split(" ")
 	_time_ = _time_[1] if(len(_time_)>1) else _time_
 	return _time_
+
 def get_employee_details(filters):
 	conditions = get_conditions(filters, is_employee=True)
 	emp_map = frappe._dict()
