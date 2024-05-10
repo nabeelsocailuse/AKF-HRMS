@@ -29,60 +29,59 @@ def send_absent_employee_notification():
      
     # Email template
     if absent_employees:
-        table_header_absentees = """
-            <p>Dear Concerned,</p>
-            <p>This email is to notify that the %s is Absent consecutively for the last 03 days. The details are as under.</p>
-            <table class="table table-bordered" style="border: 2px solid black; background-color: #f6151;">
-                <thead style="background-color: #0b4d80; color: white; text-align: left;">
-                <tr>
-                    <th style="border: 1px solid black;">Employee ID</th>
-                    <th style="border: 1px solid black;">Employee Name</th>
-                    <th style="border: 1px solid black;">Department</th>
-                    <th style="border: 1px solid black;">Designation</th>
-                    <th style="border: 1px solid black;">Absent Dates</th>
-                    <th style="border: 1px solid black;">Absent Days</th>
-                </tr>
-                </thead>
-                <tbody>
-                
-        """
-
-        employee_rows = ""
         for employee in absent_employees:
-            
-            # Convert absent dates to list of datetime objects
-            absent_dates = employee.absent_dates.split(',')
-            absent_dates_formatted = []
-            absent_day_names = []
-            for date_str in absent_dates:
-                # Convert date string to datetime object
-                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-                # Format the date as "01 March, 2024" and append to the list
-                formatted_date = date_obj.strftime('%d %B, %Y')
-                absent_dates_formatted.append(formatted_date)
-                # Get the corresponding day name and append to the list
-                day_name = date_obj.strftime('%A')
-                absent_day_names.append(day_name)
-
-            # Join absent dates and day names into strings
-            absent_dates_str = ', '.join(absent_dates_formatted)
-            absent_days_str = ', '.join(absent_day_names)
-
-            employee_row = """
-                <tr style= "background-color: #d1e0e4; text-align: left;">
-                            <td class="text-left" style="border: 1px solid black;">{}</td>
-                            <td class="text-left" style="border: 1px solid black;">{}</td>
-                            <td class="text-left" style="border: 1px solid black;">{}</td>
-                            <td class="text-left" style="border: 1px solid black;">{}</td>
-                            <td class="text-left" style="border: 1px solid black;">{}</td>
-                            <td class="text-left" style="border: 1px solid black;">{}</td>
+            if employee.reports_to:
+                # Email subject
+                email_subject = f"Notification of the Absence of Employee: {employee.employee_name} {employee.employee}"
+                # Construct HTML content for the current employee
+                table_header_absentees = """
+                    <p>Dear Concerned,</p>
+                    <p>This email is to notify that {} is Absent consecutively for the last 03 days. The details are as under.</p>
+                    <table class="table table-bordered" style="border: 2px solid black; background-color: #f6151;">
+                        <thead style="background-color: #0b4d80; color: white; text-align: left;">
+                        <tr>
+                            <th style="border: 1px solid black;">Employee ID</th>
+                            <th style="border: 1px solid black;">Employee Name</th>
+                            <th style="border: 1px solid black;">Department</th>
+                            <th style="border: 1px solid black;">Designation</th>
+                            <th style="border: 1px solid black;">Absent Dates</th>
+                            <th style="border: 1px solid black;">Absent Days</th>
                         </tr>
-            """.format(employee.get('employee', ''), employee.get('employee_name', ''), employee.get('department', ''), employee.get('designation', ''), absent_dates_str, absent_days_str)
-            employee_rows += employee_row
-            routing_message = "<p>The email is routed for any further necessary action please.</p>"
-        html_content = table_header_absentees%employee.employee_name + employee_rows + "</tbody></table><br>" + routing_message
-        # frappe.throw(html_content)
+                        </thead>
+                        <tbody>
+                """.format(employee.employee_name)
+                
+                # Formatting for Absent Dates and Absent Days
+                absent_dates = employee.absent_dates.split(',')
+                absent_dates_formatted = [datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %B, %Y') for date_str in absent_dates]
+                absent_day_names = [datetime.strptime(date_str, '%Y-%m-%d').strftime('%A') for date_str in absent_dates]
+                absent_days_str = ', '.join(absent_day_names)
+                absent_dates_str = ', '.join(absent_dates_formatted)
+                
+                # Construct HTML row for the current employee
+                employee_row = """
+                    <tr style="background-color: #d1e0e4; text-align: left;">
+                        <td class="text-left" style="border: 1px solid black;">{}</td>
+                        <td class="text-left" style="border: 1px solid black;">{}</td>
+                        <td class="text-left" style="border: 1px solid black;">{}</td>
+                        <td class="text-left" style="border: 1px solid black;">{}</td>
+                        <td class="text-left" style="border: 1px solid black;">{}</td>
+                        <td class="text-left" style="border: 1px solid black;">{}</td>
+                    </tr>
+                """.format(
+                    employee.get('employee', ''), 
+                    employee.get('employee_name', ''), 
+                    employee.get('department', ''), 
+                    employee.get('designation', ''), 
+                    absent_dates_str, 
+                    absent_days_str
+                )
+                
+                table_closing_tags = "</tbody></table><br><p>The email is routed for any further necessary action please.</p>"
+                
+                html_content = table_header_absentees + employee_row + table_closing_tags
 
+<<<<<<< HEAD
         #Populating the recipients list (HR Manager, Reports_to and Absent Employee User ID)
         recipients = []
 
@@ -118,4 +117,35 @@ def send_absent_employee_notification():
                 subject='Notification of the Absence of the Employee',
                 message=html_content,
             )
+=======
+                # Get the email of the reporting manager
+                recipients = []
 
+                # Adding employee's email
+                if employee.get('user_id'):
+                    recipients.append(employee.get('user_id'))
+
+                # Add reporting manager's email
+
+                reports_to_email = frappe.db.get_value("Employee", {"user_id": employee.reports_to}, "user_id")
+                recipients.append(reports_to_email)
+
+                # Add HR manager's email
+                hr_manager_email = frappe.db.sql("""
+                    SELECT u.email 
+                    FROM `tabUser` AS u 
+                    INNER JOIN `tabHas Role` AS h ON (u.name = h.parent) 
+                    WHERE u.name NOT IN ("Administrator") 
+                    AND h.role = 'HR Manager' 
+                    GROUP BY u.name
+                """, as_dict=False)
+
+                recipients.extend([row[0] for row in hr_manager_email])
+>>>>>>> f00ad1a (second sprint changes added.)
+
+                # Send email to all recipients
+                frappe.sendmail(
+                    recipients=recipients,
+                    subject=email_subject,
+                    message=html_content
+                )
