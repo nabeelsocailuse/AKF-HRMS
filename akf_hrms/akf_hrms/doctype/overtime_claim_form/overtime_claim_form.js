@@ -6,8 +6,15 @@ frappe.ui.form.on("Overtime Claim Form", {
 		acf.set_queries(frm);
 		acf.employee_info(frm);
 	},
+	year: function(frm){
+		acf.load_details_of_overtime(frm);
+	},
+	month: function(frm){
+		acf.load_details_of_overtime(frm);
+	},
 	employee_id: function(frm){
 		acf.employee_info(frm);
+		acf.load_details_of_overtime(frm);
 	}
 });
 // COMMENTS
@@ -44,5 +51,14 @@ acf = {
 			}
 		});
 		
+	},
+	load_details_of_overtime: function(frm){
+		frm.call("get_details_of_overtime").then(r =>{
+			console.log(r.message);
+			// let data = r.message;
+			// data.forEach(element => {
+			// 	frm.set_value()
+			// });
+		});
 	}
 }

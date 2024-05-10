@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-04-30 13:10:28.193554",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_ws6p",
+  "request_for_workshop",
+  "proposed_date",
+  "topics_of_training",
+  "amended_from",
+  "proposed_start_time",
+  "column_break_tdey",
+  "proposed_end_time",
+  "expected_noof_participants",
+  "training_contents_and_remarks_section",
+  "training_contents",
+  "expected_outoomes",
+  "remarks_of_hod",
+  "remarks_of_senior_manager_hr",
+  "remarks_of_executive_director",
+  "remarks_of_secretary_general",
+  "approval_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ws6p",
+   "fieldtype": "Section Break",
+   "label": "Training Details"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Training Request",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "request_for_workshop",
+   "fieldtype": "Data",
+   "label": "Request for Workshop"
+  },
+  {
+   "fieldname": "proposed_date",
+   "fieldtype": "Date",
+   "label": "Proposed Date"
+  },
+  {
+   "fieldname": "topics_of_training",
+   "fieldtype": "Data",
+   "label": "Topics Of Training"
+  },
+  {
+   "fieldname": "proposed_start_time",
+   "fieldtype": "Time",
+   "label": "Proposed Start Time"
+  },
+  {
+   "fieldname": "proposed_end_time",
+   "fieldtype": "Time",
+   "label": "Proposed End Time"
+  },
+  {
+   "fieldname": "expected_noof_participants",
+   "fieldtype": "Float",
+   "label": "Expected No.of Participants"
+  },
+  {
+   "fieldname": "training_contents",
+   "fieldtype": "Table",
+   "label": "Training Contents",
+   "options": "Training Request Topics"
+  },
+  {
+   "fieldname": "expected_outoomes",
+   "fieldtype": "Small Text",
+   "label": "Expected Outoomes"
+  },
+  {
+   "fieldname": "remarks_of_hod",
+   "fieldtype": "Small Text",
+   "label": "Remarks of HOD"
+  },
+  {
+   "fieldname": "remarks_of_senior_manager_hr",
+   "fieldtype": "Small Text",
+   "label": "Remarks of Senior Manager HR"
+  },
+  {
+   "fieldname": "remarks_of_executive_director",
+   "fieldtype": "Small Text",
+   "label": "Remarks of Executive Director"
+  },
+  {
+   "fieldname": "remarks_of_secretary_general",
+   "fieldtype": "Small Text",
+   "label": "Remarks of Secretary General"
+  },
+  {
+   "fieldname": "approval_status",
+   "fieldtype": "Data",
+   "label": "Approval Status"
+  },
+  {
+   "fieldname": "training_contents_and_remarks_section",
+   "fieldtype": "Section Break",
+   "label": "Training Contents and Remarks"
+  },
+  {
+   "fieldname": "column_break_tdey",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-05-10 12:14:36.588128",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Training Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

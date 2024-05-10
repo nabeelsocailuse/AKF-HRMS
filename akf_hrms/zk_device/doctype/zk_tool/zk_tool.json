@@ -1,0 +1,159 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-05-03 11:51:32.056281",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "progress_message",
+  "company_detail_section",
+  "company",
+  "column_break_tvtq",
+  "log_type",
+  "device_detail_section",
+  "device_ip",
+  "column_break_cssv",
+  "device_port",
+  "date_ranges_section",
+  "from_date",
+  "column_break_sbus",
+  "to_date",
+  "logs_detail_section",
+  "employee_detail",
+  "employee_html",
+  "log_details_section",
+  "logs_json",
+  "logs_table"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Company Detail"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "column_break_tvtq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "IN",
+   "fieldname": "log_type",
+   "fieldtype": "Select",
+   "label": "Log Type",
+   "options": "\nIN\nOUT"
+  },
+  {
+   "fieldname": "device_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Device Detail"
+  },
+  {
+   "fieldname": "device_ip",
+   "fieldtype": "Data",
+   "label": "Device IP"
+  },
+  {
+   "fieldname": "column_break_cssv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "device_port",
+   "fieldtype": "Data",
+   "label": "Device Port"
+  },
+  {
+   "fieldname": "date_ranges_section",
+   "fieldtype": "Section Break",
+   "label": "Date Ranges"
+  },
+  {
+   "default": "Today",
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date"
+  },
+  {
+   "fieldname": "column_break_sbus",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "logs_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Details"
+  },
+  {
+   "fieldname": "logs_table",
+   "fieldtype": "HTML",
+   "label": "Logs Table"
+  },
+  {
+   "fieldname": "logs_json",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Logs Json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_detail",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Employee Detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "progress_message",
+   "fieldtype": "Text",
+   "label": "Progress Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_html",
+   "fieldtype": "HTML",
+   "label": "Employee Html"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "log_details_section",
+   "fieldtype": "Section Break",
+   "label": "Log Details"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-05-09 19:08:56.557082",
+ "modified_by": "Administrator",
+ "module": "ZK Device",
+ "name": "ZK Tool",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

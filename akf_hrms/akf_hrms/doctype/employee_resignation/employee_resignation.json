@@ -1,16 +1,109 @@
 {
  "actions": [],
- "allow_rename": 1,
- "creation": "2024-04-13 16:23:22.244965",
+ "autoname": "format:{employee}",
+ "creation": "2020-07-17 14:54:08.134052",
  "doctype": "DocType",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_ff4v",
-  "amended_from"
+  "employee",
+  "department",
+  "designation",
+  "branch",
+  "user_id",
+  "resignation_date",
+  "resignation_date_format",
+  "column_break_3",
+  "employee_name",
+  "company",
+  "gender",
+  "employment_type",
+  "last_working_day",
+  "day_before_last",
+  "last_working_day_format",
+  "section_break_6",
+  "reason_of_resignation",
+  "letter_to_managerhr",
+  "section_break_9",
+  "supervisor",
+  "column_break_10",
+  "supervisor_name",
+  "amended_from",
+  "status"
  ],
  "fields": [
   {
-   "fieldname": "section_break_ff4v",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "resignation_date",
+   "fieldtype": "Date",
+   "label": "Resignation Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_working_day",
+   "fieldtype": "Date",
+   "label": "Last working day",
+   "permlevel": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "reason_of_resignation",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Reason of Resignation",
+   "options": "\nBetter Job Opportunity\nFor Further studies\nPersonal Reasons\nRelocating another city\nInterpersonal Conflict with Manager / Employee\nLimited Career Growth within Company\nOther",
+   "reqd": 1
+  },
+  {
+   "description": "(Please add details Resignation letter if you want to)",
+   "fieldname": "letter_to_managerhr",
+   "fieldtype": "Text Editor",
+   "label": "Letter to Manager/HR"
+  },
+  {
+   "fieldname": "supervisor",
+   "fieldtype": "Link",
+   "label": "Supervisor",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "supervisor.full_name",
+   "fieldname": "supervisor_name",
+   "fieldtype": "Read Only",
+   "label": "Supervisor Name"
+  },
+  {
+   "fieldname": "section_break_9",
    "fieldtype": "Section Break"
   },
   {
@@ -20,20 +113,109 @@
    "no_copy": 1,
    "options": "Employee Resignation",
    "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nApproved\nRejected"
+  },
+  {
+   "fieldname": "resignation_date_format",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Resignation Date Format",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_working_day_format",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Last working day Format",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.gender",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.employment_type",
+   "fieldname": "employment_type",
+   "fieldtype": "Link",
+   "label": "Employment Type",
+   "options": "Employment Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.user_id",
+   "fetch_if_empty": 1,
+   "fieldname": "user_id",
+   "fieldtype": "Link",
+   "label": "User ID",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "day_before_last",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Day Before Last",
+   "read_only": 1
   }
  ],
- "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-26 12:34:05.955787",
+ "modified": "2023-05-15 14:34:31.474991",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Employee Resignation",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -49,5 +231,7 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee",
+ "track_changes": 1
 }
