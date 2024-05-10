@@ -161,7 +161,7 @@ def get_attendance_list(filters):
 		from tabAttendance 
 		where docstatus = 1 %s order by employee, attendance_date""" % conditions, filters, as_dict=1)
 	att_map = {}
-	frappe.throw(frappe.as_json(attendance_list))
+	
 	for d in attendance_list:
 		att_map.setdefault(d.employee, frappe._dict()).setdefault(d.day_of_month, "")
 		# hours_worked = time_diff(d.out_time, d.in_time)
@@ -180,8 +180,8 @@ def get_conditions(filters, is_employee=False):
 	return conditions
 
 def get_times_split(_time_):
-	_time_ = str(_time_).split(" ")
-	_time_ = _time_[1] if(len(_time_)>1) else _time_
+	s_time_ = str(_time_).split(" ")
+	_time_ = s_time_[1] if(len(s_time_)>1) else _time_
 	return _time_
 
 def get_employee_details(filters):
