@@ -3,7 +3,7 @@
 
 import frappe
 from datetime import timedelta, datetime
-from frappe.utils import  today, time_diff
+from frappe.utils import  today
 from frappe import _
 
 def execute(filters=None):
@@ -135,12 +135,12 @@ def get_data(filters):
 		# Init 3 rows for employee {in, out, hours work}
 		working_hours = get_total_hours_worked(hours_worked_time_list)
 		row1 = [employee_id, employee_data.employee_name, employee_data.branch, employee_data.department, employee_data.designation, total_days_worked, working_hours, float(total_present), float(total_leaves), float(total_absent), "<b>In</b>"] + inlist
-		# row2 = ["", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
-		# row3 = ["", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
+		row2 = ["", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
+		row3 = ["", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
 		
 		data.append(row1)
-		# data.append(row2)
-		# data.append(row3)
+		data.append(row2)
+		data.append(row3)
 	
 	return data
 
@@ -160,7 +160,7 @@ def get_attendance_list(filters):
 		# hours_worked = time_diff(d.out_time, d.in_time)
 		# hours_worked = str(hours_worked).split(".")[0]
 		
-		att_map[d.employee][str(d.day_of_month)] = [d.status, d.check_in_time, d.check_out_time, d.hours_worked]
+		att_map[d.employee][str(d.day_of_month)] = [d.status, get_times_split(d.check_in_time), get_times_split(d.check_out_time), d.hours_worked]
 	return att_map
 
 def get_conditions(filters, is_employee=False):
@@ -172,6 +172,10 @@ def get_conditions(filters, is_employee=False):
 	if filters.get("branch"): conditions += " and branch = %(branch)s"
 	return conditions
 
+def get_times_split(_time_):
+	_time_ = str(_time_).split(" ")
+	_time_ = _time_[1] if(len(_time_)>1) else _time_
+	return _time_
 def get_employee_details(filters):
 	conditions = get_conditions(filters, is_employee=True)
 	emp_map = frappe._dict()

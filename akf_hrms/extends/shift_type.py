@@ -1,6 +1,6 @@
 import frappe
 from hrms.hr.doctype.shift_type.shift_type import ShiftType
-from frappe.utils import getdate, add_to_date, get_time, time_diff_in_hours
+from frappe.utils import getdate, add_to_date, get_time, time_diff_in_hours, time_diff
 
 class XShiftType(ShiftType):
     def validate(self):
@@ -8,7 +8,8 @@ class XShiftType(ShiftType):
         self.calculate_grace_period()
 
     def calculate_working_hours(self):
-        self.custom_total_working_hours = time_diff_in_hours(self.end_time, self.start_time)
+        # self.custom_total_working_hours = time_diff_in_hours(self.end_time, self.start_time)
+        self.custom_total_working_hours = time_diff(self.end_time, self.start_time)
 
     def calculate_grace_period(self):
         if (not self.enable_auto_attendance): return

@@ -13,7 +13,8 @@ def send_absent_employee_notification():
             emp.designation,
             GROUP_CONCAT(att.attendance_date) AS absent_dates,
             COUNT(*) AS absent_days,
-            emp.reports_to
+            (SELECT e.user_id FROM `tabEmployee` AS e WHERE e.employee = emp.reports_to) AS reports_to,            
+            emp.user_id
         FROM 
             `tabAttendance` att
         INNER JOIN
@@ -80,14 +81,11 @@ def send_absent_employee_notification():
             employee_rows += employee_row
             routing_message = "<p>The email is routed for any further necessary action please.</p>"
         html_content = table_header_absentees%employee.employee_name + employee_rows + "</tbody></table><br>" + routing_message
-        frappe.throw(html_content)
+        # frappe.throw(html_content)
 
-        # Fetching email addresses of HR Manager and HR User
-        hr_manager_email = frappe.get_value("User", {"role_profile_name": "HR Manager"}, "email")
-        hr_user_email = frappe.get_value("User", {"role_profile_name": "HR User"}, "email")
-
-        # Adding email addresses to the recipients list
+        #Populating the recipients list (HR Manager, Reports_to and Absent Employee User ID)
         recipients = []
+<<<<<<< HEAD
         if hr_manager_email:
             recipients.append(hr_manager_email)
         if hr_user_email:
@@ -95,10 +93,44 @@ def send_absent_employee_notification():
             
         # Concatenating email addresses into a comma-separated string
         recipient_emails = ", ".join(recipients)
+=======
+
+        # Extracting email addresses of absent employees, their reporting managers, and HR Managers
+        for employee in absent_employees:
+            # Add email address of the absent employee
+            if employee.get('user_id'):
+                recipients.append(employee.get('user_id'))
+            # Add email address of the reporting manager
+            if employee.get('reports_to'):
+                recipients.append(employee.get('reports_to'))
+>>>>>>> 3c82d97 (Attendance module completed. zk tool upgrade tables of employee and log details.)
         
-        if html_content:
+        # Fetch HR Manager's email addresses
+        hr_manager_email = frappe.db.sql("""
+            SELECT u.email 
+            FROM `tabUser` AS u 
+            INNER JOIN `tabHas Role` AS h ON (u.name = h.parent) 
+            WHERE u.name NOT IN ("Administrator") 
+            AND h.role = 'HR Manager' 
+            GROUP BY u.name
+        """, as_dict=False)
+
+        # Extracting email addresses from the result
+        recipients.extend([row[0] for row in hr_manager_email])
+
+        # Remove duplicates from the recipients list
+        recipients = list(set(recipients))
+
+        # Convert recipients list to a formatted string
+        recipients_str = "<br>".join(recipients)
+
+        # Display recipients using frappe.msgprint
+        frappe.msgprint(f"Recipients:<br>{recipients_str}")
+        # Send email only if there are recipients and html content
+        if recipients and html_content:
             frappe.sendmail(
                 recipients=recipients,
-                subject=(' Notification of the Absence of the Employee'),
+                subject='Notification of the Absence of the Employee',
                 message=html_content,
             )
+

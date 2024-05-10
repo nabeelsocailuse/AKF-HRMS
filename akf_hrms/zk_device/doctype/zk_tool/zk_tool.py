@@ -25,10 +25,18 @@ class ZKTool(Document):
 	@frappe.whitelist()
 	def get_employees(self):
 		# sql for Attendance Device ID
-		employeeDetail = frappe.db.get_list('Employee', 
-						filters={'status': 'Active', 'company': self.company}, 
-						fields=['attendance_device_id', '(name) as employee', 'default_shift'], 
-						group_by='attendance_device_id')
+		employeeDetail = frappe.db.sql(""" select 
+			attendance_device_id, (name) as employee, ifnull(default_shift,'-') as default_shift
+		from 
+			`tabEmployee`
+		where
+			status = 'Active' 
+			and ifnull(attendance_device_id, '')!=''
+			and company = '%s' 
+		group by
+			attendance_device_id
+		"""%self.company, as_dict=1)
+		
 		if(employeeDetail): 
 			self.employee_detail = str(employeeDetail)
 			self.save()
@@ -77,6 +85,14 @@ class ZKTool(Document):
 			self.reload()
 		else:
 			return marking_attendance(self)
+
+	@frappe.whitelist()
+	def	get_employee_details(self):
+		return eval(self.employee_detail)
+	
+	@frappe.whitelist()
+	def get_log_details(self):
+		return eval(self.logs_json)
 
 @frappe.whitelist()
 def marking_attendance(self, ignore_links=False, ignore_mandatory=False):
@@ -143,14 +159,19 @@ def fetch_shift(company, employee, log):
 	shift_assignment = frappe.db.sql(""" 
 			select shift_type
 			from `tabShift Assignment`
-			where docstatus=0
-			and status="Active"
-			and company='{0}'
-			and employee = '{1}'
-			and cast('{2}' as date) between start_date and end_date
+			where docstatus=1
+				and status="Active"
+				and company='{0}'
+				and employee = '{1}'
+				and cast('{2}' as date) between start_date and end_date
 			""".format(company, employee, log))
 	
 	return shift_assignment[0][0] if(shift_assignment) else None
+
+@frappe.whitelist()
+def get_sorted_list(unordered_list):
+	import ast
+	return sorted(ast.literal_eval(unordered_list))
 
 @frappe.whitelist()
 def remove_records():
