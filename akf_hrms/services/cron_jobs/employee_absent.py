@@ -81,43 +81,6 @@ def send_absent_employee_notification():
                 
                 html_content = table_header_absentees + employee_row + table_closing_tags
 
-<<<<<<< HEAD
-        #Populating the recipients list (HR Manager, Reports_to and Absent Employee User ID)
-        recipients = []
-
-        # Extracting email addresses of absent employees, their reporting managers, and HR Managers
-        for employee in absent_employees:
-            # Add email address of the absent employee
-            if employee.get('user_id'):
-                recipients.append(employee.get('user_id'))
-            # Add email address of the reporting manager
-            if employee.get('reports_to'):
-                reporting_manager_email = frappe.db.get_value("Employee", {"user_id": employee.get('reports_to')}, "user_id")
-                if reporting_manager_email:
-                    recipients.append(reporting_manager_email)
-        
-        # Fetching HR Manager's email addresses
-        hr_manager_email = frappe.db.sql("""
-            SELECT u.email 
-            FROM `tabUser` AS u 
-            INNER JOIN `tabHas Role` AS h ON (u.name = h.parent) 
-            WHERE u.name NOT IN ("Administrator") 
-            AND h.role = 'HR Manager' 
-            GROUP BY u.name
-        """, as_dict=False)
-
-        recipients.extend([row[0] for row in hr_manager_email])
-        recipients = list(set(recipients))
-        recipients_str = "<br>".join(recipients)
-
-        frappe.msgprint(f"Recipients:<br>{recipients_str}")
-        if recipients and html_content:
-            frappe.sendmail(
-                recipients=recipients,
-                subject='Notification of the Absence of the Employee',
-                message=html_content,
-            )
-=======
                 # Get the email of the reporting manager
                 recipients = []
 
@@ -141,7 +104,6 @@ def send_absent_employee_notification():
                 """, as_dict=False)
 
                 recipients.extend([row[0] for row in hr_manager_email])
->>>>>>> f00ad1a (second sprint changes added.)
 
                 # Send email to all recipients
                 frappe.sendmail(
