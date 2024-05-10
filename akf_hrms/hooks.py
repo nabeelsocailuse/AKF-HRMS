@@ -101,7 +101,7 @@ after_install = "akf_hrms.install.after_install"
 # Name of the app being installed is passed as an argument
 
 # before_app_install = "akf_hrms.utils.before_app_install"
-# after_app_install = "akf_hrms.utils.after_app_install"
+after_app_install = "akf_hrms.install.after_install"
 
 # Integration Cleanup
 # -------------------
