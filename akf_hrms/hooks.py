@@ -87,7 +87,7 @@ doctype_js = {
 # ------------
 
 # before_install = "akf_hrms.install.before_install"
-after_install = "akf_hrms.install.after_install"
+# after_install = "akf_hrms.install.after_install"
 
 # Uninstallation
 # ------------
