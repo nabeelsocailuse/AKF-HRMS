@@ -8,11 +8,12 @@
  "field_order": [
   "section_break_8gls",
   "date",
-  "starting_time",
-  "ending_time",
+  "in_time",
+  "out_time",
+  "total_working_hours",
   "hours_worked",
-  "description_of_work_donejourney",
-  "total_hours_worked"
+  "overtime_hours",
+  "description_of_work_donejourney"
  ],
  "fields": [
   {
@@ -27,16 +28,36 @@
    "label": "Date"
   },
   {
-   "fieldname": "starting_time",
-   "fieldtype": "Time",
+   "fieldname": "description_of_work_donejourney",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Starting Time"
+   "label": "Description of Work Done/Journey"
   },
   {
-   "fieldname": "ending_time",
+   "fieldname": "in_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "In Time"
+  },
+  {
+   "fieldname": "out_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Out Time"
+  },
+  {
+   "fieldname": "total_working_hours",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Total Working Hours",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overtime_hours",
    "fieldtype": "Time",
    "in_list_view": 1,
-   "label": "Ending Time"
+   "label": "Overtime Hours",
+   "read_only": 1
   },
   {
    "fieldname": "hours_worked",
@@ -44,25 +65,12 @@
    "in_list_view": 1,
    "label": "Hours Worked",
    "read_only": 1
-  },
-  {
-   "fieldname": "description_of_work_donejourney",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Description of Work Done/Journey"
-  },
-  {
-   "fieldname": "total_hours_worked",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Total Hours Worked",
-   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-04-24 18:54:39.354209",
+ "modified": "2024-05-10 18:23:04.053617",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Details of OT",

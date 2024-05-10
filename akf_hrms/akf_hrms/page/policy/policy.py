@@ -32,5 +32,5 @@ def get_policy(fargs):
 	return total_policy_list
 
 def get_conditions(fargs):
-	conditions = " and department=%(department)s" if(fargs.get("department")) else ""
+	conditions = " and custom_department=%(department)s" if(fargs.get("department")) else ""
 	return conditions
