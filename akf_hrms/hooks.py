@@ -14,7 +14,7 @@ app_license = "mit"
 app_include_js = [
     "/assets/akf_hrms/js/jquery.inputmask.min.js",
     "/assets/akf_hrms/js/jquery.mask.js",
-    ]
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/akf_hrms/css/akf_hrms.css"
@@ -37,6 +37,7 @@ doctype_js = {
     "Loan": "public/js/loan.js",
     "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
+    "Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
     "Employee" : [
           "public/js/custom_doctype_js/identity_validations.js",
           "public/js/custom_doctype_js/emp_total_duration.js"
@@ -87,7 +88,7 @@ doctype_js = {
 # ------------
 
 # before_install = "akf_hrms.install.before_install"
-# after_install = "akf_hrms.install.after_install"
+after_install = "akf_hrms.install.after_install"
 
 # Uninstallation
 # ------------
@@ -101,7 +102,7 @@ doctype_js = {
 # Name of the app being installed is passed as an argument
 
 # before_app_install = "akf_hrms.utils.before_app_install"
-# after_app_install = "akf_hrms.utils.after_app_install"
+after_app_install = "akf_hrms.install.after_install"
 
 # Integration Cleanup
 # -------------------
@@ -140,8 +141,8 @@ doctype_js = {
 override_doctype_class = {
     "Employee": "akf_hrms.extends.employee.XEmployee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
-    "Employee Onboarding": "akf_hrms.doc_events.employee_onboarding.EmployeeOnboarding",
-    "Employee Separation": "akf_hrms.doc_events.employee_separation.EmployeeSeparation",
+    "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
+    "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
 }
 
 # Document Events
@@ -155,10 +156,10 @@ doc_events = {
     #     # 		"on_trash": "method"
     # },
     "Employee Onboarding": {
-        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
     "Employee Separation": {
-        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
 }
 
@@ -167,25 +168,25 @@ doc_events = {
 
 scheduler_events = {
     "cron": {
-		"0 0 * * *": [
-			"akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
-		],
-	},
-# 	"all": [
-# 		"akf_hrms.tasks.all"
-# 	],
-# 	"daily": [
-# 		"akf_hrms.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"akf_hrms.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"akf_hrms.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"akf_hrms.tasks.monthly"
-# 	],
+        "0 0 * * *": [
+            "akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
+        ],
+    },
+    # 	"all": [
+    # 		"akf_hrms.tasks.all"
+    # 	],
+    # 	"daily": [
+    # 		"akf_hrms.tasks.daily"
+    # 	],
+    # 	"hourly": [
+    # 		"akf_hrms.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"akf_hrms.tasks.weekly"
+    # 	],
+    # 	"monthly": [
+    # 		"akf_hrms.tasks.monthly"
+    # 	],
 }
 
 # Testing
@@ -264,4 +265,8 @@ scheduler_events = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
-fixtures = ["Custom Field"]
+# fixtures = ["Custom Field"]
+
+
+
+
