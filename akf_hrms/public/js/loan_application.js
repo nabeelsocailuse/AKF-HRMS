@@ -23,7 +23,7 @@ frappe.ui.form.on("Loan Application", {
           limit_page_length: 1,
         },
         callback: function (r) {
-          if (r.message) {
+          if (r.message[0]) {
             frm.set_value("custom_maximum_allowed_loan", r.message[0].base / 2);
             frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
             frm.set_value(
