@@ -65,6 +65,7 @@
    "fieldtype": "Date",
    "label": "Last working day",
    "permlevel": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -91,6 +92,7 @@
    "label": "Supervisor",
    "options": "User",
    "read_only": 1
+
   },
   {
    "fieldname": "column_break_10",

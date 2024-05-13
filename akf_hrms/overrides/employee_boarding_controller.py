@@ -27,6 +27,8 @@ class OverrideEmployeeBoardingController(Document):
     def on_submit(self):
         self.db_set("boarding_status", "Completed")
         self.reload()
+
+        # core-file code below !!!
         # create the project for the given employee onboarding
         # project_name = _(self.doctype) + " : "
         # if self.doctype == "Employee Onboarding":
@@ -47,6 +49,9 @@ class OverrideEmployeeBoardingController(Document):
         # ).insert(ignore_permissions=True, ignore_mandatory=True)
 
         # self.db_set("project", project.name)
+        # self.db_set("boarding_status", "Pending")
+        # self.reload()
+
         # self.create_task_and_notify_user()
 
     def create_task_and_notify_user(self):

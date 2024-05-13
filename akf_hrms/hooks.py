@@ -14,7 +14,7 @@ app_license = "mit"
 app_include_js = [
     "/assets/akf_hrms/js/jquery.inputmask.min.js",
     "/assets/akf_hrms/js/jquery.mask.js",
-    ]
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/akf_hrms/css/akf_hrms.css"
@@ -37,6 +37,7 @@ doctype_js = {
     "Loan": "public/js/loan.js",
     "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
+    "Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
     "Employee" : [
           "public/js/custom_doctype_js/identity_validations.js",
           "public/js/custom_doctype_js/emp_total_duration.js"
@@ -167,25 +168,25 @@ doc_events = {
 
 scheduler_events = {
     "cron": {
-		"0 0 * * *": [
-			"akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
-		],
-	},
-# 	"all": [
-# 		"akf_hrms.tasks.all"
-# 	],
-# 	"daily": [
-# 		"akf_hrms.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"akf_hrms.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"akf_hrms.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"akf_hrms.tasks.monthly"
-# 	],
+        "0 0 * * *": [
+            "akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
+        ],
+    },
+    # 	"all": [
+    # 		"akf_hrms.tasks.all"
+    # 	],
+    # 	"daily": [
+    # 		"akf_hrms.tasks.daily"
+    # 	],
+    # 	"hourly": [
+    # 		"akf_hrms.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"akf_hrms.tasks.weekly"
+    # 	],
+    # 	"monthly": [
+    # 		"akf_hrms.tasks.monthly"
+    # 	],
 }
 
 # Testing
