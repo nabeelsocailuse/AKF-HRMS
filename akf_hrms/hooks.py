@@ -155,10 +155,10 @@ doc_events = {
     #     # 		"on_trash": "method"
     # },
     "Employee Onboarding": {
-        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
     "Employee Separation": {
-        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
 }
 
