@@ -140,8 +140,8 @@ after_app_install = "akf_hrms.install.after_install"
 override_doctype_class = {
     "Employee": "akf_hrms.extends.employee.XEmployee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
-    "Employee Onboarding": "akf_hrms.doc_events.employee_onboarding.EmployeeOnboarding",
-    "Employee Separation": "akf_hrms.doc_events.employee_separation.EmployeeSeparation",
+    "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
+    "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
 }
 
 # Document Events
