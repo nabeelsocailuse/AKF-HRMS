@@ -75,7 +75,7 @@ frappe.query_reports["In Out Timing Report"] = {
 			"fieldtype": "Link",
 			"options": "Designation"
 		},
-		{
+		/* {
 			"fieldname":"late_entry",
 			"label": __("Late Entry"),
 			"fieldtype": "Check",
@@ -86,7 +86,7 @@ frappe.query_reports["In Out Timing Report"] = {
 			"label": __("Early Exit"),
 			"fieldtype": "Check",
 			"options": ""
-		},
+		}, */
 	],
 	"onload": function(frm) {
 		return  frappe.call({
