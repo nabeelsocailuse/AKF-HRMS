@@ -7,7 +7,7 @@ var custom_label = null;
 
 frappe.ui.form.on('Employee', {
     refresh: function(frm) {
-        console.log('working.')
+        // console.log('working.')
         if (!frm.doc.__islocal) {
             frm.set_query('referee_id', function(doc) {
                 return {
@@ -60,7 +60,7 @@ function custom_country_change(frm) {
             },
             callback: function(r) {
                 let data = r.message;
-                console.log(data)
+                // console.log(data)
                 if (data) {
                     id_mask=data.custom_id_mask;
                     id_mask_length=id_mask.length;

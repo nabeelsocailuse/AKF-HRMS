@@ -19,4 +19,21 @@
  "report_name": "Loan Details Summary",
  "report_type": "Script Report",
  "roles": []
+ "roles": [
+  {
+   "role": "Loan Manager"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  }
+ ]
 }

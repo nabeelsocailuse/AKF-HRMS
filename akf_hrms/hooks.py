@@ -38,10 +38,12 @@ doctype_js = {
     "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
     "Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
-    "Employee": [
-        "public/js/custom_doctype_js/identity_validations.js",
-        "public/js/custom_doctype_js/emp_total_duration.js",
+    "Employee" : [
+          "public/js/custom_doctype_js/identity_validations.js",
+          "public/js/custom_doctype_js/emp_total_duration.js"
     ],
+    "Attendance": "public/js/custom_doctype_js/attendance/load_attendance_log_details.js",
+    "Training Request": "public/js/custom_doctype_js/training_request_modifications.js"
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -86,7 +88,7 @@ doctype_js = {
 # ------------
 
 # before_install = "akf_hrms.install.before_install"
-# after_install = "akf_hrms.install.after_install"
+after_install = "akf_hrms.install.after_install"
 
 # Uninstallation
 # ------------
@@ -100,7 +102,7 @@ doctype_js = {
 # Name of the app being installed is passed as an argument
 
 # before_app_install = "akf_hrms.utils.before_app_install"
-# after_app_install = "akf_hrms.utils.after_app_install"
+after_app_install = "akf_hrms.install.after_install"
 
 # Integration Cleanup
 # -------------------
@@ -264,3 +266,7 @@ scheduler_events = {
 # }
 
 # fixtures = ["Custom Field"]
+
+
+
+

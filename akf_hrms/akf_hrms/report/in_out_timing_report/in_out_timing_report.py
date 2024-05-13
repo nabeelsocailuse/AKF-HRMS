@@ -3,7 +3,7 @@
 
 import frappe
 from datetime import timedelta, datetime
-from frappe.utils import  today, time_diff
+from frappe.utils import  today, getdate
 from frappe import _
 
 def execute(filters=None):
@@ -26,12 +26,12 @@ def get_columns(filters):
 		_("Branch") + ":Link/Branch:150",
 		_("Department") + ":Link/Department:150",
 		_("Designation") + ":Link/Designation:150",
-		_("WD") + ":Float:50", 
-		_("HW") + ":Data:50", 
+		_("WD") + ":Float:70", 
+		_("HW") + ":Data:70", 
 		_("Total Present") + ":Float:140", 
 		_("Total Leaves") + ":Float:140",  
 		_("Total Absent") + ":Float:140", 
-		_("") + "::40"
+		_("") + "::60"
 		])
 
 	for days in get_days_in_month(filters):
@@ -56,7 +56,8 @@ def get_data(filters):
 		"None": "<font color='red'><center><b>A</b></center></font>",
 		"Absent": "<font color='red'><center><b>A</b></center></font>", 
 		"Holiday":"<center><b>H</b></center>",
-		"Work From Home": "<b>WFH</b>"
+		"Work From Home": "<center><b>WFH</b></center>",
+		"Holiday": "<center><b>H</b></center>",
 	}
 	""" end """
 
@@ -93,11 +94,10 @@ def get_data(filters):
 			
 			if status== "None" and holiday_map:
 				emp_holiday_list = employee_data.holiday_list if employee_data.holiday_list else default_holiday_list
-				# if emp_holiday_list in holiday_map and (int(day)) in holiday_map[emp_holiday_list]:
-				if emp_holiday_list in holiday_map and day in holiday_map[emp_holiday_list]:
-					status = "Holiday"
+				if (emp_holiday_list in holiday_map) and (month_date in holiday_map[emp_holiday_list]):
+					status = status_map["Holiday"]			
 			# 
-			if status in ["None" , "Absent", "Holiday","On Leave", "Work From Home"]:
+			if status in ["None", "Absent", "On Leave", "Work From Home"]:
 				# condition to verify employee have attendance in Attendance Doctype
 				status_value= status_map[status_data[0]] if today_date >= month_date else ""		
 				inlist += [status_value]
@@ -109,15 +109,22 @@ def get_data(filters):
 			elif status in ["Present", "Half Day"]:
 				total_days_worked += 1
 				# 
-				check_in_time = str(status_data[1]).split(':')
-				check_out_time = str(status_data[2]).split(':')
-				hours_worked = str(status_data[3]).split(':')
+				# check_in_time = str(status_data[1]).split(':')
+				# check_out_time = str(status_data[2]).split(':')
+				# hours_worked = str(status_data[3]).split(':')
+				check_in_time = str(status_data[1])
+				check_out_time = str(status_data[2])
+				hours_worked = str(status_data[3])
 				# frappe.throw(frappe.as_json(hours_worked))
 				if status == "Present":
-					inlist += [check_in_time[0] + ":" + check_in_time[1] if (check_in_time) else ""]
-					outlist += [check_out_time[0] + ":" + check_out_time[1] if (check_out_time) else ""]
-					hwlist += [hours_worked[0] + ":" + hours_worked[1] if(hours_worked) else ""]
+					# inlist += [check_in_time[0] + ":" + check_in_time[1] if (check_in_time) else ""]
+					# outlist += [check_out_time[0] + ":" + check_out_time[1] if (check_out_time) else ""]
+					# hwlist += [hours_worked[0] + ":" + hours_worked[1] if(hours_worked) else ""]
 					# total present sum
+
+					inlist += [check_in_time if (check_in_time) else ""]
+					outlist += [check_out_time if (check_out_time) else ""]
+					hwlist += [hours_worked if(hours_worked) else ""]
 					total_present += 1
 				elif status == "Half Day":
 					inlist += ["HD " + check_in_time[0] + ":" +check_in_time[1] if (check_in_time) else ""]
@@ -135,12 +142,12 @@ def get_data(filters):
 		# Init 3 rows for employee {in, out, hours work}
 		working_hours = get_total_hours_worked(hours_worked_time_list)
 		row1 = [employee_id, employee_data.employee_name, employee_data.branch, employee_data.department, employee_data.designation, total_days_worked, working_hours, float(total_present), float(total_leaves), float(total_absent), "<b>In</b>"] + inlist
-		# row2 = ["", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
-		# row3 = ["", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
+		row2 = ["", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
+		row3 = ["", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
 		
 		data.append(row1)
-		# data.append(row2)
-		# data.append(row3)
+		data.append(row2)
+		data.append(row3)
 	
 	return data
 
@@ -154,28 +161,45 @@ def get_attendance_list(filters):
 		from tabAttendance 
 		where docstatus = 1 %s order by employee, attendance_date""" % conditions, filters, as_dict=1)
 	att_map = {}
-	# frappe.throw(frappe.as_json(attendance_list))
+	
 	for d in attendance_list:
 		att_map.setdefault(d.employee, frappe._dict()).setdefault(d.day_of_month, "")
 		# hours_worked = time_diff(d.out_time, d.in_time)
 		# hours_worked = str(hours_worked).split(".")[0]
 		
-		att_map[d.employee][str(d.day_of_month)] = [d.status, d.check_in_time, d.check_out_time, d.hours_worked]
+		att_map[d.employee][str(d.day_of_month)] = [d.status, get_times_split(d.check_in_time), get_times_split(d.check_out_time), d.hours_worked]
 	return att_map
 
 def get_conditions(filters, is_employee=False):
 	conditions = ""
-	if (filters.get("from_date") and filters.get("to_date")) and not is_employee:
-		conditions += " and attendance_date between %(from_date)s and %(to_date)s"
-	if filters.get("company"): conditions += " and company = %(company)s"
-	if filters.get("employee"): conditions += " and employee = %(employee)s"
-	if filters.get("branch"): conditions += " and branch = %(branch)s"
+	if (is_employee):
+		if filters.get("company"): conditions += " and company = %(company)s"
+		if filters.get("employee"): conditions += " and name = %(employee)s"
+		if filters.get("branch"): conditions += " and branch = %(branch)s"
+		if filters.get("department"): conditions += " and department = %(department)s"
+		if filters.get("designation"): conditions += " and designation = %(designation)s"
+
+	else:
+		if (filters.get("from_date") and filters.get("to_date")):
+			conditions += " and attendance_date between %(from_date)s and %(to_date)s"
+		if filters.get("company"): conditions += " and company = %(company)s"
+		if filters.get("employee"): conditions += " and employee = %(employee)s"
+		if filters.get("branch"): conditions += " and custom_branch = %(branch)s"
+		if filters.get("department"): conditions += " and department = %(department)s"
+		if filters.get("designation"): conditions += " and custom_designation = %(designation)s"
+		if filters.get("late_entry"): conditions += " and late_entry = %(late_entry)s"
+		if filters.get("early_exit"): conditions += " and early_exit = %(early_exit)s"
 	return conditions
+
+def get_times_split(_time_):
+	s_time_ = str(_time_).split(" ")
+	_time_ = s_time_[1].split(".")[0] if(len(s_time_)>1) else _time_
+	return _time_
 
 def get_employee_details(filters):
 	conditions = get_conditions(filters, is_employee=True)
 	emp_map = frappe._dict()
-	for d in frappe.db.sql("""select name, employee_name, branch, department, designation, date_of_joining
+	for d in frappe.db.sql("""select name, employee_name, branch, department, designation, date_of_joining,
 		holiday_list from tabEmployee where docstatus=0 %s """%conditions, filters, as_dict=1):
 		emp_map.setdefault(d.name, d)
 	return emp_map
@@ -194,7 +218,6 @@ def get_holiday(emp_map, filters):
 			# holiday_map.setdefault(d, frappe.db.sql_list('''select day(holiday_date) from `tabHoliday`
 			holiday_map.setdefault(d, frappe.db.sql_list('''select holiday_date from `tabHoliday`
 				where parent=%s and holiday_date between %s and %s''', (d, filters.get("from_date"), filters.get("to_date"))))
-
 	return holiday_map
 
 

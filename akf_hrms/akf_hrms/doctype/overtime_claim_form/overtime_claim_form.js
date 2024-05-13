@@ -6,14 +6,21 @@ frappe.ui.form.on("Overtime Claim Form", {
 		acf.set_queries(frm);
 		acf.employee_info(frm);
 	},
-	employee_id: function(frm){
+	year: function (frm) {
+		acf.load_details_of_overtime(frm);
+	},
+	month: function (frm) {
+		acf.load_details_of_overtime(frm);
+	},
+	employee_id: function (frm) {
 		acf.employee_info(frm);
+		acf.load_details_of_overtime(frm);
 	}
 });
 // COMMENTS
 acf = {
-	set_queries: function(frm){
-		frm.set_query("employee_id", function(){
+	set_queries: function (frm) {
+		frm.set_query("employee_id", function () {
 			return {
 				filters: {
 					"custom_overtime_allowed": 1,
@@ -21,10 +28,10 @@ acf = {
 			}
 		})
 	},
-	employee_info: function(frm){
+	employee_info: function (frm) {
 		let employee_id = frm.doc.employee_id;
-		if(employee_id==undefined || employee_id=="") return
-		
+		if (employee_id == undefined || employee_id == "") return
+
 		frappe.call({
 			method: "frappe.client.get_value",
 			args: {
@@ -37,12 +44,24 @@ acf = {
 					"department"
 				]
 			},
-			callback: function(r){
+			callback: function (r) {
 				// console.log(r.message);
 				let acf_employee_info = frappe.render_template("acf_employee_info", r.message);
 				frm.set_df_property("employee_info_html", "options", acf_employee_info);
 			}
 		});
-		
+
+	},
+	load_details_of_overtime: function (frm) {
+		if (frm.doc.year != "" && frm.doc.month != "" && frm.doc.employee_id != undefined) {
+			frm.call("get_details_of_overtime").then(r => {
+				console.log(r.message);
+				frm.set_intro('');
+				frm.set_intro(r.message == undefined ? "Device detail not found." : "", 'red');
+				frm.refresh_field("detail_of_overtime");
+			});
+		}else{
+			console.log('not')
+		}
 	}
 }

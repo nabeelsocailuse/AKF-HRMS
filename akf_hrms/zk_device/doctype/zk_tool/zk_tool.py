@@ -5,7 +5,7 @@ import frappe
 from frappe.model.document import Document
 import socket
 from akf_hrms.zk_device.zk_detail.base import ZK
-from frappe.utils import date_diff, add_to_date, get_datetime, getdate
+from frappe.utils import date_diff, add_to_date, get_datetime
 
 employeeDetail=[]
 
@@ -25,10 +25,19 @@ class ZKTool(Document):
 	@frappe.whitelist()
 	def get_employees(self):
 		# sql for Attendance Device ID
-		employeeDetail = frappe.db.get_list('Employee', 
-						filters={'status': 'Active', 'company': self.company}, 
-						fields=['attendance_device_id', '(name) as employee', 'default_shift'], 
-						group_by='attendance_device_id')
+		employeeDetail = frappe.db.sql(""" select 
+			attendance_device_id, (name) as employee, 
+			ifnull(case when ifnull(default_shift,"")!="" then default_shift else (select shift_type from `tabShift Assignment` where docstatus=1 and status="Active" and employee=e.name order by start_date desc limit 1) end, "") as default_shift
+		from 
+			`tabEmployee` e
+		where
+			status = 'Active' 
+			and ifnull(attendance_device_id, '')!=''
+			and company = '%s' 
+		group by
+			attendance_device_id
+		"""%self.company, as_dict=1)
+		
 		if(employeeDetail): 
 			self.employee_detail = str(employeeDetail)
 			self.save()
@@ -71,15 +80,26 @@ class ZKTool(Document):
 			frappe.msgprint('Please fetch attendance first!') 
 			return
 		no_of_days = date_diff(self.to_date, self.from_date) + 1
-		if(no_of_days > 5):
-			frappe.enqueue('frappe.integrations.doctype.companies_biometrics.companies_biometrics.marking_attendance', self=self, timeout=1000000, queue="long", ignore_links=False, ignore_mandatory=False)
-			self.set('progress_message', 'Attendance marking running in background.')
-			self.reload()
+		if(no_of_days > 10):
+			frappe.enqueue('akf_hrms.zk_device.doctype.zk_tool.zk_tool.marking_attendance', self=self, timeout=1000000, queue="long")
+			self.progress_message = 'Marking attendance in background.'
+			self.save()
 		else:
+			self.progress_message = 'Marking attendance...'
+			# self.save()
+			# self.reload()
 			return marking_attendance(self)
 
+	@frappe.whitelist()
+	def	get_employee_details(self):
+		return eval(self.employee_detail)
+	
+	@frappe.whitelist()
+	def get_log_details(self):
+		return eval(self.logs_json)
+
 @frappe.whitelist()
-def marking_attendance(self, ignore_links=False, ignore_mandatory=False):
+def marking_attendance(self):
 	MARKED = False
 	try:
 		employee_detail = eval(self.employee_detail)
@@ -92,7 +112,6 @@ def marking_attendance(self, ignore_links=False, ignore_mandatory=False):
 				for date in dates_list:
 					year = str(date).split('-')[0]
 					signle_year = multi_years[year] if (year in multi_years) else []
-					# signle_year = list(signle_year).sort()
 					signle_year = sorted(list(signle_year))
 					for log in signle_year:
 						if (date in log):
@@ -100,13 +119,13 @@ def marking_attendance(self, ignore_links=False, ignore_mandatory=False):
 							attendance_date = str(log).split(" ")[0]
 							_log_ = get_datetime(log)
 							default_shift = d.get("default_shift")
-							shift = default_shift if (default_shift or default_shift!="") else fetch_shift(self.company, d.get("employee"), log) 
+							# shift = default_shift if (default_shift or default_shift!="") else fetch_shift(self.company, d.get("employee"), log) 
 							
 							args = {
 								'doctype': 'Attendance Log',
 								'employee': d.get("employee"),
 								'device_id': d.get("attendance_device_id"),
-								'shift': shift,
+								'shift': default_shift,
 								'device_ip': self.device_ip,
 								'device_port': self.device_port,
 								'log_type': self.log_type,
@@ -118,17 +137,12 @@ def marking_attendance(self, ignore_links=False, ignore_mandatory=False):
 								frappe.get_doc(args).save()
 								MARKED = True
 	except Exception as e:
-		# return e
-		self.set('progress_message', '%s'%e)
-		self.reload()
+		return '%s'%e
 	finally:
-		if(MARKED):
-			# return 'Attendance marked successfully.'
-			self.set('progress_message', 'Attendance marked successfully.')
-		else:
-			self.set('progress_message', 'Attendance already marked.')
-			# return 'Attendance already marked.'
-		# self.reload()
+		doc = frappe.get_doc("ZK Tool")
+		doc.progress_message = "Attendance marked successfully." if(MARKED) else "Attendance is already marked."
+		doc.save()
+		doc.reload()
 
 def get_dates_list(from_date, to_date):
 	days = date_diff(to_date, from_date) + 1
@@ -143,14 +157,21 @@ def fetch_shift(company, employee, log):
 	shift_assignment = frappe.db.sql(""" 
 			select shift_type
 			from `tabShift Assignment`
-			where docstatus=0
-			and status="Active"
-			and company='{0}'
-			and employee = '{1}'
-			and cast('{2}' as date) between start_date and end_date
+			where docstatus=1
+				and status="Active"
+				and company='{0}'
+				and employee = '{1}'
+				-- and cast('{2}' as date) between start_date and end_date
+			order by
+				start_date desc
 			""".format(company, employee, log))
 	
 	return shift_assignment[0][0] if(shift_assignment) else None
+
+@frappe.whitelist()
+def get_sorted_list(unordered_list):
+	import ast
+	return sorted(ast.literal_eval(unordered_list))
 
 @frappe.whitelist()
 def remove_records():

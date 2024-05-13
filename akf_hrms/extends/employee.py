@@ -9,6 +9,7 @@ class XEmployee(Employee):
 	
 	def verify_identity_card_no(self):
 		details = get_country_details(self.custom_country)
+		if (not details) or (not details.custom_id_regex) or (not self.custom_cnic): return
 		if (not match_regex(details.custom_id_regex, self.custom_cnic)):
 			exception_msg('Please enter valid %s.'%details.custom_label)
 			

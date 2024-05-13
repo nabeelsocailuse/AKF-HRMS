@@ -16,6 +16,7 @@
   "detail_of_overtime_section",
   "detail_of_overtime",
   "total_hours_worked",
+  "total_overtime_hours",
   "detail_of_travelling_in_case_of_drivers_only",
   "calculation_of_overtime_section",
   "grand_totalhours_worked",
@@ -77,9 +78,11 @@
    "options": "Details of OT"
   },
   {
+   "default": "0",
    "fieldname": "total_hours_worked",
    "fieldtype": "Data",
-   "label": "Total Hours Worked"
+   "label": "Total Hours Worked",
+   "read_only": 1
   },
   {
    "fieldname": "detail_of_travelling_in_case_of_drivers_only",
@@ -167,12 +170,19 @@
    "fieldtype": "Select",
    "label": "Series",
    "options": "OCF-%(employee_id)s-%(month)s-%(year)s-.#####"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_overtime_hours",
+   "fieldtype": "Data",
+   "label": "Total Overtime Hours",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-29 15:00:01.167229",
+ "modified": "2024-05-13 18:07:30.799194",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Overtime Claim Form",
