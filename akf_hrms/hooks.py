@@ -37,6 +37,7 @@ doctype_js = {
     "Loan": "public/js/loan.js",
     "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
+    "Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
     "Employee": [
         "public/js/custom_doctype_js/identity_validations.js",
         "public/js/custom_doctype_js/emp_total_duration.js",

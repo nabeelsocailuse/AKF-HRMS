@@ -1,25 +1,66 @@
 import frappe
 
+# import datetime
+
 
 @frappe.whitelist()
-def update_schedule(docname, row_number, date):
+def update_schedule(docname, row_number):
     count = 0
     frappe.msgprint(f"Worked! - docname: {docname}")
 
     doc = frappe.get_doc("Loan Repayment Schedule", docname)
+    # last_entry = frappe.get_list(
+    #     "Repayment Schedule",
+    #     filters={"parent": docname},
+    #     fields=["payment_date", "idx"],
+    #     order_by="idx desc",
+    #     limit_page_length=1,
+    # )
+    # last_payment_date = frappe.db.get_value(
+    #     "Repayment Schedule",
+    #     {"parent": docname, "idx": last_entry},
+    #     "payment_date",
+    # )
+    # frappe.msgprint(f"last entry : {last_entry}")
+    # frappe.throw(f"last payment date : {last_payment_date}")
     child_doc = frappe.new_doc("Repayment Schedule")
-    frappe.msgprint(f"child doc : {child_doc}")
-    # child_doc.payment_date = date
-    # child_doc.principal_amount = 100
-    # doc.append("repayment_schedule", child_doc)
+    # frappe.msgprint(f"child doc : {child_doc}")
 
+    # size = len(doc.get(doc.repayment_schedule))
+    # frappe.msgprint(f"{size}")
     for row in doc.get("repayment_schedule"):
-        if row.idx == row_number:
+        # frappe.throw(f"{size}")
+        # existing_date = frappe.utils.formatdate(row.payment_date, "dd-MM-YYYY")
+        # new_date = frappe.utils.formatdate(date, "dd-MM-YYYY")
+        # frappe.msgprint(str(row.idx == row_number))
+        # frappe.throw(f"payemt date: {existing_date} , new Date: {new_date}")
+        if int(row.idx) == int(row_number) and not row.custom_skipped_loan_installment:
+            # frappe.throw(f"entered if condition for row: {row_number}, ID: {row.idx}")
             row.custom_skipped_loan_installment = 1
-            frappe.msgprint(f"skipped: {row.custom_skipped_loan_installment}")
+            # frappe.utils.formatdate(frappe.utils.today(), 'dd-MM-YYYY') == frappe.utils.formatdate(data.modified, 'dd-MM-YYYY')
+            # frappe.db.set_value(
+            #     "Repayment Schedule",
+            #     row.name,
+            #     "payment_date",
+            #     frappe.utils.getdate("2024-09-01"),
+            # )
+            # frappe.throw(f"New date cannot be less than old Payment Date")
+
+            child_doc.payment_date = row.payment_date
+            child_doc.principal_amount = row.principal_amount
+            row.principal_amount = 0
+            frappe.db.set_value("Repayment Schedule", row.name, "principal_amount", 0)
+            child_doc.total_payment = row.total_payment
+            # row.total_payment = 0
+            # frappe.db.set_value("Repayment Schedule", row.name, "total_payment", 0)
+            child_doc.number_of_days = row.number_of_days
+            child_doc.balance_loan_amount = row.balance_loan_amount
+            doc.append("repayment_schedule", child_doc)
+            frappe.msgprint(f"skipping worked!")
         count += 1
     doc.save()
-    frappe.msgprint(f"after loop - child doc : {child_doc}")
+    # doc.save
+    # frappe.msgprint(f"after loop - child doc : {child_doc}")
     return f"Funcationality Perfomed! row-count: {count}"
 
 
