@@ -34,6 +34,7 @@ def update_schedule(docname, row_number):
     # size = len(doc.get(doc.repayment_schedule))
     # frappe.msgprint(f"{size}")
     for row in doc.get("repayment_schedule"):
+        # check=False
         # frappe.throw(f"{size}")
         # existing_date = frappe.utils.formatdate(row.payment_date, "dd-MM-YYYY")
         # new_date = frappe.utils.formatdate(date, "dd-MM-YYYY")
@@ -51,6 +52,8 @@ def update_schedule(docname, row_number):
             # )
             # frappe.throw(f"New date cannot be less than old Payment Date")
 
+            # check = True
+
             child_doc.payment_date = row.payment_date
             child_doc.principal_amount = row.principal_amount
             row.principal_amount = 0
@@ -63,6 +66,10 @@ def update_schedule(docname, row_number):
             doc.append("repayment_schedule", child_doc)
             frappe.msgprint(f"skipping worked!")
         count += 1
+
+        # if check:
+        #     frappe.db.set_value("Repayment Schedule", row.name, "payment_date", "2025-10-1")
+
     doc.save()
     # doc.save
     # frappe.msgprint(f"after loop - child doc : {child_doc}")
