@@ -6,11 +6,17 @@ frappe.ui.form.on("Loan Application", {
         method: "frappe.client.get_value",
         args: {
           doctype: "Salary Structure Assignment",
-          filters: { employee: frm.doc.applicant },
+          filters: {
+            employee: frm.doc.applicant,
+            docstatus: 1,
+            from_date: ["<", new Date()],
+          },
+          // or_filters: [["from_date", "greater than", "2024-05-13"]],
           fieldname: ["base"],
         },
         callback: function (r) {
-          if (r.message) {
+          // console.log(r.message[0]);
+          if (r.message[0]) {
             frm.set_value("custom_maximum_allowed_loan", r.message.base / 2);
             frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
             frm.set_value(
@@ -19,8 +25,14 @@ frappe.ui.form.on("Loan Application", {
             );
             frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);
           } else {
-            frappe.msgprint(__("No Salary Structure Assignment found"));
+            frm.set_value("loan_product", "");
+            frappe.msgprint(
+              __(
+                "Not authorized to apply for the loan as there is no Salary Structure Assignment currently active."
+              )
+            );
           }
+          // frappe.msgprint(__("No Salary Structure Assignment found"));
         },
       });
     } else {

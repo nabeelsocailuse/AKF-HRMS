@@ -12,8 +12,8 @@ def update_schedule(docname, row_number):
     # last_entry = frappe.get_list(
     #     "Repayment Schedule",
     #     filters={"parent": docname},
-    #     fields=["payment_date", "idx"],
-    #     order_by="idx desc",
+    #     fields=["payment_date", "payment_date"],
+    #     order_by="payment_date desc",
     #     limit_page_length=1,
     # )
     # last_payment_date = frappe.db.get_value(
@@ -21,8 +21,13 @@ def update_schedule(docname, row_number):
     #     {"parent": docname, "idx": last_entry},
     #     "payment_date",
     # )
-    # frappe.msgprint(f"last entry : {last_entry}")
-    # frappe.throw(f"last payment date : {last_payment_date}")
+    # data = """select payment_date from `tabRepayment Schedule` where parent in
+    # (select name from `tabLoan Repayment Schedule` where name = '%s') order by payment_date desc limit 1""" % (
+    #     docname
+    # )
+    # data = frappe.db.sql(data)
+    # frappe.throw(f"last entry : {last_entry}")
+    # frappe.throw(frappe.as_json(data[0]))
     child_doc = frappe.new_doc("Repayment Schedule")
     # frappe.msgprint(f"child doc : {child_doc}")
 
