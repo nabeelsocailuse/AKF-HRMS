@@ -92,11 +92,11 @@ class ZKTool(Document):
 
 	@frappe.whitelist()
 	def	get_employee_details(self):
-		return eval(self.employee_detail)
+		return eval(self.employee_detail) if(self.employee_detail) else []
 	
 	@frappe.whitelist()
 	def get_log_details(self):
-		return eval(self.logs_json)
+		return eval(self.logs_json) if(self.logs_json) else []
 
 @frappe.whitelist()
 def marking_attendance(self):
