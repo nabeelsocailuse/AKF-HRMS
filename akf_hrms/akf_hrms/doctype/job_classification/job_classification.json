@@ -1,0 +1,46 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:job_classification",
+ "creation": "2024-05-14 12:28:54.559752",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "job_classification"
+ ],
+ "fields": [
+  {
+   "fieldname": "job_classification",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Job Classification",
+   "reqd": 1,
+   "unique": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-05-14 12:29:59.009227",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Job Classification",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
