@@ -1,0 +1,213 @@
+{
+ "creation": "2020-07-28 12:59:37.765048",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "designation",
+  "column_break_8",
+  "branch",
+  "department",
+  "filters_section",
+  "filters_json",
+  "html_value_section",
+  "filter_list",
+  "get_employees",
+  "fields_multicheck",
+  "section_break_15",
+  "employees",
+  "section_break_17",
+  "letter_template",
+  "print_format",
+  "letter_head",
+  "series",
+  "attach_to_employee",
+  "section_break_21",
+  "type",
+  "bulk_download",
+  "send_email",
+  "column_break_23",
+  "print",
+  "reference_doctype"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "get_employees",
+   "fieldtype": "Button",
+   "label": "Get Employees"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "section_break_15",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "employees",
+   "fieldtype": "Table",
+   "label": "Employees",
+   "options": "Employee Letter Issuance Table",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_17",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "letter_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Letter Template",
+   "options": "Letter Template",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "letter_head",
+   "fieldtype": "Check",
+   "label": "Letter Head"
+  },
+  {
+   "fieldname": "series",
+   "fieldtype": "Data",
+   "label": "Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_21",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "send_email",
+   "fieldtype": "Button",
+   "label": "Generate Letter"
+  },
+  {
+   "fieldname": "column_break_23",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "print",
+   "fieldtype": "Button",
+   "hidden": 1,
+   "label": "Print",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "attach_to_employee",
+   "fieldtype": "Check",
+   "label": "Attach to Employee"
+  },
+  {
+   "fieldname": "print_format",
+   "fieldtype": "Link",
+   "label": "Print Format",
+   "options": "Print Format",
+   "reqd": 1
+  },
+  {
+   "fieldname": "filters_section",
+   "fieldtype": "Section Break",
+   "label": "Filters"
+  },
+  {
+   "fieldname": "filters_json",
+   "fieldtype": "Code",
+   "hidden": 1,
+   "label": "Filters JSON",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "filter_list",
+   "fieldtype": "HTML",
+   "label": "Filter List"
+  },
+  {
+   "fieldname": "fields_multicheck",
+   "fieldtype": "HTML",
+   "hidden": 1,
+   "label": "Fields Multicheck",
+   "read_only": 1
+  },
+  {
+   "fieldname": "html_value_section",
+   "fieldtype": "Section Break",
+   "label": "Filters"
+  },
+  {
+   "default": "Employee",
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Reference Doctype",
+   "options": "DocType"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.type == 'PDF' || doc.type == 'Email and PDF'",
+   "description": "Download 8 per file",
+   "fieldname": "bulk_download",
+   "fieldtype": "Check",
+   "label": "Bulk Download"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nEmail\nPDF\nEmail and PDF",
+   "reqd": 1
+  }
+ ],
+ "hide_toolbar": 1,
+ "issingle": 1,
+ "modified": "2023-03-07 18:02:43.532870",
+ "modified_by": "u.farooq@micromerger.com",
+ "module": "Letter Issuance",
+ "name": "Letter Issuance Tool",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
