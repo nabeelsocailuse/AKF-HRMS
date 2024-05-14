@@ -1,0 +1,58 @@
+{
+ "allow_rename": 1,
+ "autoname": "field:name1",
+ "creation": "2020-07-23 11:51:22.520235",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "name1",
+  "html_2",
+  "section_break_2",
+  "letter_content"
+ ],
+ "fields": [
+  {
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "label": "Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "letter_content",
+   "fieldtype": "Text Editor",
+   "label": "Letter Content"
+  },
+  {
+   "fieldname": "html_2",
+   "fieldtype": "HTML"
+  }
+ ],
+ "modified": "2020-08-26 13:30:50.929873",
+ "modified_by": "Administrator",
+ "module": "Letter Issuance",
+ "name": "Letter Template",
+ "name_case": "UPPER CASE",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

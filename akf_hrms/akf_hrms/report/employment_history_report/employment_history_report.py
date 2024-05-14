@@ -2,9 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from datetime import timedelta, datetime
 from frappe import _
-
 
 @frappe.whitelist(allow_guest=True)
 def execute(filters=None):
@@ -25,8 +23,8 @@ def get_columns():
         {
             "fieldname": "employee",
             "label": _("Employee"),
-            "fieldtype": "Data",
-            "options": "",
+            "fieldtype": "Link",
+            "options": "Employee",
             "width": 120
         },
         {
@@ -145,7 +143,7 @@ def get_columns():
 
     return columns
 
-def get_data(filters):
+# def get_data(filters):
     data = []
     result = get_query_result(filters)
     unique_employees = set()
@@ -179,7 +177,7 @@ def get_data(filters):
             if d.employee in latest_salary and latest_salary[d.employee]['salary'] == d.custom_salary:
                 temp.append(f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>")
                 temp.append(latest_salary[d.employee]['from_date'])
-                # frappe.msgprint(f"Employee: {d.employee}, Latest Salary: {d.custom_salary}")
+                frappe.msgprint(f"Employee: {d.employee}, Latest Salary: {d.custom_salary}")
             else:
                 temp.append(d.custom_salary or '')
                 temp.append(d.from_date)
@@ -194,6 +192,97 @@ def get_data(filters):
                 d.custom_increment_amount
             ]
             data.append(temp)
+
+    return data
+
+# def get_data(filters):
+    data = []
+    result = get_query_result(filters)
+    unique_employees = set()
+
+    # Keep track of the latest salary for each employee
+    latest_salaries = {}
+
+    for d in result:
+        # Populate the latest salary for each employee based on from_date
+        if d.employee not in latest_salaries:
+            latest_salaries[d.employee] = {
+                'salary': str(d.custom_salary),
+                'from_date': d.from_date
+            }
+        elif d.from_date and d.from_date > latest_salaries[d.employee]['from_date']:
+            latest_salaries[d.employee] = {
+                'salary': str(d.custom_salary),
+                'from_date': d.from_date
+            }
+
+    for d in result:
+        if d.employee not in unique_employees:
+            temp = [
+                d.company, d.employee, d.first_name, d.custom_father_name,
+                d.cell_number, d.date_of_joining, d.custom_total_duration, d.scheduled_confirmation_date,
+                d.final_confirmation_date, d.contract_end_date, d.status,
+                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date,
+                d.custom_salary if d.employee not in latest_salaries or latest_salaries[d.employee]['salary'] != str(d.custom_salary) else f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>",
+                d.custom_increment_amount
+            ]
+            # Add the latest salary for the employee and highlight it if it's the latest
+            if d.employee in latest_salaries and latest_salaries[d.employee]['salary'] == str(d.custom_salary):
+                temp[-2] = f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>"
+                temp.append(latest_salaries[d.employee]['from_date'])
+            else:
+                temp.append(d.custom_salary or '')
+                temp.append(d.from_date)
+
+            temp.append(d.custom_increment_amount)
+            data.append(temp)
+            unique_employees.add(d.employee)
+        else:
+            temp = [
+                '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
+                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date, d.custom_salary,
+                d.custom_increment_amount
+            ]
+            data.append(temp)
+
+    return data
+
+def get_data(filters):
+    data = []
+    result = get_query_result(filters)
+    unique_employees = set()
+    latest_salaries = {}
+
+    for d in result:
+        if d.employee not in latest_salaries or d.from_date > latest_salaries[d.employee]['from_date']:
+            latest_salaries[d.employee] = {
+                'salary': str(d.custom_salary),
+                'from_date': d.from_date
+            }
+
+    for d in result:
+        cfrom_date = latest_salaries[d.employee]['from_date']
+        dfrom_date = d.from_date
+        salary  = d.custom_salary if (dfrom_date<cfrom_date) else f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>"
+        temp = []
+        if(d.employee not in unique_employees):
+            temp = [
+                d.company, d.employee, d.first_name, d.custom_father_name,
+                d.cell_number, d.date_of_joining, d.custom_total_duration, d.scheduled_confirmation_date,
+                d.final_confirmation_date, d.contract_end_date, d.status,
+                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date,
+                salary,
+                d.custom_increment_amount 
+            ]
+            unique_employees.add(d.employee)
+        else:
+            temp = ["-" for i in range(11)] + [
+                d.branch, d.department, d.custom_employment_type, d.designation, d.from_date,
+                salary,
+                d.custom_increment_amount 
+            ]
+
+        data.append(temp)
 
     return data
 
@@ -244,3 +333,4 @@ def get_query_result(filters):
 
     result = frappe.db.sql(query, filters, as_dict=1)
     return result
+

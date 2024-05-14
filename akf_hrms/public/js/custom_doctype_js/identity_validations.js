@@ -19,17 +19,6 @@ frappe.ui.form.on('Employee', {
         }
         custom_country_change(frm);
     },
-    // validate: function(frm) {
-    //     // Validate the ID number field
-    //     if (frm.doc.custom_cnic) {
-    //         const labelName = __(frm.fields_dict['custom_cnic'].df.label);
-    //         frm.set_intro(``);
-    //         if (!internationalIdNumberValidation(frm.doc.custom_cnic, labelName)) {
-    //             // frm.set_value('custom_cnic', '');
-    //             frm.set_intro(`Please enter valid ${labelName}`, 'red');
-    //         }
-    //     }
-    // },
     custom_cnic: function(frm) {
         if (frm.doc.custom_cnic) {
             const labelName = __(frm.fields_dict['custom_cnic'].df.label);
