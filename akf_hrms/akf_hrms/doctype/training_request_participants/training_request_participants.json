@@ -6,7 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_hov1",
+  "participant_id",
   "participant_name",
   "company",
   "department",
@@ -14,14 +14,7 @@
  ],
  "fields": [
   {
-   "fieldname": "section_break_hov1",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Participant ID",
-   "options": "Employee"
-  },
-  {
-   "fetch_from": "section_break_hov1.employee_name",
+   "fetch_from": "participant_id.employee_name",
    "fieldname": "participant_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -29,7 +22,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "section_break_hov1.department",
+   "fetch_from": "participant_id.department",
    "fieldname": "department",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -37,7 +30,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "section_break_hov1.designation",
+   "fetch_from": "participant_id.designation",
    "fieldname": "designation",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -45,18 +38,25 @@
    "read_only": 1
   },
   {
-   "fetch_from": "section_break_hov1.company",
+   "fetch_from": "participant_id.company",
    "fieldname": "company",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Company",
    "read_only": 1
+  },
+  {
+   "fieldname": "participant_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Participant ID",
+   "options": "Employee"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-05-02 15:51:19.898840",
+ "modified": "2024-05-14 11:04:54.308248",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Training Request Participants",

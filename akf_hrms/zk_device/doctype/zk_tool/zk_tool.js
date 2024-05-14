@@ -58,21 +58,23 @@ function loadEmployeeDetails(frm) {
                 </tr>`;
             idx += 1;
         });
-        let _html_ = `
-                    <table class="table">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th scope="col">#</th>
-                                <th class="" scope="col">Employee ID</th>
-                                <th class="" scope="col">Biometric ID</th>
-                                <th scope="col">Shift</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
-                    </table>`;
-        frm.set_df_property("employee_html", "options", _html_);
+        if(rows!=""){
+            let _html_ = `
+                        <table class="table">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th class="" scope="col">Employee ID</th>
+                                    <th class="" scope="col">Biometric ID</th>
+                                    <th scope="col">Shift</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>`;
+            frm.set_df_property("employee_html", "options", _html_);
+        }
     });
 }
 
