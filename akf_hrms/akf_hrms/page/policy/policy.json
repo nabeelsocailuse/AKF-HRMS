@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2024-05-02 17:49:01.039886",
+ "modified": "2024-05-11 16:46:27.708163",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "policy",
@@ -22,6 +22,18 @@
   },
   {
    "role": "HR User"
+  },
+  {
+   "role": "Employee"
+  },
+  {
+   "role": "Line Manager"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "Head of Department"
   }
  ],
  "script": null,

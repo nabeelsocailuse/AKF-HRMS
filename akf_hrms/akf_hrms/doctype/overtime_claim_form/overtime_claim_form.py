@@ -26,37 +26,35 @@ class OvertimeClaimForm(Document):
 			From `tabAttendance`
 			Where
 				docstatus=1
-				-- and custom_overtime_hours>0
+				and ifnull(custom_overtime_hours, "")!=""
 				and year(attendance_date) = '{0}'
 				and monthname(attendance_date) = '{1}'
 				and employee = '{2}'
 		""".format(self.year, self.month, self.employee_id), as_dict=1)
 		
 		self.set("detail_of_overtime", attendance_list)
-		self.save()
-		return get_total_hours_worked(attendance_list)
-		# return attendance_list
+		self.set("total_hours_worked", get_total_hours_worked(attendance_list))
+		self.set("total_overtime_hours", get_total_overtime_hours(attendance_list))
+		return True if(attendance_list) else False
 
-def get_total_hours_worked(attendance_list):
-	total_hours = 0
-	total_minutes = 0
-	total_seconds = 0
+def get_total_hours_worked(hours_worked_time_list):
+	total_h_worked= '0'	
+	hours_worked_ = 0
+	for tm in hours_worked_time_list:
+		timeParts = [int(s) for s in str(tm.hours_worked).split(':')]
+		hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
+	hours_worked_, sec = divmod(hours_worked_, 60)
+	hr, min_ = divmod(hours_worked_, 60)
+	total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))
+	return total_h_worked
 
-	# Parse each time string and sum up the total
-	for d in attendance_list:
-		# Split the time string into hours, minutes, and seconds
-		hours, minutes, seconds = map(int, str(d.hours_worked).split(':'))
-		
-		# Add hours, minutes, and seconds to the totals
-		total_hours += hours
-		total_minutes += minutes
-		total_seconds += seconds
-
-	# Convert excess minutes and seconds to hours
-	total_hours += total_minutes // 60
-	total_minutes %= 60
-	total_hours += total_seconds // 3600
-	total_seconds %= 3600
-	# Create a timedelta object with the total hours, minutes, and seconds
-	total_time = timedelta(hours=total_hours, minutes=total_minutes, seconds=total_seconds)
-	return  str(total_time)
+def get_total_overtime_hours(hours_worked_time_list):
+	total_h_worked= '0'	
+	hours_worked_ = 0
+	for tm in hours_worked_time_list:
+		timeParts = [int(s) for s in str(tm.overtime_hours).split(':')]
+		hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
+	hours_worked_, sec = divmod(hours_worked_, 60)
+	hr, min_ = divmod(hours_worked_, 60)
+	total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))
+	return total_h_worked

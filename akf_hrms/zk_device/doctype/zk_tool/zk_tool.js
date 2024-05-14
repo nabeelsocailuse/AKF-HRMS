@@ -1,6 +1,6 @@
 // Copyright (c) 2024, Nabeel Saleem and contributors
 // For license information, please see license.txt
-
+let msg = ``;
 frappe.ui.form.on("ZK Tool", {
     refresh(frm) {
         customButtons(frm);
@@ -47,7 +47,7 @@ function loadEmployeeDetails(frm) {
         let rows = ``;
         let idx = 1
         data.forEach(element => {
-            console.log(element)
+            // console.log(element)
             rows += `
                 <tr>
                     <th scope="row">${idx}</th>
@@ -58,21 +58,23 @@ function loadEmployeeDetails(frm) {
                 </tr>`;
             idx += 1;
         });
-        let _html_ = `
-                    <table class="table">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th scope="col">#</th>
-                                <th class="" scope="col">Employee ID</th>
-                                <th class="" scope="col">Biometric ID</th>
-                                <th scope="col">Shift</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
-                    </table>`;
-        frm.set_df_property("employee_html", "options", _html_);
+        if(rows!=""){
+            let _html_ = `
+                        <table class="table">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th class="" scope="col">Employee ID</th>
+                                    <th class="" scope="col">Biometric ID</th>
+                                    <th scope="col">Shift</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>`;
+            frm.set_df_property("employee_html", "options", _html_);
+        }
     });
 }
 
@@ -108,7 +110,7 @@ function loadLogDetails(frm){
                             },
                             callback: function(r){
                                 ordered_list = r.message;
-                                console.log(ordered_list)
+                                // console.log(ordered_list)
                             }
                         });
                         let rows = ``;
@@ -154,7 +156,7 @@ function get_employees(frm) {
         .then(r => {
             frm.set_intro(r.message);
             frm.save()
-            frm.refresh();
+            // frm.refresh();
         });
 
 }
@@ -181,11 +183,16 @@ function fetch_attendance(frm) {
 function mark_attendance(frm) {
     // frm.set_intro('');
     // frm.set_intro('Marking attendance...', 'blue');
-    frm.set_value("progress_message", "Marking attendance...")
+    // frm.set_value("progress_message", "Marking attendance...")
     frm.call('mark_attendance')
         .then(r => {
             // console.log(r.message)
+            // frm.set_intro('');
             // frm.set_intro(r.message, 'green');
             // frm.save()
         });
 }
+
+frappe.realtime.on('event_name', (data) => {
+    console.log(data)
+})

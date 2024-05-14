@@ -7,7 +7,7 @@ var custom_label = null;
 
 frappe.ui.form.on('Employee', {
     refresh: function(frm) {
-        console.log('working.')
+        // console.log('working.')
         if (!frm.doc.__islocal) {
             frm.set_query('referee_id', function(doc) {
                 return {
@@ -19,17 +19,6 @@ frappe.ui.form.on('Employee', {
         }
         custom_country_change(frm);
     },
-    // validate: function(frm) {
-    //     // Validate the ID number field
-    //     if (frm.doc.custom_cnic) {
-    //         const labelName = __(frm.fields_dict['custom_cnic'].df.label);
-    //         frm.set_intro(``);
-    //         if (!internationalIdNumberValidation(frm.doc.custom_cnic, labelName)) {
-    //             // frm.set_value('custom_cnic', '');
-    //             frm.set_intro(`Please enter valid ${labelName}`, 'red');
-    //         }
-    //     }
-    // },
     custom_cnic: function(frm) {
         if (frm.doc.custom_cnic) {
             const labelName = __(frm.fields_dict['custom_cnic'].df.label);
@@ -60,7 +49,7 @@ function custom_country_change(frm) {
             },
             callback: function(r) {
                 let data = r.message;
-                console.log(data)
+                // console.log(data)
                 if (data) {
                     id_mask=data.custom_id_mask;
                     id_mask_length=id_mask.length;
