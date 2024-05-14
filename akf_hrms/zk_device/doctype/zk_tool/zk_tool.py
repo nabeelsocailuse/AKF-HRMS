@@ -92,11 +92,17 @@ class ZKTool(Document):
 
 	@frappe.whitelist()
 	def	get_employee_details(self):
-		return eval(self.employee_detail) if(self.employee_detail!="None") else []
+		employee_detail = self.employee_detail if(self.employee_detail) else "[]"
+		return eval(employee_detail)
 	
 	@frappe.whitelist()
 	def get_log_details(self):
+<<<<<<< HEAD
 		return eval(self.logs_json) if(self.logs_json!="None") else []
+=======
+		logs = self.logs_json if(self.logs_json) else "[]"
+		return eval(logs)
+>>>>>>> eb83e56 (zk tool conditions revised with eval().)
 
 @frappe.whitelist()
 def marking_attendance(self):
