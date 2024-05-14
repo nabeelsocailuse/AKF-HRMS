@@ -97,6 +97,7 @@ class ZKTool(Document):
 	@frappe.whitelist()
 	def get_log_details(self):
 		return eval(self.logs_json) if(self.logs_json=="None") else []
+	
 
 @frappe.whitelist()
 def marking_attendance(self):
