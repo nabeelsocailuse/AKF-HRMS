@@ -38,12 +38,12 @@ doctype_js = {
     "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
     "Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
-    "Employee" : [
-          "public/js/custom_doctype_js/identity_validations.js",
-          "public/js/custom_doctype_js/emp_total_duration.js"
+    "Employee": [
+        "public/js/custom_doctype_js/identity_validations.js",
+        "public/js/custom_doctype_js/emp_total_duration.js",
     ],
     "Attendance": "public/js/custom_doctype_js/attendance/load_attendance_log_details.js",
-    "Training Request": "public/js/custom_doctype_js/training_request_modifications.js"
+    "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -143,6 +143,7 @@ override_doctype_class = {
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
+    "Payroll Entry": "akf_hrms.overrides.payroll_entry.OcerridePayrollEntry",
 }
 
 # Document Events
@@ -160,6 +161,9 @@ doc_events = {
     },
     "Employee Separation": {
         "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
+    },
+    "Expense Claim": {
+        "on_update": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
     },
 }
 
@@ -266,7 +270,3 @@ scheduler_events = {
 # }
 
 # fixtures = ["Custom Field"]
-
-
-
-
