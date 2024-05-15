@@ -1,4 +1,3 @@
-
 {
  "custom_fields": [
   {
@@ -53,7 +52,7 @@
    "print_hide": 0,
    "print_hide_if_no_value": 0,
    "print_width": null,
-   "read_only": 0,
+   "read_only": 1,
    "read_only_depends_on": null,
    "report_hide": 0,
    "reqd": 0,
@@ -82,7 +81,7 @@
    "field_name": null,
    "idx": 0,
    "is_system_generated": 0,
-   "modified": "2024-05-10 19:49:15.628029",
+   "modified": "2024-05-15 11:18:48.205992",
    "modified_by": "Administrator",
    "module": null,
    "name": "Repayment Schedule-main-field_order",
@@ -91,6 +90,52 @@
    "property_type": "Data",
    "row_name": null,
    "value": "[\"column_break_dszp\", \"payment_date\", \"custom_skipped_loan_installment\", \"number_of_days\", \"principal_amount\", \"interest_amount\", \"total_payment\", \"balance_loan_amount\", \"is_accrued\"]"
+  },
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2024-05-14 10:21:34.997521",
+   "default_value": null,
+   "doc_type": "Repayment Schedule",
+   "docstatus": 0,
+   "doctype_or_field": "DocField",
+   "field_name": "payment_date",
+   "idx": 0,
+   "is_system_generated": 0,
+   "modified": "2024-05-14 16:41:33.559752",
+   "modified_by": "Administrator",
+   "module": null,
+   "name": "Repayment Schedule-payment_date-read_only",
+   "owner": "Administrator",
+   "property": "read_only",
+   "property_type": "Check",
+   "row_name": null,
+   "value": "1"
+  },
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2024-05-14 10:25:06.989239",
+   "default_value": null,
+   "doc_type": "Repayment Schedule",
+   "docstatus": 0,
+   "doctype_or_field": "DocField",
+   "field_name": "payment_date",
+   "idx": 0,
+   "is_system_generated": 0,
+   "modified": "2024-05-14 16:41:33.543988",
+   "modified_by": "Administrator",
+   "module": null,
+   "name": "Repayment Schedule-payment_date-allow_on_submit",
+   "owner": "Administrator",
+   "property": "allow_on_submit",
+   "property_type": "Check",
+   "row_name": null,
+   "value": "1"
   }
  ],
  "sync_on_migrate": 1

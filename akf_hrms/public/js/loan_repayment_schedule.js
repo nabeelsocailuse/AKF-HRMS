@@ -3,9 +3,7 @@ frappe.ui.form.on("Loan Repayment Schedule", {
     if (frm.doc.docstatus == 1) {
       frm.add_custom_button(__("Skip Installment"), function () {
         frappe.prompt(
-          [
-            { fieldname: "row_number", fieldtype: "Int", label: "Row Number" },
-          ],
+          [{ fieldname: "row_number", fieldtype: "Int", label: "Row Number" }],
           function (values) {
             var idx_value = values.row_number;
             frappe.call({
@@ -15,8 +13,7 @@ frappe.ui.form.on("Loan Repayment Schedule", {
                 docname: frm.docname,
                 row_number: idx_value,
               },
-              callback: function (r) {
-              },
+              callback: function (r) {},
             });
           },
           __("Enter the serial number of Installment to be skipped!"),
