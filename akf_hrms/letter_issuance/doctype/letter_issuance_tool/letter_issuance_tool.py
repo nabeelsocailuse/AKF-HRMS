@@ -65,8 +65,8 @@ def issuance_tool_function(series, employees, letter_template, letter_head=None,
 						message = str(message).replace("{{ employee_code }}", str(emp['employee']).split("-")[2])						
 					message = str(message).replace("{{ today_date }}", frappe.utils.formatdate(frappe.utils.nowdate(), "dd-MMM-yyyy"))
 					message = str(message).replace("{{ series }}", str(series_count).zfill(4))
-					hr_sign = frappe.db.get_value("Employee", "EMP-MM-00075", "hr_signature")
-					message = str(message).replace("{{ hr_signature }}", str(hr_sign))
+					hr_sign = frappe.db.get_value("Employee", "EMP-MM-00075", "custom_hr_signature")
+					message = str(message).replace("{{ custom_hr_signature }}", str(hr_sign))
 					get_emp_sal = frappe.db.sql("""select base from `tabSalary Structure Assignment` where employee=%s and docstatus = 1 order by 
 										name desc""",(emp['employee']))
 					if get_emp_sal:
@@ -77,21 +77,22 @@ def issuance_tool_function(series, employees, letter_template, letter_head=None,
 					letter.save()
 					#---------- PDF ---------#
 					#output = PdfFileWriter()
-					output = frappe.get_print("Employee Letter", employee_letter_name, print_format, doc=None, no_letterhead=no_letter_head, as_pdf = True)
-					file_name = "{0}-{1}.pdf".format(employee_letter_name,emp['employee'])
-					file = os.path.join(frappe.get_site_path('public', 'files'),"files" ,"letters" ,file_name)
+					# output = frappe.get_print("Employee Letter", employee_letter_name, print_format, doc=None, no_letterhead=no_letter_head, as_pdf = True)
+					# file_name = "{0}-{1}.pdf".format(employee_letter_name,emp['employee'])
+					# file = os.path.join(frappe.get_site_path('public', 'files'),"files" ,"letters" ,file_name)
 					#output.write(open(file,"wb"))
 					series_count += 1
 					
 					if attach_to_employee and attach_to_employee == '1':
 						letter.attached_file = "/files/files/letters/"+employee_letter_name+"-"+emp['employee']+".pdf"
-						file_path_for_email = "/public/files/files/letters/"+employee_letter_name+"-"+emp['employee']+".pdf"
+						# file_path_for_email = "/public/files/files/letters/"+employee_letter_name+"-"+emp['employee']+".pdf"
 						letter.attached_file_name = employee_letter_name+"-"+emp['employee']+".pdf"
 						letter.save() #ignore_permissions = True
 						#requests.get("http://localhost/files/letters/VFS-00002-HR-EMP-00002.pdf")
 					else:
 						letter.attached_file_name = employee_letter_name+"-"+emp['employee']+".pdf"
 						letter.save() #ignore_permissions = True
+					
 					message_ = 'Please see attachment'
 					if str(args.department) == 'TPFM - TCV - T':
 						message_ = "Dear <b>"+ str(args.employee_name) +"</b>,<br>Please find attached your employment contract with MicroMerger for the term of one month TPFM - TCV campaign.<br><br>You are required to sign and then forward the signed contract to <b>hr@micromerger.com</b> before <b>06-October-2022</b>"
@@ -100,10 +101,10 @@ def issuance_tool_function(series, employees, letter_template, letter_head=None,
 						if user_:
 							frappe.sendmail(
 								recipients = [str(user_)],
-								sender = "MM HR Department <xperterp@micromerger.com>",
+								# sender = "MM HR Department <xperterp@micromerger.com>",
 								subject = '{0} - {1}'.format(letter_template,emp['employee']),
 								message = _(message_),
-								attachments = [frappe.attach_print('Employee Letter', letter.name, file_name=str(letter.name))]
+								attachments = [frappe.attach_print('Employee Letter', letter.name, file_name=str(letter.name), html=message)]
 							)						
 					elif type_ == 'PDF':
 						letter_names.append(letter.name)
@@ -113,10 +114,10 @@ def issuance_tool_function(series, employees, letter_template, letter_head=None,
 						if user_:
 							frappe.sendmail(
 								recipients = [str(user_)],
-								sender = "MM HR Department <xperterp@micromerger.com>",
+								# sender = "MM HR Department <xperterp@micromerger.com>",
 								subject = '{0} - {1}'.format(letter_template,emp['employee']),
 								message = _(message_),
-								attachments = [frappe.attach_print('Employee Letter', letter.name, file_name=str(letter.name))]
+								attachments = [frappe.attach_print('Employee Letter', letter.name, file_name=str(letter.name), html=message)]
 							)
 			frappe.msgprint(str(count) + " Records Created.")
 		else:
