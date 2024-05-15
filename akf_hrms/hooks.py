@@ -141,8 +141,9 @@ doctype_js = {
 override_doctype_class = {
     "Employee": "akf_hrms.extends.employee.XEmployee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
-    "Employee Onboarding": "akf_hrms.doc_events.employee_onboarding.EmployeeOnboarding",
-    "Employee Separation": "akf_hrms.doc_events.employee_separation.EmployeeSeparation",
+    "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
+    "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
+    "Payroll Entry": "akf_hrms.overrides.payroll_entry.OcerridePayrollEntry",
 }
 
 # Document Events
@@ -156,10 +157,13 @@ doc_events = {
     #     # 		"on_trash": "method"
     # },
     "Employee Onboarding": {
-        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
     "Employee Separation": {
-        "before_submit": "akf_hrms.overrides.submit_on_completed.submit_on_complete"
+        "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
+    },
+    "Expense Claim": {
+        "on_update": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
     },
 }
 

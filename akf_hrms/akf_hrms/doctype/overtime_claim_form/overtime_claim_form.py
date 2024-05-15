@@ -3,9 +3,6 @@
 
 import frappe
 from frappe.model.document import Document
-from datetime import datetime, timedelta
-
-
 
 class OvertimeClaimForm(Document):
 	def autoname(self):
