@@ -65,8 +65,8 @@ def issuance_tool_function(series, employees, letter_template, letter_head=None,
 						message = str(message).replace("{{ employee_code }}", str(emp['employee']).split("-")[2])						
 					message = str(message).replace("{{ today_date }}", frappe.utils.formatdate(frappe.utils.nowdate(), "dd-MMM-yyyy"))
 					message = str(message).replace("{{ series }}", str(series_count).zfill(4))
-					hr_sign = frappe.db.get_value("Employee", "EMP-MM-00075", "hr_signature")
-					message = str(message).replace("{{ hr_signature }}", str(hr_sign))
+					hr_sign = frappe.db.get_value("Employee", "EMP-MM-00075", "custom_hr_signature")
+					message = str(message).replace("{{ custom_hr_signature }}", str(hr_sign))
 					get_emp_sal = frappe.db.sql("""select base from `tabSalary Structure Assignment` where employee=%s and docstatus = 1 order by 
 										name desc""",(emp['employee']))
 					if get_emp_sal:
@@ -77,7 +77,7 @@ def issuance_tool_function(series, employees, letter_template, letter_head=None,
 					letter.save()
 					#---------- PDF ---------#
 					#output = PdfFileWriter()
-					output = frappe.get_print("Employee Letter", employee_letter_name, print_format, doc=None, no_letterhead=no_letter_head, as_pdf = True)
+					# output = frappe.get_print("Employee Letter", employee_letter_name, print_format, doc=None, no_letterhead=no_letter_head, as_pdf = True)
 					file_name = "{0}-{1}.pdf".format(employee_letter_name,emp['employee'])
 					file = os.path.join(frappe.get_site_path('public', 'files'),"files" ,"letters" ,file_name)
 					#output.write(open(file,"wb"))
