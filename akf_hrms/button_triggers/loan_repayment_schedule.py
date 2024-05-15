@@ -22,3 +22,4 @@ def update_schedule(docname, row_number):
             row.payment_date = next_payment_date
         count += 1
     doc.save()
+    return f"Funcationality Perfomed! row-count: {count}"
