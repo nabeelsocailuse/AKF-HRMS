@@ -23,7 +23,7 @@ class TrainingRequest(Document):
     def on_submit(self):
         if (self.custom_approval_status != 'Approved by the Head of Department'):
             frappe.throw('Training Request can only be submitted when status is "Approved by the Head of Department".')
-        
+            
         # Implementation of the existing employees 
         event_id = self.custom_topictraining_event
         for row in self.custom_attendees:

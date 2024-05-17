@@ -7,7 +7,7 @@ frappe.ui.form.on('Training Request', {
             frm.set_value('custom_topictraining_event', '');
         }
     },
-
+    
     set_custom_training_event_query: function(frm) {
         var trainingProgram = frm.doc.custom_workshoptraining_program;
         // Set the query for the custom_topictraining_event field
