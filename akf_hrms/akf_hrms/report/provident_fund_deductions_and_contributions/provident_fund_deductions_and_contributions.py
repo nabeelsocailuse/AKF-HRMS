@@ -20,9 +20,19 @@ def execute(filters=None):
 def get_data(filters, col_len):
     conditions, filters = get_conditions(filters)
     detail = []
-    # pf_deduction='Yes' and (after where clause in query)
     emp_info = frappe.db.sql(
-        """ select name, start_date, employee, employee_name, " --date_of_joining" , designation, branch, " --employment_type", "--job_classification", " -- pf_employer_contribution" from `tabSalary Slip` where  %s  """
+        """ select 
+                name, start_date, employee, employee_name, 
+                custom_date_of_joining, 
+                ifnull((select designation from `tabEmployee` where name=ss.employee), "-") as designation, 
+                branch, 
+                ifnull((select employment_type from `tabEmployee` where name=ss.employee), "-") as employment_type, 
+                ifnull((select custom_job_classification from `tabEmployee` where name=ss.employee), "-") as job_classification, 
+                custom_provident_fund_employer_contribution
+            from 
+                `tabSalary Slip` ss
+            where  
+                custom_pf_deduction='Yes' and %s  """
         % conditions,
         filters,
     )

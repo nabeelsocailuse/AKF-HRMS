@@ -5,7 +5,11 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from frappe.utils import date_diff, getdate
+from frappe.utils import (
+    date_diff,
+    getdate,
+    formatdate
+)
 from frappe import _
 
 
@@ -13,34 +17,23 @@ class WorkFromHomeRequest(Document):
     def validate(self):
         self.validate_dates()
         self.wfh_for_samedates()
-        # self.check_employment_type()
         self.count_total_days()
-        # if self.employee:
-        #     exceed_wfh_limit = frappe.db.get_value(
-        #         "Employee", self.employee, "exceed_wfh_limit"
-        #     )
-        #     if not exceed_wfh_limit:
-        #         self.check_limit_per_month()
-
-    # def check_employment_type(self):
-    #     allow_wfh = frappe.db.get_value("Employee", self.employee, "allow_wfh")
-    #     if self.employment_type != "Full-time" and not allow_wfh:
-    #         frappe.throw(_("You are not allowed to Apply for Work From Home Request"))
 
     def wfh_for_samedates(self):
         get_previos_data = frappe.db.sql(
-            """ select ifnull(sum(total_days),0) from `tabWork From Home Request` where docstatus=1
-                and from_date between %s and %s and to_date between %s and %s and employee=%s """,
+            """ select name from `tabWork From Home Request` 
+                where docstatus<2
+                    and (%s between from_date and to_date) and (%s between from_date and to_date) 
+                    and employee=%s """,
             (
-                str(self.to_date),
                 str(self.from_date),
                 str(self.to_date),
-                str(self.from_date),
                 self.employee,
             ),
+            as_dict=1,
         )
-        if get_previos_data:
-            frappe.throw(_("You have already Work From Home Request for same dates"))
+        if (get_previos_data):
+            frappe.throw(_(f"`Work From Home Request` already exist b/w dates {formatdate(self.from_date)} and {formatdate(self.to_date)}"))
 
     def count_total_days(self):
         self.total_days = 0.0
@@ -52,16 +45,6 @@ class WorkFromHomeRequest(Document):
         self.month = month
 
     def validate_dates(self):
-        # if 'HR Manager' in frappe.get_roles(frappe.session.user):
-        # 	pass
-        # else:
-        # wfh_on_back_days = frappe.db.get_value(
-        #     "Employee", self.employee, "allow_wfh_on_back_days"
-        # )
-        # if (
-        #     getdate(self.from_date) <= getdate(self.posting_date)
-        # ) and not wfh_on_back_days:
-        #     frappe.throw(_("You can request for future dates only"))
         if (
             self.from_date
             and self.to_date
@@ -101,15 +84,3 @@ class WorkFromHomeRequest(Document):
             if get_count:
                 holidays = len(get_count)
         return holidays
-
-
-# @frappe.whitelist()
-# def chk_dublication(employee, doc_name):
-#     name_ = ""
-#     wfh_name = frappe.db.sql(
-#         """ select name from `tabAttendance Request` where employee=%s and work_from_home_request=%s and docstatus!=2 """,
-#         (employee, doc_name),
-#     )
-#     if wfh_name:
-#         name_ = wfh_name[0][0]
-#     return name_

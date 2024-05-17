@@ -8,7 +8,7 @@ frappe.ui.form.on("Employee Resignation", {
   employee: function (frm) {
     frm.set_value("last_working_day", "");
     if (frm.doc.employee) {
-      frm.trigger("set_supervisor");
+      // frm.trigger("set_supervisor");
       if (frm.doc.resignation_date && frm.doc.employment_type) {
         frappe.call({
           method:

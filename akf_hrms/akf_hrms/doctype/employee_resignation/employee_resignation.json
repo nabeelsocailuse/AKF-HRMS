@@ -1,53 +1,154 @@
 {
-    "actions": [],
-    "allow_rename": 1,
-    "creation": "2024-04-13 16:23:22.244965",
-    "doctype": "DocType",
-    "engine": "InnoDB",
-    "field_order": [
-     "section_break_ff4v",
-     "amended_from"
-    ],
-    "fields": [
-     {
-      "fieldname": "section_break_ff4v",
-      "fieldtype": "Section Break"
-     },
-     {
-      "fieldname": "amended_from",
-      "fieldtype": "Link",
-      "label": "Amended From",
-      "no_copy": 1,
-      "options": "Employee Resignation",
-      "print_hide": 1,
-      "read_only": 1,
-      "search_index": 1
-     }
-    ],
-    "index_web_pages_for_search": 1,
-    "is_submittable": 1,
-    "links": [],
-    "modified": "2024-04-13 16:23:22.244965",
-    "modified_by": "Administrator",
-    "module": "Akf Hrms",
-    "name": "Employee Resignation",
-    "owner": "Administrator",
-    "permissions": [
-     {
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "System Manager",
-      "share": 1,
-      "submit": 1,
-      "write": 1
-     }
-    ],
-    "sort_field": "modified",
-    "sort_order": "DESC",
-    "states": []
-   }
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:RES-{employee}-{employee_name}-{#####}",
+ "creation": "2024-04-13 16:23:22.244965",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee_details_section",
+  "employee",
+  "employee_name",
+  "department",
+  "designation",
+  "column_break_que0",
+  "employment_type",
+  "date_of_joining",
+  "resignation_date",
+  "last_working_day",
+  "comments_section",
+  "eligible_for_re_hiring",
+  "column_break_tnsv",
+  "approval_status",
+  "posting_date",
+  "section_break_ff4v",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ff4v",
+   "fieldtype": "Section Break",
+   "label": "Employee Details"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Employee Resignation",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "employee_details_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Details"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_que0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.employment_type",
+   "fieldname": "employment_type",
+   "fieldtype": "Link",
+   "label": "Employment Type",
+   "options": "Employment Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.date_of_joining",
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Joining",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resignation_date",
+   "fieldtype": "Date",
+   "label": "Resignation - Termination Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_working_day",
+   "fieldtype": "Date",
+   "label": "Relieving Date(Last Working Day)",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "comments_section",
+   "fieldtype": "Section Break",
+   "label": "Comments"
+  },
+  {
+   "fieldname": "eligible_for_re_hiring",
+   "fieldtype": "Select",
+   "label": "Eligible for re-hiring",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "column_break_tnsv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "label": "Approval Status",
+   "options": "Open\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the HR Manager\nRejected by the HR Manager",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-05-16 16:25:54.397822",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Employee Resignation",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-05-15 15:46:57.224170",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "social_security_details_section",
+  "social_security_amount",
+  "column_break_tdrt7",
+  "social_security_rate",
+  "eobi_details_section",
+  "eobi_employee_contribution",
+  "column_break_r9l71",
+  "eobi_employer_contribution",
+  "provident_fund_details_section",
+  "delay_of_provident_fund_deduction",
+  "provident_employer_contribution_percent",
+  "column_break_kiieu",
+  "provident_employee_contribution_percent"
+ ],
+ "fields": [
+  {
+   "fieldname": "social_security_details_section",
+   "fieldtype": "Section Break",
+   "label": "Social Security Details"
+  },
+  {
+   "fieldname": "social_security_amount",
+   "fieldtype": "Currency",
+   "label": "Social Security Amount"
+  },
+  {
+   "fieldname": "column_break_tdrt7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "social_security_rate",
+   "fieldtype": "Data",
+   "label": "Social Security Rate"
+  },
+  {
+   "fieldname": "eobi_details_section",
+   "fieldtype": "Section Break",
+   "label": "EOBI Details"
+  },
+  {
+   "fieldname": "eobi_employee_contribution",
+   "fieldtype": "Currency",
+   "label": "EOBI Employee Contribution"
+  },
+  {
+   "fieldname": "column_break_r9l71",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "eobi_employer_contribution",
+   "fieldtype": "Currency",
+   "label": "EOBI Employer Contribution"
+  },
+  {
+   "fieldname": "provident_fund_details_section",
+   "fieldtype": "Section Break",
+   "label": "Provident Fund Details"
+  },
+  {
+   "fieldname": "delay_of_provident_fund_deduction",
+   "fieldtype": "Int",
+   "label": "Delay of Provident Fund Deduction (in Months)"
+  },
+  {
+   "fieldname": "provident_employer_contribution_percent",
+   "fieldtype": "Data",
+   "label": "Provident Employer Contribution Percent"
+  },
+  {
+   "fieldname": "column_break_kiieu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "provident_employee_contribution_percent",
+   "fieldtype": "Data",
+   "label": "Provident Employee Contribution Percent"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-05-15 18:58:24.917628",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "AKF Payroll Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

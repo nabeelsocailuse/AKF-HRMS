@@ -8,7 +8,6 @@
   "section_break_ws6p",
   "request_for_workshop",
   "proposed_date",
-  "topics_of_training",
   "amended_from",
   "proposed_start_time",
   "column_break_tdey",
@@ -20,8 +19,7 @@
   "remarks_of_hod",
   "remarks_of_senior_manager_hr",
   "remarks_of_executive_director",
-  "remarks_of_secretary_general",
-  "approval_status"
+  "remarks_of_secretary_general"
  ],
  "fields": [
   {
@@ -48,11 +46,6 @@
    "fieldname": "proposed_date",
    "fieldtype": "Date",
    "label": "Proposed Date"
-  },
-  {
-   "fieldname": "topics_of_training",
-   "fieldtype": "Data",
-   "label": "Topics Of Training"
   },
   {
    "fieldname": "proposed_start_time",
@@ -101,11 +94,6 @@
    "label": "Remarks of Secretary General"
   },
   {
-   "fieldname": "approval_status",
-   "fieldtype": "Data",
-   "label": "Approval Status"
-  },
-  {
    "fieldname": "training_contents_and_remarks_section",
    "fieldtype": "Section Break",
    "label": "Training Contents and Remarks"
@@ -118,7 +106,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-10 12:14:36.588128",
+ "modified": "2024-05-16 12:43:31.849765",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Training Request",

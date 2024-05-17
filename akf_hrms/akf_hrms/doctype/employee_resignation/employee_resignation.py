@@ -13,8 +13,8 @@ class EmployeeResignation(Document):
 		if self.employee and self.resignation_date and self.employment_type and not self.last_working_day:
 			self.last_working_day = get_last_working_day(self.resignation_date, self.employment_type)
 		self.last_working_day_format = frappe.utils.formatdate(self.last_working_day, "dd-MMM-yyyy")
-		self.send_mail_on_workflow_action()
-		self.add_reliving_date_in_emp_table()
+		# self.send_mail_on_workflow_action()
+		# self.add_reliving_date_in_emp_table()
 		
 
 	def add_reliving_date_in_emp_table(self):

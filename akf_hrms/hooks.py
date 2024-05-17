@@ -44,6 +44,9 @@ doctype_js = {
     ],
     "Attendance": "public/js/custom_doctype_js/attendance/load_attendance_log_details.js",
     "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
+    "Salary Slip": [
+        "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
+        ]
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -144,6 +147,8 @@ override_doctype_class = {
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
     "Payroll Entry": "akf_hrms.overrides.payroll_entry.OcerridePayrollEntry",
+    "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
+    "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
 }
 
 # Document Events

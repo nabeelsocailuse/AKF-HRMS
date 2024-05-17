@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import formatdate, today
 from datetime import datetime
 
 @frappe.whitelist()
@@ -11,7 +10,7 @@ def send_absent_employee_notification():
             att.employee_name,
             emp.department,
             emp.designation,
-            GROUP_CONCAT(att.attendance_date) AS absent_dates,
+            GROUP_CONCAT(att.attendance_date ORDER BY att.attendance_date DESC LIMIT 3) AS absent_dates,
             COUNT(*) AS absent_days,
             (SELECT e.user_id FROM `tabEmployee` AS e WHERE e.employee = emp.reports_to) AS reports_to,            
             emp.user_id
