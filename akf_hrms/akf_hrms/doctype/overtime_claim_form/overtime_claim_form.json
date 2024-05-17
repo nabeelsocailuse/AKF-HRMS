@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "format:OT-{employee}-{employee_name}-{####}",
  "creation": "2024-03-28 11:32:30.925752",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -10,20 +10,19 @@
   "naming_series",
   "year",
   "month",
-  "employee_id",
+  "employee",
   "column_break_l4dw",
   "employee_info_html",
   "detail_of_overtime_section",
   "detail_of_overtime",
   "total_hours_worked",
-  "total_overtime_hours",
   "detail_of_travelling_in_case_of_drivers_only",
   "calculation_of_overtime_section",
-  "grand_totalhours_worked",
-  "rate",
+  "total_overtime_hours",
+  "hourly_rate",
   "column_break_fcwe",
-  "amountfigures",
-  "amount_words",
+  "amount_in_figures",
+  "amount_in_words",
   "remarks_section",
   "requested_by",
   "recommended_by",
@@ -42,6 +41,7 @@
    "fieldname": "year",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Year",
    "options": "\n2024\n2025\n2026\n2027\n2028\n2029\n2030\n2031\n2032\n2033\n2034\n2035",
    "reqd": 1
@@ -52,14 +52,6 @@
    "in_list_view": 1,
    "label": "Month",
    "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
-   "reqd": 1
-  },
-  {
-   "fieldname": "employee_id",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Employee ID",
-   "options": "Employee",
    "reqd": 1
   },
   {
@@ -96,28 +88,8 @@
    "label": "Calculation of Overtime"
   },
   {
-   "fieldname": "grand_totalhours_worked",
-   "fieldtype": "Data",
-   "label": "Grand Total(Hours Worked)"
-  },
-  {
-   "fieldname": "rate",
-   "fieldtype": "Currency",
-   "label": "Rate"
-  },
-  {
    "fieldname": "column_break_fcwe",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "amountfigures",
-   "fieldtype": "Currency",
-   "label": "Amount(Figures)"
-  },
-  {
-   "fieldname": "amount_words",
-   "fieldtype": "Data",
-   "label": "Amount (Words)"
   },
   {
    "fieldname": "remarks_section",
@@ -142,7 +114,7 @@
    "fieldname": "approval_by",
    "fieldtype": "Select",
    "label": "Approval Status",
-   "options": "\nPending\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the HR Manager\nRejected by the HR Manager\nApproved by the Executive Director\nRejected by the Executive Director",
+   "options": "\nPending\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the HR Manager\nRejected by the HR Manager\nApproved by the Executive Director\nRejected by the Executive Director\nCancelled",
    "permlevel": 1
   },
   {
@@ -168,8 +140,9 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Series",
-   "options": "OCF-%(employee_id)s-%(month)s-%(year)s-.#####"
+   "options": "OCF-%(employee)s-%(month)s-%(year)s-.#####"
   },
   {
    "default": "0",
@@ -177,16 +150,42 @@
    "fieldtype": "Data",
    "label": "Total Overtime Hours",
    "read_only": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "hourly_rate",
+   "fieldtype": "Currency",
+   "label": "Hourly Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_in_figures",
+   "fieldtype": "Currency",
+   "label": "Amount In Figures",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_in_words",
+   "fieldtype": "Small Text",
+   "label": "Amount in (Words)",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-13 18:07:30.799194",
+ "modified": "2024-05-17 18:29:38.896259",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Overtime Claim Form",
- "naming_rule": "By \"Naming Series\" field",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
@@ -199,7 +198,6 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "submit": 1,
    "write": 1
   }
  ],

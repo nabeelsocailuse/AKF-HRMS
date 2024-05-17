@@ -8,10 +8,25 @@ class OvertimeClaimForm(Document):
 	def autoname(self):
 		from frappe.model.naming import make_autoname
 		self.name = make_autoname(self.naming_series%{
-			"employee_id": self.employee_id, 
+			"employee": self.employee, 
 			"month": self.month, 
 			"year": self.year
 			})
+
+	def validate(self):
+		if(frappe.db.exists("Overtime Claim Form", {
+			"docstatus": ["<", 2],
+			"year": self.year,
+			"employee": ["<", 2],
+
+		})):
+			pass
+	
+	def on_submit(self):
+		pass
+
+	def on_cancel(self):
+		pass
 
 	@frappe.whitelist()
 	def get_details_of_overtime(self):

@@ -38,11 +38,10 @@ class ZKTool(Document):
 			attendance_device_id
 		"""%self.company, as_dict=1)
 		
-		if(employeeDetail): 
-			self.employee_detail = str(employeeDetail)
-			self.save()
-			return "Employees fetched."
-		return "Employees not found."
+		self.employee_detail = str(employeeDetail)
+		self.save()
+		
+		return "Employees fetched." if(employeeDetail) else "Employees not found."
 		
 	@frappe.whitelist()
 	def fetch_attendance(self):
@@ -52,6 +51,7 @@ class ZKTool(Document):
 		device_port = self.device_port
 		if (device_ip and device_port):
 			conn = None
+			attendance_records = []
 			addr_ip = socket.gethostbyname(device_ip)
 			zk = ZK(str(addr_ip), port=int(device_port), timeout=3000000, password=0, force_udp=False, ommit_ping=False)
 			try:
@@ -62,14 +62,15 @@ class ZKTool(Document):
 					userIds = {d.get("attendance_device_id"): {} for d in eval(self.employee_detail) if(d.get("attendance_device_id"))}
 					# Fetch from machine
 					attendance_records = conn.get_attendance_json(userIds=userIds)
-					self.logs_json = str(attendance_records)
-					self.save()
+					
 					
 			except Exception as e:
 				return e
 			finally:
 				if conn:
 					conn.disconnect()
+					self.logs_json = str(attendance_records)
+					self.save()
 					return "Attendance fetched." if(attendance_records) else "Attendance not found."		
 		else:
 			return "Please select right company and log type to 'Get Attendance' "
