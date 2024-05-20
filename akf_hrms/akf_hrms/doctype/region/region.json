@@ -6,7 +6,6 @@
  "engine": "InnoDB",
  "field_order": [
   "region_name",
-  "column_break_nlma",
   "region_code"
  ],
  "fields": [
@@ -17,10 +16,6 @@
    "set_only_once": 1
   },
   {
-   "fieldname": "column_break_nlma",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "region_code",
    "fieldtype": "Data",
    "label": "Region Code"
@@ -28,7 +23,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-17 23:48:18.694151",
+ "modified": "2024-05-17 23:56:39.196537",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Region",

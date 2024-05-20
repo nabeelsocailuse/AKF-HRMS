@@ -12,7 +12,7 @@ frappe.ui.form.on("Overtime Claim Form", {
 	month: function (frm) {
 		acf.load_details_of_overtime(frm);
 	},
-	employee_id: function (frm) {
+	employee: function (frm) {
 		acf.employee_info(frm);
 		acf.load_details_of_overtime(frm);
 	}
@@ -20,7 +20,7 @@ frappe.ui.form.on("Overtime Claim Form", {
 // COMMENTS
 acf = {
 	set_queries: function (frm) {
-		frm.set_query("employee_id", function () {
+		frm.set_query("employee", function () {
 			return {
 				filters: {
 					"custom_overtime_allowed": 1,
@@ -29,14 +29,14 @@ acf = {
 		})
 	},
 	employee_info: function (frm) {
-		let employee_id = frm.doc.employee_id;
-		if (employee_id == undefined || employee_id == "") return
+		let employee = frm.doc.employee;
+		if (employee == undefined || employee == "") return
 
 		frappe.call({
 			method: "frappe.client.get_value",
 			args: {
 				doctype: "Employee",
-				filters: { name: frm.doc.employee_id },
+				filters: { name: frm.doc.employee },
 				fieldname: [
 					"employee_name",
 					"company",
@@ -53,7 +53,7 @@ acf = {
 
 	},
 	load_details_of_overtime: function (frm) {
-		if (frm.doc.year != "" && frm.doc.month != "" && frm.doc.employee_id != undefined) {
+		if (frm.doc.year != "" && frm.doc.month != "" && frm.doc.employee != undefined) {
 			frm.call("get_details_of_overtime").then(r => {
 				console.log(r.message);
 				frm.set_intro('');
