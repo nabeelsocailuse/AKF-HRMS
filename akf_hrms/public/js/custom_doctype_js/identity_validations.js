@@ -7,16 +7,7 @@ var custom_label = null;
 
 frappe.ui.form.on('Employee', {
     refresh: function(frm) {
-        // console.log('working.')
-        if (!frm.doc.__islocal) {
-            frm.set_query('referee_id', function(doc) {
-                return {
-                    filters: {
-                        'name': ['!=', frm.doc.name]
-                    }
-                };
-            });
-        }
+        set_queries(frm);
         custom_country_change(frm);
     },
     custom_cnic: function(frm) {
@@ -36,6 +27,25 @@ frappe.ui.form.on('Employee', {
     }
 });
 
+function set_queries(frm){
+    if (!frm.doc.__islocal) {
+        frm.set_query('referee_id', function(doc) {
+            return {
+                filters: {
+                    'name': ['!=', frm.doc.name]
+                }
+            };
+        });
+    }
+    frm.set_query('reports_to', function() {
+        return {
+            filters: {
+                'company': frm.doc.company,
+            }
+        };
+    });
+    
+}
 function custom_country_change(frm) {
     var country = frm.doc.custom_country;
     
