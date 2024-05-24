@@ -8,7 +8,8 @@ from frappe.utils import time_diff, getdate, get_datetime
 
 class AttendanceLog(Document):
 	def after_insert(self):
-		self.process_log()
+		pass
+		# self.process_log()
 
 	def process_log(self):
 		attendance = self.is_attendance_exist()
@@ -16,7 +17,6 @@ class AttendanceLog(Document):
 			self.update_attendance(attendance)
 		else:
 			self.create_attendance()
-
 
 	def is_attendance_exist(self):
 		return frappe.db.get_value("Attendance", 
@@ -103,3 +103,4 @@ def get_logs_details(filters=None):
 			and employee=%(employee)s
 			and attendance_date=%(attendance_date)s
 	""", filters, as_dict=1)
+

@@ -2,8 +2,6 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-import traceback
-import sys
 from frappe.utils import getdate, get_datetime
 
 @frappe.whitelist(allow_guest=True)
@@ -14,7 +12,8 @@ def create_attendance_log(**kwargs):
 def get_employee(kwargs):
 	query = f""" 
 			select 
-				e.name
+				e.name,
+				(Select name from `tabShift Assignment` where docstatus=1 and status="Active" and employee=e.name order by start_date limit 1) as shift_assignment
 			from `tabEmployee` e inner join `tabZK IP Detail` zk on (e.company=zk.company)
 			where attendance_device_id='{kwargs["device_id"]}' and zk.device_ip = '{kwargs["device_ip"]}'
 			group by e.attendance_device_id
@@ -27,8 +26,8 @@ def _insert_attedance_log(kwargs):
 		doc = frappe.new_doc("Attendance Log")
 		doc.employee = employee[0][0] if(employee) else None
 		doc.device_id = kwargs['device_id']
-		doc.device_ip = kwargs['device_ip']
-		doc.device_port = kwargs['device_port']
+		doc.device_ip = kwargs["device_ip"]
+		doc.device_port = kwargs["device_port"]
 		doc.attendance_date = getdate(kwargs['attendance_date'])
 		doc.log = get_datetime(kwargs['log'])
 		doc.insert(ignore_permissions=True)

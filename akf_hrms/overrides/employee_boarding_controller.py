@@ -20,10 +20,13 @@ class OverrideEmployeeBoardingController(Document):
 
     def validate(self):
         # remove the task if linked before submitting the form
-        if self.amended_from:
-            for activity in self.activities:
-                activity.task = ""
+        self.update_status()
 
+    def update_status(self):
+        for d in self.activities:
+            if(d.custom_completed):
+                self.db_set("boarding_status", "In Process")
+                
     def on_submit(self):
         self.db_set("boarding_status", "Completed")
         self.reload()

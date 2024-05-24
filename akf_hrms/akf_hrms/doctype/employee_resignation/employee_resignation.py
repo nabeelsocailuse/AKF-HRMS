@@ -13,9 +13,20 @@ class EmployeeResignation(Document):
 		if self.employee and self.resignation_date and self.employment_type and not self.last_working_day:
 			self.last_working_day = get_last_working_day(self.resignation_date, self.employment_type)
 		self.last_working_day_format = frappe.utils.formatdate(self.last_working_day, "dd-MMM-yyyy")
+		self.validate_duplicate_employee_resignation()
 		# self.send_mail_on_workflow_action()
 		# self.add_reliving_date_in_emp_table()
 		
+	def validate_duplicate_employee_resignation(self):
+		emp_resignation = frappe.db.exists(
+			"Employee Resignation", {"employee": self.employee, "docstatus": ("!=", 2)}
+		)
+		if emp_resignation and emp_resignation != self.name:
+			frappe.throw(
+				_("Employee Resignation: {0} already exists for Employee: {1}").format(
+					frappe.bold(emp_resignation), frappe.bold(self.employee)
+				)
+			)
 
 	def add_reliving_date_in_emp_table(self):
 		if self.workflow_state == "Approved by HR":
@@ -64,7 +75,8 @@ class EmployeeResignation(Document):
 			frappe.sendmail(
 				recipients=['ops.team@micromerger.com', 'finance.team@micromerger.com', 'hr@micromerger.com'],
 				sender = "MM HR Department <xperterp@micromerger.com>",
-				subject='Employee Resignation from ' + str(self.employee_name),
+				
+				bject='Employee Resignation from ' + str(self.employee_name),
 				message = _(message_)
 			)
 			

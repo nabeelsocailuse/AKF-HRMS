@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_rename": 1,
  "autoname": "format:RES-{employee}-{employee_name}-{#####}",
  "creation": "2024-04-13 16:23:22.244965",
  "doctype": "DocType",
@@ -141,7 +140,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-16 16:25:54.397822",
+ "modified": "2024-05-24 14:16:56.633848",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Employee Resignation",

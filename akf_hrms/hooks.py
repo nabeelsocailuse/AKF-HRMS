@@ -168,7 +168,7 @@ doc_events = {
         "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
     "Expense Claim": {
-        "on_update": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
+        "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
     },
 }
 

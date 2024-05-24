@@ -32,15 +32,20 @@ class OvertimeClaimForm(Document):
 			frappe.throw(f"{link_to_form} on {self.month}-{self.year}", title="APPLIED")
 	
 	def on_submit(self):
+		self.create_additional_salary()
+
+	def create_additional_salary(self):
 		payroll_date = f"{self.year}-{MONTHSLIST.index(self.month)}-21"
-		frappe.get_doc("Additional Salary", {
+		frappe.get_doc({
+			"doctype": "Additional Salary",
 			"employee": self.employee,
 			"payroll_date": payroll_date,
 			"salary_component": "Overtime",
 			"overwrite_salary_structure_amount": 0,
 			"amount": self.amount_in_figures,
 		}).submit()
-
+		frappe.msgprint("Addtional Salary has been created.", alert=1)
+	
 	def on_cancel(self):
 		pass
 
@@ -74,7 +79,7 @@ class OvertimeClaimForm(Document):
 		if(not ssa): return
 		hourly_base =  ssa["hourly_base"]
 		self.set("hourly_rate", hourly_base)
-		_seconds_ = get_timedelta(self.total_overtime_hours)
+		_seconds_ = get_timedelta(self.total_overtime_hours or 0)
 		total_overtime_hours = (_seconds_.seconds)/3600
 		amount_in_figures = float(total_overtime_hours) * float(hourly_base)
 		self.set("amount_in_figures", amount_in_figures)
