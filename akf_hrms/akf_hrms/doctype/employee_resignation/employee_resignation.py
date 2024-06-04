@@ -27,7 +27,10 @@ class EmployeeResignation(Document):
 					frappe.bold(emp_resignation), frappe.bold(self.employee)
 				)
 			)
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 	def add_reliving_date_in_emp_table(self):
 		if self.workflow_state == "Approved by HR":
 			frappe.db.set_value("Employee" ,self.employee ,'relieving_date', self.last_working_day)
