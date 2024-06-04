@@ -8,17 +8,16 @@ from frappe.utils import time_diff, getdate, get_datetime
 
 class AttendanceLog(Document):
 	def after_insert(self):
-		pass
-		# self.process_log()
+		self.process_attendance()
 
-	def process_log(self):
-		attendance = self.is_attendance_exist()
+	def process_attendance(self):
+		attendance = self.get_attendance()
 		if (attendance):
 			self.update_attendance(attendance)
 		else:
 			self.create_attendance()
 
-	def is_attendance_exist(self):
+	def get_attendance(self):
 		return frappe.db.get_value("Attendance", 
 				{	
 					"docstatus": 1,

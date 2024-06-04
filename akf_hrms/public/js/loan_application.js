@@ -1,13 +1,6 @@
 frappe.ui.form.on("Loan Application", {
   loan_product: function (frm) {
-    if (
-      frm.doc.loan_product == "Advance Salary" ||
-      frm.doc.loan_product == "Advance Salary - Endowment Fund Trust" ||
-      frm.doc.loan_product ==
-        "Advance Salary - Alkhidmat Islamic Microfinance" ||
-      frm.doc.loan_product == "Advance Salary - Alkhidmat Health Foundation" ||
-      frm.doc.loan_product == "Advance Salary - Alfalah Scholarship"
-    ) {
+    if (frm.doc.custom_loan_category == "Term Loan(Salary Advance)") {
       frm.set_value("repayment_method", "Repay Fixed Amount per Period");
       frappe.call({
         method: "frappe.client.get_list",
@@ -31,6 +24,7 @@ frappe.ui.form.on("Loan Application", {
               frm.doc.custom_maximum_allowed_loan
             );
             frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);
+            frm.set_df_property("applicant", "read_only", 1);
           } else {
             frm.set_value("loan_product", "");
             frappe.msgprint(
@@ -43,17 +37,11 @@ frappe.ui.form.on("Loan Application", {
       });
     } else {
       frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
+      frm.set_df_property("applicant", "read_only", 0);
     }
   },
   loan_amount: function (frm) {
-    if (
-      frm.doc.loan_product == "Advance Salary" ||
-      frm.doc.loan_product == "Advance Salary - Endowment Fund Trust" ||
-      frm.doc.loan_product ==
-        "Advance Salary - Alkhidmat Islamic Microfinance" ||
-      frm.doc.loan_product == "Advance Salary - Alkhidmat Health Foundation" ||
-      frm.doc.loan_product == "Advance Salary - Alfalah Scholarship"
-    ) {
+    if (frm.doc.custom_loan_category == "Term Loan(Salary Advance)") {
       frm.set_value("repayment_method", "Repay Fixed Amount per Period");
       frm.set_value("repayment_amount", frm.doc.loan_amount);
       frm.set_df_property("repayment_method", "read_only", 1);
@@ -74,5 +62,22 @@ frappe.ui.form.on("Loan Application", {
       frm.set_df_property("repayment_method", "read_only", 0);
       frm.set_df_property("repayment_amount", "read_only", 0);
     }
+  },
+
+  company: function (frm) {
+    frm.trigger("set_reports_to_query");
+    if (!frm.doc.company) {
+      frm.set_value("custom_guarantor_of_loan_application", "");
+    }
+  },
+  set_reports_to_query: function (frm) {
+    var company = frm.doc.company;
+    frm.set_query("custom_guarantor_of_loan_application", function () {
+      return {
+        filters: {
+          company: company,
+        },
+      };
+    });
   },
 });

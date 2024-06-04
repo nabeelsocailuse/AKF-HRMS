@@ -263,7 +263,9 @@ def get_data(filters):
     for d in result:
         cfrom_date = latest_salaries[d.employee]['from_date']
         dfrom_date = d.from_date
-        salary  = d.custom_salary if (dfrom_date<cfrom_date) else f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>"
+        if(d.from_date and d.custom_salary):
+                salary  = d.custom_salary if (dfrom_date<cfrom_date) else f"<span style='font-weight: bold; color: blue;'>{d.custom_salary}</span>"
+        else: salary = 0.0
         temp = []
         if(d.employee not in unique_employees):
             temp = [

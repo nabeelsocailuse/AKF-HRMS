@@ -5,26 +5,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "employee_id",
+  "employee",
   "employee_name",
   "section_break_dvup",
   "compenstion_date",
   "amended_from"
  ],
  "fields": [
-  {
-   "fieldname": "employee_id",
-   "fieldtype": "Link",
-   "label": "Employee ID",
-   "options": "Employee"
-  },
-  {
-   "fetch_from": "employee_id.employee_name",
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "Employee Name",
-   "read_only": 1
-  },
   {
    "fieldname": "section_break_dvup",
    "fieldtype": "Section Break",
@@ -44,12 +31,25 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-24 18:56:04.772301",
+ "modified": "2024-06-03 15:27:55.224832",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Adjustment",

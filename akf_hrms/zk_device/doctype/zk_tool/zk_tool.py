@@ -12,7 +12,7 @@ employeeDetail=[]
 class ZKTool(Document):
 	@frappe.whitelist()
 	def get_company_details(self):
-		doctype = 'ZK Company Device Detail'
+		doctype = 'ZK IP Detail'
 		filters = {'enable': 1, 'company': self.company, 'log_type': self.log_type}
 		fieldname = ['*']
 		# SQL

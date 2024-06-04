@@ -1,9 +1,9 @@
 # Copyright (c) 2024, Nabeel Saleem and contributors
 # For license information, please see license.txt
 
-import frappe
+import frappe, ast
 from frappe.model.document import Document
-from frappe.utils import fmt_money, money_in_words, get_link_to_form, get_timedelta
+from frappe.utils import fmt_money, money_in_words, get_link_to_form, get_timedelta, time_diff, get_time
 MONTHSLIST = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 class OvertimeClaimForm(Document):
@@ -17,6 +17,8 @@ class OvertimeClaimForm(Document):
 
 	def validate(self):
 		self.already_applied_for_overtime()
+		self.set_salary_structure_assignment()
+		self.calculate_detail_of_overtime()
 
 	def already_applied_for_overtime(self):
 		name = frappe.db.get_value("Overtime Claim Form", {
@@ -30,6 +32,38 @@ class OvertimeClaimForm(Document):
 			link_to_form = get_link_to_form("Overtime Claim Form", name, "Overtime Claim Form")
 
 			frappe.throw(f"{link_to_form} on {self.month}-{self.year}", title="APPLIED")
+	
+	@frappe.whitelist()
+	def calculate_detail_of_overtime(self):
+		self.set_detail_of_overtime_hours()
+		self.set_total_hours_worked()
+		self.set_total_overtime_hours()
+		self.set_amount_in_figures()
+		self.set_amount_in_words()
+	
+	def set_detail_of_overtime_hours(self):
+		for row in self.detail_of_overtime:
+			row.hours_worked = time_diff(row.out_time, row.in_time)
+			row.overtime_hours = time_diff(row.out_time, row.in_time)
+			if(get_time(row.in_time)>get_time(row.out_time)): 
+				frappe.throw(f"Row#{row.idx}: In-Time must be less than Out-Time.")
+	
+	def set_total_hours_worked(self):
+		self.total_hours_worked = get_total_hours_worked(self.detail_of_overtime)
+	
+	def set_total_overtime_hours(self):
+		self.total_overtime_hours = get_total_overtime_hours(self.detail_of_overtime)
+
+	def set_amount_in_figures(self):
+		self.amount_in_figures = float(self.get_total_overtime_seconds()) * float(self.hourly_rate)
+		
+	def set_amount_in_words(self):
+		self.amount_in_words = money_in_words(self.amount_in_figures)
+	
+	def get_total_overtime_seconds(self):
+		if(not self.total_overtime_hours): return 0.0
+		ot_split = (self.total_overtime_hours).split(":")
+		return ((3600 * float(ot_split[0])) + (60 * float(ot_split[1])))/3600
 	
 	def on_submit(self):
 		self.create_additional_salary()
@@ -56,7 +90,6 @@ class OvertimeClaimForm(Document):
 		self.set("detail_of_overtime", attendance_list)
 		self.set("total_hours_worked", get_total_hours_worked(attendance_list))
 		self.set("total_overtime_hours", get_total_overtime_hours(attendance_list))
-		self.set_overtime_rate_calculate_amount_in_figures()
 		return True if(attendance_list) else False
 	
 	def get_attendance(self):
@@ -74,40 +107,14 @@ class OvertimeClaimForm(Document):
 				and employee = '{2}'
 		""".format(self.year, self.month, self.employee), as_dict=1)
 
-	def set_overtime_rate_calculate_amount_in_figures(self):
-		ssa = self.get_salary_structure_assignment()
-		if(not ssa): return
-		hourly_base =  ssa["hourly_base"]
-		self.set("hourly_rate", hourly_base)
-		_seconds_ = get_timedelta(self.total_overtime_hours or 0)
-		total_overtime_hours = (_seconds_.seconds)/3600
-		amount_in_figures = float(total_overtime_hours) * float(hourly_base)
-		self.set("amount_in_figures", amount_in_figures)
-		self.set("amount_in_words", money_in_words(amount_in_figures))
-
 	@frappe.whitelist()
-	def get_salary_structure_assignment(self):
-		ssa = {}
-		result = frappe.db.sql(f""" 
-			Select 
-				name, salary_structure, base, custom_hourly_base, (custom_hourly_base) as hourly_base
-			From 
-				`tabSalary Structure Assignment` ssa
-			Where
-				docstatus = 1
-				and employee = "{self.employee}"
-			Order by
-				from_date desc
-			Limit 
-				1
-		""", as_dict=1)
-
-		for d in result:
-			ssa = d
-			ssa["base"] = fmt_money(ssa["base"], currency="PKR")
-			ssa["custom_hourly_base"] = fmt_money(ssa["hourly_base"], currency="PKR")
-		
-		return ssa
+	def set_salary_structure_assignment(self):
+		ssa = frappe.db.get_value("Salary Structure Assignment", {"docstatus": 1, "employee": self.employee}, ["name", "custom_hourly_base"], as_dict=1)
+		if(ssa):
+			self.salary_structure_assignment = ssa.name
+			self.hourly_rate = ssa.custom_hourly_base
+		else:
+			frappe.throw(f"No active, salary structure assignment found.")
 
 def get_total_hours_worked(hours_worked_time_list):
 	total_h_worked= '0'	
@@ -130,3 +137,11 @@ def get_total_overtime_hours(hours_worked_time_list):
 	hr, min_ = divmod(hours_worked_, 60)
 	total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))
 	return total_h_worked
+
+@frappe.whitelist()
+def calculate_hours_worked_overtime_hours(doc):
+	row = ast.literal_eval(doc)
+	row = frappe._dict(row)
+	print(row)
+	return row
+	# return time_diff(out_time, in_time)
