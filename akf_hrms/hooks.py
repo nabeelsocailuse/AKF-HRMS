@@ -213,6 +213,7 @@ scheduler_events = {
     # 	],
 }
 
+advance_payment_doctypes = ["Gratuity", "Employee Advance"]
 # Testing
 # -------
 
