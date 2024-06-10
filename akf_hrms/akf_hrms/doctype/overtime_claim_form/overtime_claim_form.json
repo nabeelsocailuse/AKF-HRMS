@@ -13,6 +13,7 @@
   "month",
   "employee",
   "salary_structure_assignment",
+  "additional_salary",
   "column_break_l4dw",
   "employee_info_html",
   "detail_of_overtime_section",
@@ -30,7 +31,7 @@
   "requested_by",
   "recommended_by",
   "column_break_xgts",
-  "approval_by",
+  "approval_status",
   "general_manager_finance",
   "amended_from"
  ],
@@ -115,13 +116,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "approval_by",
-   "fieldtype": "Select",
-   "label": "Approval Status",
-   "options": "\nPending\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the CEO\nRejected by the CEO\nCancelled",
-   "permlevel": 1
-  },
-  {
    "fieldname": "general_manager_finance",
    "fieldtype": "Date",
    "label": "General Manager Finance"
@@ -195,12 +189,26 @@
   {
    "fieldname": "section_break_sydf",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "additional_salary",
+   "fieldtype": "Link",
+   "label": "Additional Salary",
+   "options": "Additional Salary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "label": "Approval Status",
+   "options": "\nPending\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the CEO\nRejected by the CEO\nCancelled",
+   "permlevel": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-03 15:22:54.680370",
+ "modified": "2024-06-05 14:23:57.907464",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Overtime Claim Form",

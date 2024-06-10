@@ -14,6 +14,12 @@ app_license = "mit"
 app_include_js = [
     "/assets/akf_hrms/js/jquery.inputmask.min.js",
     "/assets/akf_hrms/js/jquery.mask.js",
+    "/assets/akf_hrms/js/highcharts_apis/highcharts.js",
+    "/assets/akf_hrms/js/highcharts_apis/data.js",
+    "/assets/akf_hrms/js/highcharts_apis/export-data.js",
+    "/assets/akf_hrms/js/highcharts_apis/exporting.js",
+    "/assets/akf_hrms/js/highcharts_apis/accessibility.js",
+    "/assets/akf_hrms/js/highcharts_apis/variable-pie.js",
 ]
 
 # include js, css files in header of web template
