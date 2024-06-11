@@ -14,6 +14,12 @@ app_license = "mit"
 app_include_js = [
     "/assets/akf_hrms/js/jquery.inputmask.min.js",
     "/assets/akf_hrms/js/jquery.mask.js",
+    "/assets/akf_hrms/js/highcharts_apis/highcharts.js",
+    "/assets/akf_hrms/js/highcharts_apis/data.js",
+    "/assets/akf_hrms/js/highcharts_apis/export-data.js",
+    "/assets/akf_hrms/js/highcharts_apis/exporting.js",
+    "/assets/akf_hrms/js/highcharts_apis/accessibility.js",
+    "/assets/akf_hrms/js/highcharts_apis/variable-pie.js",
 ]
 
 # include js, css files in header of web template
@@ -28,7 +34,7 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+# page_js = {"hr_dashboard" : "public/js/highcharts_apis/highcharts.js"}
 
 # include js in doctype views
 doctype_js = {
