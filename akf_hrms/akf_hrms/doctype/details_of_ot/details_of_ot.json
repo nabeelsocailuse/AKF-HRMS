@@ -13,7 +13,8 @@
   "total_working_hours",
   "hours_worked",
   "overtime_hours",
-  "description_of_work_donejourney"
+  "description_of_work_donejourney",
+  "attendance"
  ],
  "fields": [
   {
@@ -26,6 +27,7 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Date",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -36,42 +38,52 @@
   },
   {
    "fieldname": "in_time",
-   "fieldtype": "Time",
+   "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "In Time",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "out_time",
-   "fieldtype": "Time",
+   "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Out Time",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "total_working_hours",
-   "fieldtype": "Data",
-   "hidden": 1,
+   "fieldtype": "Time",
    "in_list_view": 1,
-   "label": "Total Working Hours"
+   "label": "Total Working Hours",
+   "read_only": 1
   },
   {
    "fieldname": "overtime_hours",
    "fieldtype": "Time",
    "in_list_view": 1,
-   "label": "Overtime Hours"
+   "label": "Overtime Hours",
+   "read_only": 1
   },
   {
    "fieldname": "hours_worked",
    "fieldtype": "Time",
    "in_list_view": 1,
-   "label": "Hours Worked"
+   "label": "Hours Worked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attendance",
+   "fieldtype": "Data",
+   "label": "Attendance",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-06-03 13:10:22.701207",
+ "modified": "2024-06-05 14:49:34.789413",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Details of OT",

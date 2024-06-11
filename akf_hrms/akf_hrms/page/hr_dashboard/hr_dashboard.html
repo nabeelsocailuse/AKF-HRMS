@@ -7,27 +7,27 @@
                         <div class="card-body">
                             <div>
                                 <h3 class=" card-title mb-0"> <span class="applicant_count">
-                                    {% if total_head_count %}
-                                        {{total_head_count}}
-                                    {% else %}
+                                        {% if head_count %}
+                                        {{head_count}}
+                                        {% else %}
                                         0
-                                    {% endif %}
-                                </span></h3>
+                                        {% endif %}
+                                    </span></h3>
 
                             </div>
                             <span class="fw-semibold d-block mb-1">Head Count</span>
 
                         </div>
                     </div>
-                </div> 
+                </div>
                 <div class=" col-md-4  pr-0">
                     <div class="card">
                         <div class="card-body">
                             <h3 class=" card-title mb-0">
-                                {% if total_present %}
-                                    {{total_present}}
+                                {% if presents %}
+                                {{presents.total}}
                                 {% else %}
-                                    0
+                                0
                                 {% endif %}
                             </h3>
 
@@ -41,19 +41,33 @@
                         <div class="card-body">
                             <div>
                                 <h3 class=" card-title mb-0">
-                                    <span class="amountCounter">0</span>
+                                    <span class="amountCounter">
+                                        {% if absents %}
+                                        {{absents.total}}
+                                        {% else %}
+                                        0
+                                        {% endif %}
+                                    </span>
                                 </h3>
 
                             </div>
                             <span class="fw-semibold d-block mb-1">Absent</span>
                         </div>
                     </div>
-                </div> 
+                </div>
                 <div class=" col-md-4   pr-0">
                     <div class="card">
                         <div class="card-body">
                             <div>
-                                <h3 class=" card-title mb-0"> <span class="applicant_count">0 %</span></h3>
+                                <h3 class=" card-title mb-0">
+                                    <span class="applicant_count">
+                                        {% if absents %}
+                                        {{absents.average}}
+                                        {% else %}
+                                        0
+                                        {% endif %}
+                                        %</span>
+                                </h3>
 
                             </div>
                             <span class="fw-semibold d-block mb-1">Absenteeism Per Month</span>
@@ -64,19 +78,21 @@
                 <div class=" col-md-4   pr-0">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class=" card-title mb-0">0</h3>
+                            <h3 class=" card-title mb-0">
+                                {{presents.late_comings}} / {{presents.in_times}}
+                            </h3>
 
                             <span class="fw-semibold d-block mb-1">Late Comings / In-Time</span>
 
                         </div>
                     </div>
-                </div> 
+                </div>
                 <div class=" col-md-4   ">
                     <div class="card">
                         <div class="card-body">
                             <div>
                                 <h3 class=" card-title mb-0">
-                                    <span class="amountCounter">0 %</span>
+                                    <span class="amountCounter">{{presents.average_late_coming}}%</span>
                                 </h3>
 
                             </div>
@@ -88,7 +104,13 @@
                     <div class="card">
                         <div class="card-body">
                             <div>
-                                <h3 class=" card-title mb-0"> <span class="applicant_count">0 %</span></h3>
+                                <h3 class=" card-title mb-0"> <span class="applicant_count">
+                                        {% if leaves %}
+                                        {{leaves.short_leaves}}
+                                        {% else %}
+                                        0
+                                        {% endif %}
+                                    </span></h3>
 
                             </div>
                             <span class="fw-semibold d-block mb-1">Short Leaves</span>
@@ -99,7 +121,13 @@
                 <div class=" col-md-4   pr-0">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class=" card-title mb-0">0</h3>
+                            <h3 class=" card-title mb-0">
+                                {% if leaves %}
+                                    {{leaves.unapproved_leaves}}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </h3>
 
                             <span class="fw-semibold d-block mb-1">Unapproved Leaves</span>
 
@@ -118,112 +146,173 @@
                             <span class="fw-semibold d-block mb-1">In-station/Out-station</span>
                         </div>
                     </div>
-                </div> 
-            </div> 
+                </div>
+
+                <div class=" col-md-4   ">
+                    <div class="card">
+                        <div class="card-body">
+                            <div>
+                                <h3 class=" card-title mb-0">
+                                    <span class="amountCounter">
+                                    {% if contract %}
+                                        {{contract}}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                    </span>
+                                </h3>
+
+                            </div>
+                            <span class="fw-semibold d-block mb-1">Contract Completion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class=" col-md-4   ">
+                    <div class="card">
+                        <div class="card-body">
+                            <div>
+                                <h3 class=" card-title mb-0">
+                                    <span class="amountCounter">
+                                        {% if probation %}
+                                            {{probation}}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </span>
+                                </h3>
+
+                            </div>
+                            <span class="fw-semibold d-block mb-1">Probation Completion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class=" col-md-4   ">
+                    <div class="card">
+                        <div class="card-body">
+                            <div>
+                                <h3 class=" card-title mb-0">
+                                    <small class="amountCounter">
+                                        {% if avg_overtime %}
+                                            {{avg_overtime}}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </small>
+                                </h3>
+
+                            </div>
+                            <span class="fw-semibold d-block mb-1">Average Overtime Hours</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-        <div class="col-md-6 "> 
+        <div class="col-md-6 ">
             <div class="card">
                 <div class="card-body">
                     <div id="employee_by_status">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div> 
-<div class="row">
-    <div class="col-md-6  p-0">
-        <div class="card">
-            <div class="card-body">
-                <div id="employee_count"> </div>
+    <div class="row">
+        <div class="col-md-6  p-0">
+            <div class="card">
+                <div class="card-body">
+                    <div id="employee_count"> </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 ">
+            <div class="card">
+                <div class="card-body">
+                    <div id="salary_range"> </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6 ">
-        <div class="card">
-            <div class="card-body">
-                <div id="salary_range"> </div>
+    <div class="row">
+        <div class="col-md-4 p-0">
+            <div class="row">
+                <div class="col-md-6"></div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="heading mb-3">Department</h3>
+                    <input type="text" class="form-control" placeholder="Department">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Total Applicant</span>
+                    <div>
+                        <h3 class=" card-title mb-0"> <span class="applicant_count">100</span></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1"> Shortlisted Candidate</span>
+                    <div>
+                        <h3 class=" card-title mb-0"> <span class="applicant_count">70</span></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Hired Candidate</span>
+                    <div>
+                        <h3 class=" card-title mb-0"> <span class="applicant_count">50</span></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Rejected Candidate</span>
+                    <div>
+                        <h3 class=" card-title mb-0"> <span class="applicant_count">10</span></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Cost Per Hired</span>
+                    <div>
+                        <h3 class=" card-title mb-0"> <span class="applicant_count">$12K</span></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Time To Hire (days)</span>
+                    <div>
+                        <h3 class=" card-title mb-0"> <span class="applicant_count">15</span></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <span class="fw-semibold d-block mb-1">Time To Fill (days) </span>
+                    <div>
+                        <h3 class=" card-title mb-0"> <span class="applicant_count">20</span></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div id="open_position"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div id="application_received"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<div class="row">
-    <div class="col-md-4 p-0"> 
-        <div class="row">
-            <div class="col-md-6"></div>
-        </div>
-        <div class="card">
-            <div class="card-body"> 
-                <h3 class="heading mb-3">Department</h3>
-                <input type="text" class="form-control" placeholder="Department">
-            </div>
-        </div>
-        <div class="card"> 
-            <div class="card-body"> 
-                <span class="fw-semibold d-block mb-1">Total Applicant</span> 
-                <div> 
-                    <h3 class=" card-title mb-0"> <span class="applicant_count">100</span></h3>
-                </div> 
-            </div>
-        </div>
-        <div class="card"> 
-            <div class="card-body"> 
-                <span class="fw-semibold d-block mb-1"> Shortlisted Candidate</span> 
-                <div> 
-                    <h3 class=" card-title mb-0"> <span class="applicant_count">70</span></h3>
-                </div> 
-            </div>
-        </div>
-        <div class="card"> 
-            <div class="card-body"> 
-                <span class="fw-semibold d-block mb-1">Hired Candidate</span> 
-                <div> 
-                    <h3 class=" card-title mb-0"> <span class="applicant_count">50</span></h3>
-                </div> 
-            </div>
-        </div>
-        <div class="card"> 
-            <div class="card-body"> 
-                <span class="fw-semibold d-block mb-1">Rejected Candidate</span> 
-                <div> 
-                    <h3 class=" card-title mb-0"> <span class="applicant_count">10</span></h3>
-                </div> 
-            </div>
-        </div>
-        <div class="card"> 
-            <div class="card-body"> 
-                <span class="fw-semibold d-block mb-1">Cost Per Hired</span> 
-                <div> 
-                    <h3 class=" card-title mb-0"> <span class="applicant_count">$12K</span></h3>
-                </div> 
-            </div>
-        </div>
-        <div class="card"> 
-            <div class="card-body"> 
-                <span class="fw-semibold d-block mb-1">Time To Hire (days)</span> 
-                <div> 
-                    <h3 class=" card-title mb-0"> <span class="applicant_count">15</span></h3>
-                </div> 
-            </div>
-        </div>
-        <div class="card"> 
-            <div class="card-body"> 
-                <span class="fw-semibold d-block mb-1">Time To Fill (days) </span> 
-                <div> 
-                    <h3 class=" card-title mb-0"> <span class="applicant_count">20</span></h3>
-                </div> 
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <div id="open_position"></div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <div id="application_received"></div>
-            </div>
-        </div>
-    </div>
-</div>

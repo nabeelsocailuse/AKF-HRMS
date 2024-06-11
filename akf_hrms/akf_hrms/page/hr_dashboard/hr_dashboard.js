@@ -64,7 +64,12 @@ filters = {
 					"from_date": from_date.get_value(),
 					"to_date": to_date.get_value(),
 				}
-				serverCall.fetch_counts(page, filters);
+				setTimeout(() => {
+					serverCall.fetch_counts(page, filters);
+				}, 0);
+				setTimeout(() => {
+					serverCall.get_charts(page, filters);
+				}, 500);
 			},
 		});
 		// serverCall.fetch_counts(page)
@@ -79,14 +84,26 @@ serverCall = {
 			}, 
 			callback: function(r){
 				let data = r.message;
-				console.log(data)
-				loadDesign.template(page, data);
+				design.cards(page, data);
+			}
+		})
+	},
+	get_charts: function(page, filters){
+		frappe.call({
+			method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_charts",
+			args: {
+				filters: filters
+			}, 
+			callback: function(r){
+				let data = r.message;
+				console.log(data);
+				design.charts(page, data);
 			}
 		})
 	}
 }
-loadDesign = {
-	template: function (page, data) {
+design = {
+	cards: function (page, data) {
 		$("#management_dashboard_id").remove();
 		const content = frappe.render_template("hr_dashboard", data);
 		const main = page.main;
@@ -98,14 +115,22 @@ loadDesign = {
 }
 
 charts = {
+	charts: function(page, data){
+		chartsFunc.employee_count_by_status();
+		chartsFunc.employee_count_by_department(data.department_wise);
+		chartsFunc.employee_count_by_salary_range(data.salary_range);
+	}
+}
+
+chartsFunc = {
 	employee_count_by_status: function () {
 		donutChart();
 	},
-	employee_count_by_department: function () {
-		barChart();
+	employee_count_by_department: function (data) {
+		barChart(data);
 	},
-	employee_count_by_salary_range: function () {
-		pieChart()
+	employee_count_by_salary_range: function (data) {
+		pieChart(data);
 	}
 }
 
@@ -116,7 +141,7 @@ function donutChart() {
 			type: 'pie',
 		},
 		title: {
-			text: 'School Status',
+			text: 'Employee count by status',
 			align: 'left',
 			style: {
 				fontSize: '18px', 
@@ -127,6 +152,12 @@ function donutChart() {
 		tooltip: {
 			valueSuffix: '%'
 		},
+		exporting: {
+			enabled: false,
+		},
+		credits: {
+			enabled: false,
+		},
 		plotOptions: {
 			pie: {
 				allowPointSelect: true,
@@ -135,7 +166,7 @@ function donutChart() {
 					enabled: true,
 					format: '{point.name}: {y} %'
 				},
-				showInLegend: true
+				showInLegend: false
 			}
 		},
 		legend: {
@@ -148,7 +179,7 @@ function donutChart() {
 		series: [{
 			name: 'Percentage',
 			colorByPoint: true,
-			innerSize: '80%',
+			innerSize: '40%',
 			data: [{
 				name: 'Open School',
 				y: 78
@@ -167,9 +198,7 @@ function donutChart() {
 			}
 			]
 		}],
-		credits: {
-			enabled: false // Disable credits
-		} 
+
 	});
 
 	
@@ -235,7 +264,7 @@ function donutChart() {
 		} 
 	});
 }
-function barChart() {
+function barChart(data) {
 	Highcharts.chart('employee_count', {
 		chart: {
 			type: 'column'
@@ -296,7 +325,8 @@ function barChart() {
 			{
 				name: 'Employees',
 				colorByPoint: true,
-				data: [
+				data: data
+				/* data: [
 					{
 						name: 'Chrome',
 						y: 63.06
@@ -325,7 +355,7 @@ function barChart() {
 						name: 'Other',
 						y: 1.582
 					}
-				]
+				] */
 			}
 		],
 
@@ -426,7 +456,7 @@ function barChart() {
 
 	});
 }
-function pieChart() {
+function pieChart(data) {
 	Highcharts.chart('salary_range', {
 		chart: {
 			type: 'pie'
@@ -440,9 +470,9 @@ function pieChart() {
 				fontFamily: '"Inter", sans-serif'
 			}
 		},
-		tooltip: {
-			valueSuffix: '%'
-		},
+		// tooltip: {
+		// 	valueSuffix: '%'
+		// },
 		subtitle: {
 			text:
 				''
@@ -456,15 +486,16 @@ function pieChart() {
 
 		plotOptions: {
 			series: {
+				showInLegend: true,
 				allowPointSelect: true,
 				cursor: 'pointer',
 				dataLabels: [{
-					enabled: true,
+					enabled: false,
 					distance: 20
 				}, {
 					enabled: true,
 					distance: -40,
-					format: '{point.percentage:.1f}%',
+					format: '{point.y}',
 					style: {
 						fontSize: '1.2em',
 						textOutline: 'none',
@@ -480,9 +511,10 @@ function pieChart() {
 		},
 		series: [
 			{
-				name: 'Percentage',
+				name: 'Employees',
 				colorByPoint: true,
-				data: [
+				data: data
+				/* data: [
 					{
 						name: 'Water',
 						y: 55.02
@@ -505,7 +537,7 @@ function pieChart() {
 						name: 'Ash',
 						y: 1.68
 					}
-				]
+				] */
 			}
 		]
 	});

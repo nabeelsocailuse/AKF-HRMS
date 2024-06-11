@@ -24,7 +24,7 @@ class WorkFromHomeRequest(Document):
             """ select name from `tabWork From Home Request` 
                 where docstatus<2
                     and (%s between from_date and to_date) and (%s between from_date and to_date) 
-                    and employee=%s 
+                    and employee=%s
                     and name!=%s """,
             (
                 str(self.from_date),
