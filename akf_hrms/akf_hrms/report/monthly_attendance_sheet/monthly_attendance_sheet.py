@@ -153,7 +153,7 @@ def get_columns(filters: Filters) -> list[dict]:
 				{"label": _("Total Absent"), "fieldname": "total_absent", "fieldtype": "Float", "width": 110},
 				{"label": _("Total Leaves"), "fieldname": "total_leaves", "fieldtype": "Float", "width": 110},
 				{"label": _("Total Late Entries"), "fieldname": "total_late_entries", "fieldtype": "Float", "width": 140},
-				{"label": _("Total Late Exits"), "fieldname": "total_early_exits", "fieldtype": "Float", "width": 140},
+				{"label": _("Total Early Exits"), "fieldname": "total_early_exits", "fieldtype": "Float", "width": 140},
 
 			]
 		)

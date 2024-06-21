@@ -103,8 +103,8 @@ def get_data(filters):
 			(select designation from `tabEmployee` where name=la.employee) as designation,
 			company, 
 			(name) as leave_application, 
-			monthname(posting_date) as month, 
 			datediff(la.to_date, la.from_date) as days,
+			monthname(posting_date) as month, 
 			(select base/30 from `tabSalary Structure Assignment` where docstatus=1 and employee=la.employee order by from_date limit 1) as amount
 		From 
 			`tabLeave Application` la
