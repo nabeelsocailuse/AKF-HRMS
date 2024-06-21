@@ -1,75 +1,87 @@
 {
- "actions": [],
- "allow_rename": 1,
- "creation": "2024-04-02 12:21:19.835706",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "employee",
-  "employee_name",
-  "section_break_dvup",
-  "compenstion_date",
-  "amended_from"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_dvup",
-   "fieldtype": "Section Break",
-   "label": "Adjustment of Attendance"
-  },
-  {
-   "fieldname": "compenstion_date",
-   "fieldtype": "Date",
-   "label": "Compenstion Date"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Attendance Adjustment",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "employee",
-   "fieldtype": "Link",
-   "label": "Employee",
-   "options": "Employee"
-  },
-  {
-   "fetch_from": "employee.employee_name",
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "Employee Name",
-   "read_only": 1
-  }
- ],
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [],
- "modified": "2024-06-03 15:27:55.224832",
- "modified_by": "Administrator",
- "module": "Akf Hrms",
- "name": "Attendance Adjustment",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  }
- ],
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
-}
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2024-04-02 12:21:19.835706",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+     "employee",
+     "employee_name",
+     "section_break_dvup",
+     "start_time",
+     "end_time",
+     "compensation_date",
+     "amended_from"
+    ],
+    "fields": [
+     {
+      "fieldname": "section_break_dvup",
+      "fieldtype": "Section Break",
+      "label": "Adjustment of Attendance"
+     },
+     {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Attendance Adjustment",
+      "print_hide": 1,
+      "read_only": 1,
+      "search_index": 1
+     },
+     {
+      "fieldname": "employee",
+      "fieldtype": "Link",
+      "label": "Employee",
+      "options": "Employee"
+     },
+     {
+      "fetch_from": "employee.employee_name",
+      "fieldname": "employee_name",
+      "fieldtype": "Data",
+      "label": "Employee Name",
+      "read_only": 1
+     },
+     {
+      "fieldname": "start_time",
+      "fieldtype": "Time",
+      "label": "Start Time"
+     },
+     {
+      "fieldname": "end_time",
+      "fieldtype": "Time",
+      "label": "End Time"
+     },
+     {
+      "fieldname": "compensation_date",
+      "fieldtype": "Date",
+      "label": "Compensation Date"
+     }
+    ],
+    "index_web_pages_for_search": 1,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2024-06-10 22:10:36.123117",
+    "modified_by": "Administrator",
+    "module": "Akf Hrms",
+    "name": "Attendance Adjustment",
+    "owner": "Administrator",
+    "permissions": [
+     {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+     }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+   }
