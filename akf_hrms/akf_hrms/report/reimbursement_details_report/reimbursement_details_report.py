@@ -101,7 +101,7 @@ def get_data(filters):
 		From 
 			`tabLeave Application` la
 		Where
-			docstatus<2
+			docstatus=1
 			{0}
 
 	 """.format(get_conditions(filters)), filters, as_dict=0)
