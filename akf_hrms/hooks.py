@@ -155,6 +155,7 @@ override_doctype_class = {
     "Payroll Entry": "akf_hrms.overrides.payroll_entry.OcerridePayrollEntry",
     "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
+    "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
 }
 
 # Document Events
