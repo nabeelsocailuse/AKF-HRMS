@@ -23,8 +23,10 @@ frappe.ui.form.on("Loan Application", {
               "repayment_amount",
               frm.doc.custom_maximum_allowed_loan
             );
+            frm.set_value("repay_from_salary", 1);
             frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);
             frm.set_df_property("applicant", "read_only", 1);
+            frm.set_df_property("repay_from_salary", "read_only", 1);
           } else {
             frm.set_value("loan_product", "");
             frappe.msgprint(
@@ -38,6 +40,7 @@ frappe.ui.form.on("Loan Application", {
     } else {
       frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
       frm.set_df_property("applicant", "read_only", 0);
+      frm.set_df_property("repay_from_salary", "read_only", 0);
     }
   },
   loan_amount: function (frm) {
