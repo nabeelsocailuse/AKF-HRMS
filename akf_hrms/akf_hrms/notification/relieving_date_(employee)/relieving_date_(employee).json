@@ -1,0 +1,35 @@
+{
+ "attach_print": 0,
+ "channel": "System Notification",
+ "condition": "",
+ "creation": "2024-05-27 13:18:05.541265",
+ "date_changed": "relieving_date",
+ "days_in_advance": 7,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Employee",
+ "enabled": 1,
+ "event": "Days Before",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "Dear Concerned,\n\nThis email is the notification of the last working day of the employee.\n\nEmployee ID: {{doc.name}}\n\nEmployee Name: {{doc.employee_name}} \n\nDepartment:{{doc.department}} \n\nDesignation:{{doc.designation}}\n\nThe resignation date is : {{doc.resignation_letter_date}}\n\nThe last working day of the employee is: {{doc.relieving_date}}.\n\nThe email is forwarded for any further necessary action,please.\n\nXpertERP",
+ "modified": "2024-06-21 14:02:45.270819",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Relieving Date (Employee)",
+ "owner": "Administrator",
+ "recipients": [
+  {
+   "receiver_by_role": "HR Manager"
+  },
+  {
+   "receiver_by_role": "HR User"
+  },
+  {
+   "receiver_by_role": "System Manager"
+  }
+ ],
+ "send_system_notification": 0,
+ "send_to_all_assignees": 0,
+ "subject": "Notification of the Last Working Day : {{doc.employee_name}} Department:{{doc.department}} Designation:{{doc.designation}}"
+}

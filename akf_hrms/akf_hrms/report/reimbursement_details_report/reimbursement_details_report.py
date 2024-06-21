@@ -69,6 +69,13 @@ def get_columns():
 			"width": 180,
 		},
 		{
+			"label": "Days",
+			"fieldname": "days",
+			"fieldtype": "Data",
+			"options": "",
+			"width": 100,
+		},
+		{
 			"label": "Month",
 			"fieldname": "month",
 			"fieldtype": "Data",
@@ -97,11 +104,12 @@ def get_data(filters):
 			company, 
 			(name) as leave_application, 
 			monthname(posting_date) as month, 
+			datediff(la.to_date, la.from_date) as days,
 			(select base/30 from `tabSalary Structure Assignment` where docstatus=1 and employee=la.employee order by from_date limit 1) as amount
 		From 
 			`tabLeave Application` la
 		Where
-			docstatus<2
+			docstatus=1
 			{0}
 
 	 """.format(get_conditions(filters)), filters, as_dict=0)

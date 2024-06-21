@@ -1,0 +1,31 @@
+{
+ "attach_print": 0,
+ "channel": "System Notification",
+ "creation": "2024-05-27 15:15:17.575199",
+ "days_in_advance": 0,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Employee Resignation",
+ "enabled": 1,
+ "event": "Value Change",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "Dear Concerned,\n\nThis email is the notification of employee resignation created by:\n\nEmployee Name: {{doc.employee_name}} \n\nCompany: {{doc.company}}\n\nDepartment: {{doc.department}}\n\nRequest ID: {{doc.name}}\n\nResignation Date: {{doc.resignation_date}}\n\nThe current state of the application: {{doc.approval_status}}.\n\nThe relieving date is: {{doc.last_working_day}}\n\nThe email is forwarded for any further necessary action,please.\n\nXpertERP",
+ "modified": "2024-06-21 14:03:06.519746",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Employee Resignation",
+ "owner": "Administrator",
+ "recipients": [
+  {
+   "receiver_by_role": "System Manager"
+  },
+  {
+   "receiver_by_role": "HR Manager"
+  }
+ ],
+ "send_system_notification": 0,
+ "send_to_all_assignees": 0,
+ "subject": "Notification of the Employee Resignation - Employee ID: {{doc.employee}} Employee Name: {{doc.employee_name}}",
+ "value_changed": "approval_status"
+}
