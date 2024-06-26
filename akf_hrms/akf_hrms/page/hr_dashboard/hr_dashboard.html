@@ -42,8 +42,13 @@
                             <div>
                                 <h3 class=" card-title mb-0">
                                     <span class="amountCounter">
-                                        {% if absenteesim %}
+                                        <!-- {% if absenteesim %}
                                         {{absenteesim.total}}
+                                        {% else %}
+                                        0
+                                        {% endif %} -->
+                                        {% if total_absent %}
+                                        {{total_absent}}
                                         {% else %}
                                         0
                                         {% endif %}

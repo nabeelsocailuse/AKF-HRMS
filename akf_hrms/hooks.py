@@ -152,10 +152,13 @@ override_doctype_class = {
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
-    "Payroll Entry": "akf_hrms.overrides.payroll_entry.OcerridePayrollEntry",
+    "Payroll Entry": "akf_hrms.overrides.payroll_entry.OverridePayrollEntry",
     "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
     "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
+    "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
+    "Leave Application": "akf_hrms.extends.leave_application_wf.leave_application_wf.XLeaveApplication",
+    "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
 }
 
 # Document Events

@@ -103,13 +103,21 @@ def get_data(filters):
 			(select designation from `tabEmployee` where name=la.employee) as designation,
 			company, 
 			(name) as leave_application, 
-			datediff(la.to_date, la.from_date) as days,
+			datediff(la.to_date, la.from_date)+1 as days,
 			monthname(posting_date) as month, 
 			(select base/30 from `tabSalary Structure Assignment` where docstatus=1 and employee=la.employee order by from_date limit 1) as amount
 		From 
 			`tabLeave Application` la
 		Where
-			docstatus=1
+			docstatus=0 AND la.leave_type != 'Leave Without Pay'
+			AND EXISTS (
+                SELECT 1 
+                FROM `tabPayroll Entry` pe
+                WHERE 
+                    la.from_date >= pe.start_date 
+                    AND la.to_date <= pe.end_date
+					AND pe.docstatus IN (0, 1) 
+            )
 			{0}
 
 	 """.format(get_conditions(filters)), filters, as_dict=0)

@@ -270,10 +270,72 @@ chartsFunc = {
 		$("#browsers").html(values);
 	},	
 }
+// function EmployeeCheckInOut(data) {
+//     Highcharts.chart('employee_by_time', {
+//         chart: {
+//             type: 'pie' // Change chart type to pie
+//         },
+//         title: {
+//             text: 'Employee Check-In and Late Entry',
+//             align: 'left',
+//             style: {
+//                 fontSize: '18px',
+//                 fontWeight: '600',
+//                 fontFamily: '"Inter", sans-serif'
+//             }
+//         },
+//         subtitle: {
+//             align: 'left',
+//             text: ''
+//         },
+//         exporting: {
+//             enabled: false,
+//         },
+//         credits: {
+//             enabled: false
+//         },
+//         accessibility: {
+//             announceNewData: {
+//                 enabled: true
+//             }
+//         },
+//         tooltip: {
+//             pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
+//                 '<b>{point.y}</b> of total<br/>'
+//         },
+//         plotOptions: {
+//             pie: {
+//                 allowPointSelect: true,
+//                 cursor: 'pointer',
+//                 dataLabels: {
+//                     enabled: true,
+//                     format: '{point.name}: {point.y}'
+//                 },
+//                 showInLegend: true
+//             }
+//         },
+//         series: [{
+//             name: 'Count',
+//             colorByPoint: true,
+//             data: data.map(item => ({ name: item.entry_status, y: item.total }))
+//         }]
+//     });
+// }
+
+
 function EmployeeCheckInOut(data) {
+    // Prepare data for the pie chart
+    let chartData = [];
+    
+    // Loop through data and populate chartData with required format
+    data.forEach(item => {
+        chartData.push({ name: item.entry_status, y: item.entry_status === 'Late' ? item.late_count : item.on_time_count });
+    });
+    
+    // Generate the Highcharts pie chart
     Highcharts.chart('employee_by_time', {
         chart: {
-            type: 'pie' // Change chart type to pie
+            type: 'pie'
         },
         title: {
             text: 'Employee Check-In and Late Entry',
@@ -289,7 +351,7 @@ function EmployeeCheckInOut(data) {
             text: ''
         },
         exporting: {
-            enabled: false,
+            enabled: false
         },
         credits: {
             enabled: false
@@ -317,10 +379,11 @@ function EmployeeCheckInOut(data) {
         series: [{
             name: 'Count',
             colorByPoint: true,
-            data: data.map(item => ({ name: item.entry_status, y: item.total }))
+            data: chartData
         }]
     });
 }
+
 function CountEmploymentType(data) {
 	Highcharts.chart('employee_by_status', {
 		colors: ['#01BAF2', 'rgb(75, 208, 139)', '#FAA74B', '#B37CD2'],

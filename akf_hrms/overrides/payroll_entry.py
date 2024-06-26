@@ -29,7 +29,7 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
 from erpnext.accounts.utils import get_fiscal_year
 
 
-class OcerridePayrollEntry(Document):
+class OverridePayrollEntry(Document):
 	def onload(self):
 		if not self.docstatus == 1 or self.salary_slips_submitted:
 			return
@@ -1150,6 +1150,7 @@ def get_filtered_employees(
 		.where(
 			(SalaryStructureAssignment.docstatus == 1)
 			& (Employee.status != "Inactive")
+			& (Employee.custom_hold_salary != "Yes")
 			& (Employee.company == filters.company)
 			& ((Employee.date_of_joining <= filters.end_date) | (Employee.date_of_joining.isnull()))
 			& ((Employee.relieving_date >= filters.start_date) | (Employee.relieving_date.isnull()))
