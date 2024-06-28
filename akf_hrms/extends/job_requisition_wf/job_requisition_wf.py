@@ -30,15 +30,15 @@ class XJobRequisition(JobRequisition):
             current_roles = frappe.get_roles()
 
             # For Approved Statuses
-            if 'Secretary General' in current_roles and self.docstatus == 1:
+            if 'Secretary General' in current_roles and self.docstatus == 0:
                 if self.custom_employee_grade in ["C", "D", "DM", "DH", "F", "FD"]:
                     self.custom_approval_status = 'Approved by the Secretary General'
 
-            if 'CEO' in current_roles and self.docstatus == 1:
+            if 'CEO' in current_roles and self.docstatus == 0:
                 if self.custom_employee_grade in ["FH", "FP", "FS", "P", "PD", "PS", "PP-1", "PP-2", "PP-3"]:
                     self.custom_approval_status = 'Approved by the CEO'
 
-            if 'HR Manager' in current_roles and self.docstatus == 1:
+            if 'HR Manager' in current_roles and self.docstatus == 0:
                 if self.custom_employee_grade in ["SS-1", "SS-2", "SS-3"]:
                     self.custom_approval_status = 'Approved by the HR Manager'
 
