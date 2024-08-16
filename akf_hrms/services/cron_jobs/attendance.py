@@ -153,6 +153,16 @@ def mark_attendance():
 	except Exception as e:
 		print(e)
 
+""" Mubarrim
+> implemet leave deduction, If employee come 2 hours late consective 3 or above days in a month.
+ """
+@frappe.whitelist()
+def deduct_leave_of_2_hours():
+	from hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry import (
+		create_leave_ledger_entry,
+	)
+	from frappe.utils import time_diff_in_hours
+
 @frappe.whitelist()
 def reset_attendance():
 	attendances = frappe.db.sql(""" select  * from `tabAttendance`

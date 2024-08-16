@@ -34,7 +34,7 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"hr_dashboard" : "public/js/highcharts_apis/highcharts.js"}
+# page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
 doctype_js = {
@@ -52,11 +52,7 @@ doctype_js = {
     "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
     "Salary Slip": [
         "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
-        ],
-    "Company": [
-    "public/js/custom_doctype_js/company/company.js",
-    ]
-
+        ]
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -151,19 +147,18 @@ doctype_js = {
 # override_doctype_class = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
-
-
 override_doctype_class = {
     "Employee": "akf_hrms.extends.employee.XEmployee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
-    "Payroll Entry": "akf_hrms.overrides.payroll_entry.OcerridePayrollEntry",
+    "Payroll Entry": "akf_hrms.overrides.payroll_entry.OverridePayrollEntry",
     "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
     "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
-    "Project": "akf_accounts.customizations.extends.project_override.XProject",
-    "Leave Application": "akf_hrms.overrides.leave_application.OLeaveApplication",
+    "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
+    "Leave Application": "akf_hrms.extends.leave_application_wf.leave_application_wf.XLeaveApplication",
+    "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
 }
 
 # Document Events

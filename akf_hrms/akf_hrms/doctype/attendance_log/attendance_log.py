@@ -3,7 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import time_diff, getdate, get_datetime
+from frappe.utils import time_diff, getdate, get_datetime, time_diff_in_hours
 
 
 class AttendanceLog(Document):
@@ -43,7 +43,8 @@ class AttendanceLog(Document):
 				"status": "Present",
 				"shift": self.shift,
 				"in_time": self.log,
-				"late_entry": self.late_entry()
+				"late_entry": self.late_entry(),
+				# "custom_2_hours_late": self.get_2_hours_late()
 			}
 		frappe.get_doc(args).submit()
 
@@ -51,38 +52,49 @@ class AttendanceLog(Document):
 		if (not self.shift or not self.log): 
 			return False
 		doc = frappe.get_doc("Shift Type", self.shift)
-		
+		log = get_datetime(self.log)
+		late_time = log
 		if(doc.enable_auto_attendance and doc.custom_grace_in_time): 
-			log = get_datetime(self.log)
-			grace_datetime = get_datetime("%s %s"%(getdate(self.log), doc.custom_grace_in_time))
-			if(log>grace_datetime):
-				return True
-			else:
-				return False
+			late_time = get_datetime("%s %s"%(getdate(self.log), doc.custom_grace_in_time))
 		else:
-			log = get_datetime(self.log)
-			start_time = get_datetime("%s %s"%(getdate(self.log), doc.start_time))
-			if(log>start_time):
-				return True
-			else:
-				return False
+			late_time = get_datetime("%s %s"%(getdate(self.log), doc.start_time))
+		if(log>late_time):
+			return True
+		else:
+			return False
 
 	def early_exit(self):
 		if (not self.shift or not self.log): 
 			return False
 		doc = frappe.get_doc("Shift Type", self.shift)
-		
-		if(not doc.enable_auto_attendance or not doc.custom_grace_out_time): 
-			return False
-		
 		log = get_datetime(self.log)
-		# log_date = 
-		grace_datetime = get_datetime("%s %s"%(getdate(self.log), doc.custom_grace_out_time))
-
-		# frappe.throw(str(log<grace_datetime))
-		if(log<grace_datetime):
+		exit_time = log
+		if(doc.enable_auto_attendance and doc.custom_grace_out_time): 	
+			exit_time = get_datetime("%s %s"%(getdate(self.log), doc.custom_grace_out_time))
+		else:
+			exit_time = get_datetime("%s %s"%(getdate(self.log), doc.end_time))
+		
+		if(log<exit_time):
 			return True
-		return False
+		else:
+			return False
+
+	def get_2_hours_late(self):
+		if(not self.shift): return False
+		doc = frappe.get_doc("Shift Type", self.shift)
+		log_in_time = get_datetime(self.log)
+		shift_in_time = log_in_time
+		if(doc.enable_auto_attendance and doc.custom_grace_in_time): 
+			shift_in_time = get_datetime("%s %s"%(getdate(self.log), doc.custom_grace_in_time))
+		else:
+			shift_in_time = get_datetime("%s %s"%(getdate(self.log), doc.start_time))
+		
+		hours_differnce = time_diff_in_hours(log_in_time, shift_in_time)
+		if(hours_differnce>2):
+			return True
+		else:
+			return False
+
 
 	def cal_overtime_hours(self, hours_worked):
 		overtime_hours = None
