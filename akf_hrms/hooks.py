@@ -52,7 +52,11 @@ doctype_js = {
     "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
     "Salary Slip": [
         "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
-        ]
+        ],
+    "Company": [
+    "public/js/custom_doctype_js/company/company.js",
+    ]
+
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -147,6 +151,8 @@ doctype_js = {
 # override_doctype_class = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
+
+
 override_doctype_class = {
     "Employee": "akf_hrms.extends.employee.XEmployee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
@@ -156,6 +162,8 @@ override_doctype_class = {
     "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
     "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
+    "Project": "akf_accounts.customizations.extends.project_override.XProject",
+    "Leave Application": "akf_hrms.overrides.leave_application.OLeaveApplication",
 }
 
 # Document Events

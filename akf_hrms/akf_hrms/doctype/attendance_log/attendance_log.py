@@ -52,15 +52,20 @@ class AttendanceLog(Document):
 			return False
 		doc = frappe.get_doc("Shift Type", self.shift)
 		
-		if(not doc.enable_auto_attendance or not doc.custom_grace_in_time): 
-			return False
-		
-		log = get_datetime(self.log)
-		grace_datetime = get_datetime("%s %s"%(getdate(self.log), doc.custom_grace_in_time))
-		
-		if(log>grace_datetime):
-			return True
-		return False
+		if(doc.enable_auto_attendance and doc.custom_grace_in_time): 
+			log = get_datetime(self.log)
+			grace_datetime = get_datetime("%s %s"%(getdate(self.log), doc.custom_grace_in_time))
+			if(log>grace_datetime):
+				return True
+			else:
+				return False
+		else:
+			log = get_datetime(self.log)
+			start_time = get_datetime("%s %s"%(getdate(self.log), doc.start_time))
+			if(log>start_time):
+				return True
+			else:
+				return False
 
 	def early_exit(self):
 		if (not self.shift or not self.log): 
