@@ -52,7 +52,8 @@ doctype_js = {
     "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
     "Salary Slip": [
         "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
-        ]
+        ],
+    "Attendance Request": "public/js/attendance_request.js",
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -159,6 +160,7 @@ override_doctype_class = {
     "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
     "Leave Application": "akf_hrms.extends.leave_application_wf.leave_application_wf.XLeaveApplication",
     "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
+    "Attendance Request": "akf_hrms.overrides.attendance_request.OAttendanceRequest",
 }
 
 # Document Events
@@ -190,15 +192,15 @@ scheduler_events = {
         "0 0 * * *": [
             "akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
         ],
-        "*/5 * * * *": [
-            "akf_hrms.services.cron_jobs.attendance.mark_attendance",
-        ],
-        "*/45 * * * *": [
-            "akf_hrms.services.cron_jobs.attendance.fetch_attendance",
-        ],
-        "*/20 * * * *": [
-            "akf_hrms.services.cron_jobs.attendance.mark_proxy_attendance_logs",
-        ]
+        # "*/5 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.mark_attendance",
+        # ],
+        # "*/45 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.fetch_attendance",
+        # ],
+        # "*/20 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.mark_proxy_attendance_logs",
+        # ]
     },
     # 	"all": [
     # 		"akf_hrms.tasks.all"

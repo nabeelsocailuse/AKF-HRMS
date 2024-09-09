@@ -12,14 +12,14 @@ def create_attendance_log(**kwargs):
 def _insert_attedance_log(kwargs):
 	try:
 		frappe.get_doc({
-			"doctype": "Proxy Attendance Log",
+			"doctype": "Attendance Log",
 			"device_id": kwargs['device_id'],
 			"device_ip": kwargs["device_ip"],
 			"device_port": kwargs["device_port"],
 			"attendance_date": getdate(kwargs['attendance_date']),
 			"log": get_datetime(kwargs['log'])
-		}).insert(ignore_permissions=True)
-		frappe.db.commit()
+		}).save(ignore_permissions=True)
+		# frappe.db.commit()
 	except Exception as e:
 		return e
 

@@ -23,7 +23,6 @@ def get_columns(filters):
 		]
 	columns.extend([
 		_("Employee Name") + "::180", 
-		_("CNIC") + "::180", #--------------------------------------------------
 		_("Branch") + ":Link/Branch:150",
 		_("Department") + ":Link/Department:150",
 		_("Designation") + ":Link/Designation:150",
@@ -32,7 +31,6 @@ def get_columns(filters):
 		_("Total Present") + ":Float:140", 
 		_("Total Leaves") + ":Float:140",  
 		_("Total Absent") + ":Float:140", 
-		_("Total Holidays") + ":Float:140", 
 		_("") + "::60"
 		])
 
@@ -74,7 +72,7 @@ def get_data(filters):
 		# Total Days In Month
 		total_days_worked = 0
 		# Total (Presents, Absent, Leaves)
-		total_present = total_absent = total_leaves = total_holidays = 0.0
+		total_present = total_absent = total_leaves = total_h = 0.0
 		# 
 		hours_worked_time_list = ["0:00:00"]
 		""" Now loop on all days in month """
@@ -141,13 +139,11 @@ def get_data(filters):
 				inlist += [status]
 				outlist += [status]
 				hwlist += [status]
-			if status == status_map["Holiday"]:
-				total_holidays += 1
 		# Init 3 rows for employee {in, out, hours work}
 		working_hours = get_total_hours_worked(hours_worked_time_list)
-		row1 = [employee_id, employee_data.employee_name, employee_data.custom_cnic, employee_data.branch, employee_data.department, employee_data.designation, total_days_worked, working_hours, float(total_present), float(total_leaves), float(total_absent), float(total_holidays), "<b>In</b>"] + inlist
-		row2 = ["", "", "", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
-		row3 = ["", "", "", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
+		row1 = [employee_id, employee_data.employee_name, employee_data.branch, employee_data.department, employee_data.designation, total_days_worked, working_hours, float(total_present), float(total_leaves), float(total_absent), "<b>In</b>"] + inlist
+		row2 = ["", "", "", "", "", "", "", "", "", "", "<b>Out</b>"] + outlist
+		row3 = ["", "", "", "", "", "", "", "", "", "", "<b>HW</b>"] + hwlist
 		
 		data.append(row1)
 		data.append(row2)
@@ -200,10 +196,10 @@ def get_times_split(_time_):
 	_time_ = s_time_[1].split(".")[0] if(len(s_time_)>1) else _time_
 	return _time_
 
-def get_employee_details(filters):			#------------------------------------------
+def get_employee_details(filters):
 	conditions = get_conditions(filters, is_employee=True)
 	emp_map = frappe._dict()
-	for d in frappe.db.sql("""select name, employee_name, custom_cnic, branch, department, designation, date_of_joining,
+	for d in frappe.db.sql("""select name, employee_name, branch, department, designation, date_of_joining,
 		holiday_list from tabEmployee where docstatus=0 %s """%conditions, filters, as_dict=1):
 		emp_map.setdefault(d.name, d)
 	return emp_map

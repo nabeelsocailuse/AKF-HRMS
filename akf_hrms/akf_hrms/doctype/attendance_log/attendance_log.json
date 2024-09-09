@@ -19,6 +19,7 @@
   "device_port",
   "log_detail_section",
   "log_type",
+  "log_from",
   "column_break_jzpo",
   "attendance_date",
   "log"
@@ -111,11 +112,17 @@
    "label": "Company",
    "options": "Company",
    "read_only": 1
+  },
+  {
+   "fieldname": "log_from",
+   "fieldtype": "Select",
+   "label": "Log From",
+   "options": "\nLive\nCron\nZK Tool"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-09 15:34:35.546179",
+ "modified": "2024-08-26 16:38:14.633307",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Log",
@@ -131,6 +138,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
    "share": 1,
    "write": 1
   }

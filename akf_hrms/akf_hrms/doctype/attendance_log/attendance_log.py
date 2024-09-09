@@ -7,6 +7,22 @@ from frappe.utils import time_diff, getdate, get_datetime, time_diff_in_hours
 
 
 class AttendanceLog(Document):
+	def validate(self):
+		self.set_employee_and_shift_type()
+
+	def set_employee_and_shift_type(self):
+		query = f""" 
+				select 
+					e.name,
+					(Select shift_type from `tabShift Assignment` where docstatus=1 and status="Active" and employee=e.name order by start_date limit 1) as shift_type
+				from `tabEmployee` e inner join `tabZK IP Detail` zk on (e.company=zk.company)
+				where attendance_device_id='{self.device_id}' and zk.device_ip = '{self.device_ip}'
+				group by e.attendance_device_id
+				"""
+		for d in frappe.db.sql(query, as_dict=1):
+			self.employee = d.name
+			self.shift = d.shift_type
+			
 	def after_insert(self):
 		self.process_attendance()
 
@@ -46,7 +62,8 @@ class AttendanceLog(Document):
 				"late_entry": self.late_entry(),
 				# "custom_2_hours_late": self.get_2_hours_late()
 			}
-		frappe.get_doc(args).submit()
+		doc = frappe.get_doc(args).save(ignore_permissions=True)
+		doc.submit()
 
 	def late_entry(self):
 		if (not self.shift or not self.log): 
@@ -95,7 +112,6 @@ class AttendanceLog(Document):
 		else:
 			return False
 
-
 	def cal_overtime_hours(self, hours_worked):
 		overtime_hours = None
 		if(not self.shift): 
@@ -107,6 +123,8 @@ class AttendanceLog(Document):
 			overtime_hours = time_diff(str(hours_worked), str(total_working_hours))
 
 		return overtime_hours
+
+
 
 @frappe.whitelist()
 def get_logs_details(filters=None):

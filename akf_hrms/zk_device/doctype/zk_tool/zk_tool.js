@@ -1,198 +1,225 @@
 // Copyright (c) 2024, Nabeel Saleem and contributors
 // For license information, please see license.txt
 let msg = ``;
+var logs = {};
 frappe.ui.form.on("ZK Tool", {
     refresh(frm) {
-        customButtons(frm);
-        customQuery(frm);
-        loadEmployeeDetails(frm);
-        loadLogDetails(frm);
+        set_queries(frm);
+        frm.set_value("fetched", 0);
+		// 
+		// check_zkteco_machine_status(frm);
+		// activate_live_attendance_service(frm);
     },
     company: function (frm) {
         get_company_details(frm);
     },
     log_type: function (frm) {
-        get_company_details(frm);
-    },
+		get_company_details(frm);
+	},
+	get_employees: function (frm) {
+		let d = progress_message_dialog("Getting employees!");
+		frm.call("get_employees", {
+		}).then(r => {
+			$(d.$wrapper).find('.change_message').empty();
+			$(d.$wrapper).find('.change_message').html(`
+					<small class="" style="margin-right: 20px;
+					font-style: italic;
+					font-family: monospace;
+					font-weight: bold;">Employees found!</small>
+					<i class="fa fa-smile-o" style="font-size:30px; color: green;"></i>
+				`);
+				
+				setInterval(() => {
+					d.hide();
+				}, 6000);
+		});
+	},
+	fetch_attendance: function (frm) {
+		let d = progress_message_dialog("Fetching Attendance!");
+		var start = new Date();
+		frm.call('fetch_attendance', {})
+			.then(r => {
+				let data = r.message;
+				logs = data.logs;
+				console.log(logs);
+				frm.set_value("fetched", data.fetched);
+				var end = new Date();
+				const total_time = calculate_process_time(start, end);
+				$(d.$wrapper).find('.change_message').empty();
+				$(d.$wrapper).find('.change_message').html(`
+						<small class="" style="margin-right: 20px;
+						font-style: italic;
+						font-family: monospace;
+						font-weight: bold;">Attendance Fetched</small>
+						<i class="fa fa-smile-o" style="font-size:30px; color: green;"></i>
+						<br>
+						<p>${total_time}</p>
+					`);
+				setInterval(() => {
+					d.hide();	
+				}, 10000);
+			});
+	},
+	mark_attendance: function (frm) {
+		if (logs != null) {
+			var start = new Date();
+			let d = progress_message_dialog("Marking attendance!");
+			let employees_list = frm.doc.employee_list;
+			frm.call('mark_attendance', {
+				employees: employees_list, logs: logs
+			}).then(r => {
+					console.log(r.message);
+					const data = r.message;
+					let msg = (data.marked == true)? "Attendance marked!": "Attendance already marked!"
+					var end = new Date();
+					const total_time = calculate_process_time(start, end);
+					$(d.$wrapper).find('.change_message').empty();
+					$(d.$wrapper).find('.show_progress').empty();
+					$(d.$wrapper).find('.change_message').html(`
+							<small class="" style="margin-right: 20px;
+							font-style: italic;
+							font-family: monospace;
+							font-weight: bold;">${msg}</small>
+							<i class="fa fa-smile-o" style="font-size:30px; color: green;"></i>
+							<br>
+							<p>${total_time}</p>
+						`);
+					setInterval(() => {
+							d.hide();	
+						}, 10000);
+				
+			});
+			
+		} else {
+			frappe.msgprint(`Logs not found please fetch first from machine.`)
+		}
+	},
 });
 
-function customButtons(frm) {
 
-    frm.add_custom_button(__('Get Employees'), function () {
-        get_employees(frm);
-    });
-    frm.add_custom_button(__('Fetch Attendance'), function () {
-        fetch_attendance(frm);
-    });
-    frm.add_custom_button(__('Mark Attendance'), function () {
-        mark_attendance(frm);
-    });
+function set_queries(frm) {
+	frm.set_query('branch', function () {
+		return {
+			filters: {
+				'company': frm.doc.company,
+			}
+		}
+	});
+	frm.set_query('department', function () {
+		return {
+			filters: {
+				'is_group': 0,
+				'disabled': 0,
+				'company': frm.doc.company,
+			}
+		}
+	});
+	frm.set_query('designation', function () {
+		return {
+			filters: {
+				// 'company': frm.doc.company
+			}
+		}
+	});
+	frm.set_query('employee', function () {
+		return {
+			filters: {
+				'status': 'Active',
+				'company': frm.doc.company,
+				'department': frm.doc.department,
+				'designation': frm.doc.designation
+			}
+		}
+	});
 
-}
-
-function customQuery(frm) {
-    // frm.set_query('employee', 'employee_biometric', function () {
-    //     return {
-    //         filters: {
-    //             'status': 'Active',
-    //             'company': frm.doc.company
-    //         }
-    //     }
-    // });
-}
-
-function loadEmployeeDetails(frm) {
-    frm.call("get_employee_details").then(r => {
-        let data = r.message;
-        let rows = ``;
-        let idx = 1
-        data.forEach(element => {
-            // console.log(element)
-            rows += `
-                <tr>
-                    <th scope="row">${idx}</th>
-                    <td class="">${element.employee}</td>
-                    <td class="">${element.attendance_device_id!=null?element.attendance_device_id:"-"}</td>
-                    <td>${element.default_shift!=null?element.default_shift:"-"}</td>
-                    
-                </tr>`;
-            idx += 1;
-        });
-        if(rows!=""){
-            let _html_ = `
-                        <table class="table">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th class="" scope="col">Employee ID</th>
-                                    <th class="" scope="col">Biometric ID</th>
-                                    <th scope="col">Shift</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rows}
-                            </tbody>
-                        </table>`;
-            frm.set_df_property("employee_html", "options", _html_);
-        }
-    });
-}
-
-function loadLogDetails(frm){
-    frm.call("get_log_details").then(r => {
-        let data = r.message;
-        // console.log(data)
-        let div = ``;
-        let idx = 1
-
-        for (const [key1, main_dict] of Object.entries(data)) {
-            div +=`
-                <div class="row"> 
-                    <div class="col-md-12">
-                        <b>Biometric ID</b>: ${key1} 
-                    </div> 
-                </div>`;
-            if (typeof(main_dict)=='object'){
-                for (const [key2, child_values] of Object.entries(main_dict)) {
-                    div +=`
-                        <div class="row"> 
-                            <div class="col-md-12">
-                                <b>Year</b>: ${key2} 
-                            </div> 
-                        </div>`;
-                    if(Array.isArray(child_values)){
-                        let ordered_list = [];
-                        frappe.call({
-                            method: "akf_hrms.zk_device.doctype.zk_tool.zk_tool.get_sorted_list",
-                            async: false,
-                            args:{
-                                unordered_list: child_values
-                            },
-                            callback: function(r){
-                                ordered_list = r.message;
-                                // console.log(ordered_list)
-                            }
-                        });
-                        let rows = ``;
-                        for(let i in ordered_list){
-                            let log = moment(ordered_list[i]).format("DD-MM-YYYY hh:mm:ss a")
-                            rows += `
-                                <tr>
-                                    <!-- th scope="row">${key1}</th -->
-                                    <td scope="row">${key2}</td>
-                                    <td class="text-right" scope="row">${log}</td> 
-                                </tr>`;
-                        }
-                        div += `
-                        <div class="row"> 
-                            <div class="col-md-12">
-                                <table class="table">
-                                    <thead class="thead-dark">
-                                        <tr>
-                                            <!-- th scope="col">Biometric ID</th -->
-                                            <th scope="col">Year</th>
-                                            <th class="text-right" scope="col">Log</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${rows}
-                                    </tbody>
-                                </table>
-                            </div> 
-                        </div>
-                        `;
-                    }
-                }
-                frm.set_df_property("logs_table", "options", div);
-            }
-        }
-    });
-}
-
-function get_employees(frm) {
-    frm.set_intro('');
-    frm.set_intro('Fetching employees...');
-    frm.call('get_employees')
-        .then(r => {
-            frm.set_intro(r.message);
-            frm.save()
-            // frm.refresh();
-        });
-
+	frm.set_query('employee', 'employee_list', function () {
+		return {
+			filters: {
+				'status': 'Active',
+				'company': frm.doc.company
+			}
+		}
+	});
 }
 
 function get_company_details(frm) {
-    frm.call('get_company_details')
-        .then(r => {
-            // console.log(r.message);
-            frm.set_intro('');
-            frm.set_intro(r.message == undefined ? "Device detail not found." : "", 'red');
-        });
+	if (frm.doc.company) {
+		logs = {};
+		frm.set_value("fetched", 0);
+		frm.call('get_company_details', {
+			throw_if_missing: true, freeze: true,
+		}).then(r => {
+			if (r.message) {
+				// let linked_doc = r.message;
+			}
+		});
+	} else {
+		frm.set_value("ip_address", "")
+		frm.set_value("port", "")
+	}
 }
 
-function fetch_attendance(frm) {
-    frm.set_intro('');
-    frm.set_intro('Fetching attendance...');
-    frm.call('fetch_attendance')
-        .then(r => {
-            frm.set_intro(r.message);
-            frm.save()
-        });
+// Listening to event published on server side
+function progress_message_dialog(msg){
+	let d = new frappe.ui.Dialog({
+		title: 'add message',
+		fields: [
+			{
+				label: '',
+				fieldname: 'show_msg',
+				fieldtype: 'HTML',
+				options: `
+				<div class="row">
+					<div class="col-xs-12 change_message">
+						<small class="" style="margin-right: 20px;
+						font-style: italic;
+						font-family: monospace;
+						font-weight: bold;">${msg}</small>
+						<i class="fa fa-spinner fa-spin" style="font-size:30px; color: blue;"></i>
+					</div>
+					<div class="col-xs-12 show_progress">
+					</div>
+				</div>`
+			},
+		],
+		size: 'small', // small, large, extra-large 
+		primary_action_label: 'Fetch',
+		primary_action(values) {
+			// console.log(values);
+			d.hide();
+		}
+	});
+	d.show();
+	// Hide the buttons (if you prefer to hide them entirely)
+	$(d.$wrapper).find('.modal-header').hide();
+	$(d.$wrapper).find('.btn-modal-close').hide();
+	$(d.$wrapper).find('.btn-primary').hide();
+	return d;
 }
 
-function mark_attendance(frm) {
-    // frm.set_intro('');
-    // frm.set_intro('Marking attendance...', 'blue');
-    // frm.set_value("progress_message", "Marking attendance...")
-    frm.call('mark_attendance')
-        .then(r => {
-            // console.log(r.message)
-            // frm.set_intro('');
-            // frm.set_intro(r.message, 'green');
-            // frm.save()
-        });
+function calculate_process_time(start, end){
+	var diffMs = end - start;
+	var diffHrs = Math.floor((diffMs % 86400000) / 3600000); // 3600000 ms in an hour
+	var diffMins = Math.floor(((diffMs % 86400000) % 3600000) / 60000); // 60000 ms in a minute
+	var diffSecs = Math.floor((((diffMs % 86400000) % 3600000) % 60000) / 1000); // seconds
+	return `${diffHrs} hours:${diffMins} minutes: ${diffSecs} seconds`;
 }
 
-frappe.realtime.on('event_name', (data) => {
-    console.log(data)
-})
+function check_zkteco_machine_status(frm){
+	// frm.add_custom_button(__("Machine Status"), function(){
+	// 	//perform desired action such as routing to new form or fetching etc.
+	//   }, __("ZKTeco"));
+}
+
+function activate_live_attendance_service(frm){
+	frm.add_custom_button(__("Activate Live Serivce"), function(){
+		//perform desired action such as routing to new form or fetching etc.
+		frappe.call({
+			method: "akf_hrms.zk_device.doctype.zk_tool.zk_tool.activate_live_attendance_service",
+			callback: function(r){
+				console.log(r.message);
+				// frappe.msgprint(r.message);
+			}
+		})
+	  }, __("ZKTeco"));
+}

@@ -6,7 +6,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "progress_message",
   "company_detail_section",
   "company",
   "column_break_tvtq",
@@ -15,16 +14,27 @@
   "device_ip",
   "column_break_cssv",
   "device_port",
+  "other_filters_section",
+  "department",
+  "column_break_bwfi",
+  "designation",
+  "column_break_hzho",
+  "employee",
+  "column_break_wwey",
+  "get_employees",
+  "process_attendance_section",
+  "fetched",
+  "total_employees",
+  "column_break_baic",
+  "fetch_attendance",
+  "column_break_aglz",
+  "mark_attendance",
   "date_ranges_section",
   "from_date",
   "column_break_sbus",
   "to_date",
   "logs_detail_section",
-  "employee_detail",
-  "employee_html",
-  "log_details_section",
-  "logs_json",
-  "logs_table"
+  "employee_list"
  ],
  "fields": [
   {
@@ -35,8 +45,10 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_tvtq",
@@ -57,7 +69,8 @@
   {
    "fieldname": "device_ip",
    "fieldtype": "Data",
-   "label": "Device IP"
+   "label": "Device IP",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_cssv",
@@ -66,7 +79,8 @@
   {
    "fieldname": "device_port",
    "fieldtype": "Data",
-   "label": "Device Port"
+   "label": "Device Port",
+   "reqd": 1
   },
   {
    "fieldname": "date_ranges_section",
@@ -96,47 +110,94 @@
    "label": "Employee Details"
   },
   {
-   "fieldname": "logs_table",
-   "fieldtype": "HTML",
-   "label": "Logs Table"
+   "fieldname": "employee_list",
+   "fieldtype": "Table",
+   "label": "Employee List",
+   "options": "Employee List"
   },
   {
-   "fieldname": "logs_json",
-   "fieldtype": "Long Text",
-   "hidden": 1,
-   "label": "Logs Json",
-   "read_only": 1
-  },
-  {
-   "fieldname": "employee_detail",
-   "fieldtype": "Long Text",
-   "hidden": 1,
-   "label": "Employee Detail",
-   "read_only": 1
-  },
-  {
-   "fieldname": "progress_message",
-   "fieldtype": "Text",
-   "label": "Progress Message",
-   "read_only": 1
-  },
-  {
-   "fieldname": "employee_html",
-   "fieldtype": "HTML",
-   "label": "Employee Html"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "log_details_section",
+   "fieldname": "other_filters_section",
    "fieldtype": "Section Break",
-   "label": "Log Details"
+   "label": "Other Filters"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "column_break_bwfi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "column_break_hzho",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "column_break_wwey",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "get_employees",
+   "fieldtype": "Button",
+   "label": "Get Employees"
+  },
+  {
+   "fieldname": "process_attendance_section",
+   "fieldtype": "Section Break",
+   "label": "Process Attendance"
+  },
+  {
+   "default": "0",
+   "fieldname": "fetched",
+   "fieldtype": "Check",
+   "label": "Fetched"
+  },
+  {
+   "fieldname": "total_employees",
+   "fieldtype": "Int",
+   "label": "Total Employees"
+  },
+  {
+   "fieldname": "column_break_baic",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.fetched == 0",
+   "description": "From machine",
+   "fieldname": "fetch_attendance",
+   "fieldtype": "Button",
+   "label": "Fetch Attendance"
+  },
+  {
+   "fieldname": "column_break_aglz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.fetched == 1",
+   "fieldname": "mark_attendance",
+   "fieldtype": "Button",
+   "label": "Mark Attendance"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-09 19:08:56.557082",
+ "modified": "2024-08-23 13:05:02.004943",
  "modified_by": "Administrator",
  "module": "ZK Device",
  "name": "ZK Tool",

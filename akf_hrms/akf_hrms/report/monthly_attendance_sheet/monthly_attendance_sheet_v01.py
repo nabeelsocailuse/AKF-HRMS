@@ -96,7 +96,6 @@ def get_columns(filters: Filters) -> list[dict]:
 				"width": 135,
 			},
 			{"label": _("Employee Name"), "fieldname": "employee_name", "fieldtype": "Data", "width": 120},
-			{"label": _("CNIC"), "fieldname": "custom_cnic", "fieldtype": "Data", "width": 120},   #----------------------------------------------
 			{"label": _("Banch"), "fieldname": "branch", "fieldtype": "Data", "width": 120},
 			{"label": _("Department"), "fieldname": "department", "fieldtype": "Data", "width": 120},
 			{"label": _("Designation"), "fieldname": "designation", "fieldtype": "Data", "width": 120},
@@ -295,7 +294,6 @@ def get_employee_related_details(filters: Filters) -> tuple[dict, list]:
 		.select(
 			Employee.name,
 			Employee.employee_name,
-			Employee.custom_cnic,      #-------------------------------------------------------------------------------------
 			Employee.designation,
 			Employee.grade,
 			Employee.department,
@@ -402,7 +400,6 @@ def get_rows(employee_details: dict, filters: Filters, holiday_map: dict, attend
             row = {
                 "employee": employee,
                 "employee_name": details.employee_name,
-                "custom_cnic": details.custom_cnic,
                 "branch": details.branch,
                 "department": details.department,
                 "designation": details.designation
@@ -422,7 +419,6 @@ def get_rows(employee_details: dict, filters: Filters, holiday_map: dict, attend
             attendance_for_employee[0].update({
                 "employee": employee,
                 "employee_name": details.employee_name,
-                "custom_cnic": details.custom_cnic,
                 "branch": details.branch,
                 "department": details.department,
                 "designation": details.designation

@@ -1604,7 +1604,7 @@ class ZK(object):
                 attendance_data = attendance_data[40:]
         return attendances
 
-    def get_attendance_json(self, dates_list=None, userIds=None):
+    def get_attendance_json(self, dates_list=None, userIds=None, year=None, month=None):
         """
         return attendance record
 
@@ -1636,23 +1636,32 @@ class ZK(object):
             user_id = (user_id.split(b'\x00')[0]).decode(errors='ignore')
             
             timestamp = self.__decode_time(timestamp)
-            year = str(timestamp).split(' ')[0].split('-')[0]
+            machine_date = str(timestamp).split(' ')[0].split('-')
+            machine_year = machine_date[0]
+            machine_month = machine_date[1]
             
             attendance = Attendance(user_id, timestamp, status, punch, uid)
             # print('attendance {user_id, status} :', attendance.user_id, attendance.status)
-            
+            year_month = ""
             if(attendance.user_id in userIds):
                 # print('timestamp: ', timestamp)
-                print('year: ',year)
+                if(year and month):
+                    year_month = f"{year}-{month}"
+                else:
+                    year_month = f"{machine_year}-{machine_month}"
+
+                print('year_month: ',year_month)
                 # print('user_id: ',user_id)
                 dtDict = userIds[attendance.user_id]
-                if (not year in dtDict):
-                    userIds[attendance.user_id].update({year : set()})
-                userIds[str(attendance.user_id)][str(year)].add(("%s"%attendance.timestamp))
+                if (not year_month in dtDict):
+                    userIds[attendance.user_id].update({year_month : set()})
+                if(year_month in str(timestamp)):
+                    userIds[str(attendance.user_id)][str(year_month)].add(("%s"%attendance.timestamp))
                 # print(userIds)
             # attendances.append(attendance)
             attendance_data = attendance_data[40:]
         return userIds
+
 
     def clear_attendance(self):
         """

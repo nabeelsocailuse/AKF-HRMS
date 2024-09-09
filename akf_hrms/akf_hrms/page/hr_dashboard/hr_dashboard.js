@@ -137,6 +137,7 @@ serverCall = {
     hr_counts: function(page, filters){
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_hr_counts",
+            async: false,
             args: {
                 filters: filters
             }, 
@@ -149,6 +150,7 @@ serverCall = {
     hr_charts: function(filters){
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_hr_charts",
+            async: false,
             args: {
                 filters: filters
             }, 
@@ -161,6 +163,7 @@ serverCall = {
     recruiment_counts: function(filters){
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_recruitement_counts",
+            async: false,
             args: {
                 filters: filters
             }, 
@@ -173,6 +176,7 @@ serverCall = {
     recruitment_charts: function(filters){
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_recruitement_charts",
+            async: false,
             args: {
                 filters: filters
             }, 
@@ -670,7 +674,7 @@ function pieChart(data) {
 // HR Recruitment Dashboard
 function search_departments() {
     $("#department").on('change', function() {
-        console.log(company)
+        // console.log(company)
         var selectedValue = $(this).val();
         // updateTotalCandidates(selectedValue);
         // updateShortlistedCandidates(selectedValue);
@@ -694,7 +698,7 @@ function updateTotalCandidates(department, company) {
                 if (r.message.error) {
                     console.error("Error fetching Total candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    console.log("Shortlisted candidates count:", r.message);
+                    // console.log("Shortlisted candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
                     const data = r.message.total;
                     const t1 = document.getElementById('total_applicants');
@@ -727,7 +731,7 @@ function updateShortlistedCandidates(department) {
                 if (r.message.error) {
                     console.error("Error fetching shortlisted candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    console.log("Shortlisted candidates count:", r.message);
+                    // console.log("Shortlisted candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
                     const data = r.message.total
                     t1 = document.getElementById('shortlisted')
@@ -758,12 +762,12 @@ function updateHiredCandidates(department) {
             filters: { "department": department }
         },
         callback: function(r) {
-            console.log(r.message)
+            // console.log(r.message)
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching hired candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    console.log("Hired candidates count:", r.message);
+                    // console.log("Hired candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
                     const data = r.message.total;
                     const t1 = document.getElementById('hired');
@@ -792,12 +796,12 @@ function updateRejectedCandidates(department) {
             filters: { "department": department }
         },
         callback: function(r) {
-            console.log(r.message)
+            // console.log(r.message)
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching rejected candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    console.log("Rejected candidates count:", r.message);
+                    // console.log("Rejected candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
 
                     const data = r.message.total;
@@ -827,12 +831,12 @@ function updateTimetoFill(department) {
             filters: { "department": department }
         },
         callback: function(r) {
-            console.log(r.message);
+            // console.log(r.message);
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching average time to fill:", r.message.error);
                 } else {
-                    console.log("Average time to fill:", r.message);
+                    // console.log("Average time to fill:", r.message);
                     const avgTime = r.message;
                     document.querySelector('.card .applicant_count').textContent = r.message;
 
