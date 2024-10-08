@@ -66,10 +66,6 @@ doctype_js = {
     "Company": [
     "public/js/custom_doctype_js/company/company.js",
     ],
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
