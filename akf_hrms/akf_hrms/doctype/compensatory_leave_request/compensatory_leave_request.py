@@ -101,7 +101,8 @@ class CompensatoryLeaveRequest(Document):
 
 		company = frappe.db.get_value("Employee", self.employee, "company")
 		holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
-		compensatory_off=frappe.db.get_value("Holiday List",holiday_list,"custom_compensatory_leave")
+		compensatory_off=frappe.db.get_value("Holiday",{"parent":holiday_list,"holiday_date":self.work_from_date },"custom_compensatory_leave")
+		frappe.throw(f"{compensatory_off}")
 		
 		if(self.against == "Work on Holiday"):
 			date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off
@@ -144,7 +145,7 @@ class CompensatoryLeaveRequest(Document):
 		if self.leave_allocation:
 			if(self.against == "Work on Holiday"):
 				holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
-				compensatory_off=frappe.db.get_value("Holiday List",holiday_list,"custom_compensatory_leave")
+				compensatory_off=frappe.db.get_value("Holiday",{"parent":holiday_list},"custom_compensatory_leave")
 				date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off
 			else:
 				date_difference = date_diff(self.work_end_date, self.work_from_date) + 1

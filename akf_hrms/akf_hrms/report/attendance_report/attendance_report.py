@@ -17,13 +17,13 @@ def execute(filters=None):
 		columns = get_absentess_columns()
 		data = get_absentees(filters, user)
 	
-	# if filters.get("report_type") == "Late Arrival":
-	# 	columns = get_late_arrival_columns()
-	# 	data = get_late_arrival(filters, user)
+	if filters.get("report_type") == "Late Arrival":
+		columns = get_late_arrival_columns()
+		data = get_late_arrival(filters, user)
 
-	# if filters.get("report_type") == "Early Leavers":
-	# 	columns = get_early_leavers_columns()
-	# 	data = get_early_leavers(filters, user)
+	if filters.get("report_type") == "Early Leavers":
+		columns = get_early_leavers_columns()
+		data = get_early_leavers(filters, user)
 
 	# if filters.get("report_type") == "Check In/Out Missing":
 	# 	columns = get_check_in_out_columns()
@@ -56,7 +56,7 @@ def execute(filters=None):
 # Absentees @@@
 def get_absentess_columns():
 	return [
-		_("Employee ID") + ":Data:120",
+		_("Attendance ID") + ":Link/Attendance:120",
 		_("Employee name") + ":Data:120",
 		_("Gender") + ":Data:120",
 		_("Designation") + ":Data:120",
@@ -90,7 +90,7 @@ def get_absentees(filters, user):
 # Late Arrivals @@@
 def get_late_arrival_columns():
 	return [
-		_("Employee ID") + ":Data:120",
+		_("Attendance ID") + ":Link/Attendance:120",
 		_("Employee name") + ":Data:120",
 		_("Designation") + ":Data:120",
 		_("Department") + ":Data:120",
@@ -131,37 +131,6 @@ def get_late_arrival(filters, user):
 		late_arrival_result = frappe.db.sql(late_query, filters)
 	
 	return late_arrival_result
-# # 
-# def get_late_arrival(filters, user):
-	
-# 	conditions = ""
-# 	if filters.get("department"):
-# 		conditions += " and att.department = %(department)s"
-# 	if filters.get("region"):
-# 		conditions += " and att.custom_region = %(region)s"
-# 	if filters.get("date"):
-# 		conditions += " and att.attendance_date = %(date)s and erv.roster_date = %(date)s"
-	
-# 	if "HR Manager" in frappe.get_roles(user):
-# 		late_query = """ SELECT att.name, att.employee_name, att.designation, att.department, att.location, cast(ervt.from_time as time) as from_time,  
-# 				cast(att.check_in_time as time) as check_in_time, ervt.total_time_in_hours_mins, att.check_in_late, att.status    
-# 				FROM `tabAttendance` att INNER JOIN `tabEmployee Roster View` erv ON (att.employee=erv.employee) 
-# 				INNER JOIN `tabEmployee Roster View Table` ervt ON (erv.name = ervt.parent) 
-# 				WHERE  att.in_time_status='Late' and att.status = "Present" {condition} order by  att.check_in_late desc  """.format(condition = conditions)
-# 		# Database
-# 		late_arrival_result = frappe.db.sql(late_query, filters)
-# 	else:
-# 		late_query = """ SELECT att.name, att.employee_name, att.designation, att.department, att.location, cast(ervt.from_time as time) as from_time,  
-# 				cast(att.check_in_time as time) as check_in_time, ervt.total_time_in_hours_mins, att.check_in_late, att.status     
-# 				FROM `tabAttendance` att INNER JOIN `tabEmployee Roster View` erv ON (att.employee=erv.employee) 
-# 				INNER JOIN `tabEmployee Roster View Table` ervt ON (erv.name = ervt.parent) INNER JOIN `tabUser Permission` per ON (att.employee=per.for_value)
-# 				WHERE  att.in_time_status='Late' and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
-# 				group by att.employee
-# 				order by  att.check_in_late desc  """.format(id=user,condition = conditions)
-#         # Database
-# 		late_arrival_result = frappe.db.sql(late_query, filters)
-	
-# 	return late_arrival_result
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
  
@@ -169,53 +138,47 @@ def get_late_arrival(filters, user):
 
 def get_early_leavers_columns():
 	return [
-		_("Employee Code") + ":Data:120",
+		_("Attendance ID") + ":Link/Attendance:120",
 		_("Employee name") + ":Data:120",
-		_("Designation") + ":/Department:120",
+		_("Designation") + ":Data:120",
 		_("Department") + ":Data:120",
-		_("Location") + ":Data:120",
-		_("Roster Check Out") + ":Data:120",
-		_("Check Out") + ":Data:120",
-		_("Total Hours Assigned") + ":Data:120",
-		_("Total Hours Worked") + ":Data:120",
-		_("Check Out Status") + ":Data:120",
+		_("Branch") + ":Data:120",
+		_("Shift Check In") + ":Data:120",
+		_("Check In") + ":Data:120",
+		_("Total hours assigned") + ":Data:120",
+		_("Check In Status") + ":Data:120",
 		_("Feedback/Status") + ":Data:120",
 
 	]
-
+# 
 def get_early_leavers(filters, user):
 	
 	conditions = ""
 	if filters.get("department"):
 		conditions += " and att.department = %(department)s"
 	if filters.get("region"):
-		conditions += " and att.region = %(region)s"
+		conditions += " and att.custom_region = %(region)s"
 	if filters.get("date"):
-		conditions += " and att.attendance_date = %(date)s and erv.roster_date = %(date)s"
+		conditions += " and att.attendance_date = %(date)s"
 	
 	if "HR Manager" in frappe.get_roles(user):
-		query = """
-			SELECT att.employee_code, att.employee_name, att.designation, att.department,att.location, cast(ervt.to_time as time) as to_time,  
-			cast(att.check_out_time as time) as check_out_time, ervt.total_time_in_hours_mins, att.total_time, att.check_out_early, att.status
-			FROM `tabAttendance` att INNER JOIN `tabEmployee Roster View` erv ON (att.employee=erv.employee) 
-			INNER JOIN `tabEmployee Roster View Table` ervt ON (erv.name = ervt.parent) 
-			WHERE att.out_time_status='Early' and att.status = "Present"  {condition} order by att.check_out_early desc 
-			 """.format(condition = conditions)
-        # Database
-		result = frappe.db.sql(query, filters)
+		late_query = """ SELECT att.name, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
+				cast(att.in_time as time) as check_in_time, att.custom_total_working_hours, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status    
+				FROM `tabAttendance` att
+				WHERE  early_exit = 1 and att.status = "Present" {condition} order by  att.early_exit desc  """.format(condition = conditions)
+		# Database
+		late_arrival_result = frappe.db.sql(late_query, filters)
 	else:
-		query = """
-        	SELECT att.employee_code, att.employee_name, att.designation, att.department,att.location, cast(ervt.to_time as time) as to_time,  
-        	cast(att.check_out_time as time) as check_out_time, ervt.total_time_in_hours_mins, att.total_time, att.check_out_early, att.status
-            FROM `tabAttendance` att INNER JOIN `tabEmployee Roster View` erv ON (att.employee=erv.employee) 
-            INNER JOIN `tabEmployee Roster View Table` ervt ON (erv.name = ervt.parent) INNER JOIN `tabUser Permission` per ON (att.employee=per.for_value)
-            WHERE att.out_time_status='Early' and att.status = "Present"  and per.user='{id}'  and per.allow='Employee'  {condition} 
-			group by att.employee
-			order by att.check_out_early desc 
-        	 """.format(id=user, condition = conditions)
+		late_query = """ SELECT att.name, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
+				cast(att.in_time as time) as check_in_time, att.custom_total_working_hours, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status     
+				FROM `tabAttendance` att INNER JOIN `tabUser Permission` per ON (att.employee=per.for_value)
+				WHERE  early_exit = 1 and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
+				group by att.employee
+				order by  att.early_exit desc  """.format(id=user,condition = conditions)
         # Database
-		result = frappe.db.sql(query, filters)
-	return result
+		late_arrival_result = frappe.db.sql(late_query, filters)
+	
+	return late_arrival_result
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
  
