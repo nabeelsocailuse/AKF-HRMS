@@ -1,6 +1,10 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+""" custom functions 
+1- validate_only_three_leaves_in_current_month
+
+"""
 import datetime
 from typing import Dict, Optional, Tuple, Union
 
@@ -86,6 +90,9 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_value("Leave Type", self.leave_type, "is_optional_leave"):
 			self.validate_optional_leave()
 		self.validate_applicable_after()
+		self.validate_only_three_leaves_in_current_month()
+		
+
 
 	def on_update(self):
 		if self.status == "Open" and self.docstatus < 1:
@@ -133,6 +140,9 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 		hrms.refetch_resource("hrms:my_leaves", employee_user)
 
 	def validate_applicable_after(self):
+		from akf_hrms.patches.skip_validations import skip
+		if(skip()): 
+			return
 		if self.leave_type:
 			leave_type = frappe.get_doc("Leave Type", self.leave_type)
 			if leave_type.applicable_after > 0:
@@ -247,6 +257,63 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 				).format(formatdate(future_allocation[0].from_date), future_allocation[0].name)
 			)
 
+	""" HR Leave Policy """
+	""" Casual Leave allowed 3 three in a month... """
+	def validate_only_three_leaves_in_current_month(self):
+		from akf_hrms.patches.skip_validations import skip
+		if(skip()): 
+			return
+		if(self.leave_type!="Casual Leave"): return
+		# start validation
+		from frappe.utils import get_first_day, get_last_day, getdate
+		import datetime
+		# Parse the from_date string into a datetime object
+		from_month = getdate(self.from_date)
+		# Get the month name
+		from_month_name = from_month.strftime("%B")
+		# Parse the to_date string into a datetime object
+		to_month = getdate(self.to_date)
+		# Get the month name
+		to_month_name = to_month.strftime("%B")
+
+
+		def verifyLeaves(conditions, month_name):
+			result = frappe.db.sql(f""" 
+				select 
+					ifnull(sum(total_leave_days),0) total_leaves
+				from 
+					`tabLeave Application` 
+				{conditions}
+				""")
+			if(result): 
+				total_leaves = result[0][0] + self.total_leave_days
+				if(total_leaves>3):
+					frappe.throw(f"3 <b>{self.leave_type}</b> allowed in a month <b>{month_name}</b>.", title="Exception")
+
+		conditions = f""" 
+		where 
+			docstatus=1
+			and employee = '{self.employee}'
+			and company = '{self.company}'
+			and leave_type = '{self.leave_type}'
+		"""
+		if(from_month_name == to_month_name):
+			start_date =  get_first_day(self.from_date)
+			end_date =  get_last_day(self.to_date)
+			conditions += f" and (from_date>='{start_date}' and to_date<='{end_date}') "
+			verifyLeaves(conditions, from_month_name)
+			
+		else:
+			# validate with from date
+			start_date =  get_first_day(self.from_date)
+			end_date =  get_last_day(self.from_date)
+			conditions += " and (from_date>='{start_date}' and to_date<='{end_date}') "
+			verifyLeaves(conditions, from_month_name)
+			# validate with to date
+			start_date =  get_first_day(self.to_date)
+			end_date =  get_last_day(self.to_date)
+			verifyLeaves(conditions, to_month_name)
+		
 	def update_attendance(self):
 		if self.status != "Approved":
 			return
@@ -1398,3 +1465,6 @@ def get_leave_approver(employee):
 
 def on_doctype_update():
 	frappe.db.add_index("Leave Application", ["employee", "from_date", "to_date"])
+
+
+

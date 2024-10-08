@@ -20,6 +20,16 @@ app_include_js = [
     "/assets/akf_hrms/js/highcharts_apis/exporting.js",
     "/assets/akf_hrms/js/highcharts_apis/accessibility.js",
     "/assets/akf_hrms/js/highcharts_apis/variable-pie.js",
+    
+    # "assets/akf_hrms/js/hierarchy-chart.min.js",
+    # "/assets/akf_hrms/js/orgchart.js",
+    "/assets/akf_hrms/js/d3.v7.min.js",
+    "/assets/akf_hrms/js/d3-org-chart.js",
+    # "/assets/akf_hrms/js/jspdf.min.js",
+    "/assets/akf_hrms/js/d3-flextree.js",
+    "/assets/akf_hrms/js/html2canvas.js",
+    # "/assets/akf_hrms/js/d3.v5.min.js",
+    
 ]
 
 # include js, css files in header of web template
@@ -52,7 +62,10 @@ doctype_js = {
     "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
     "Salary Slip": [
         "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
-        ]
+        ],
+    "Company": [
+    "public/js/custom_doctype_js/company/company.js",
+    ],
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -90,7 +103,7 @@ doctype_js = {
 # add methods and filters to jinja environment
 # jinja = {
 # 	"methods": "akf_hrms.utils.jinja_methods",
-# 	"filters": "akf_hrms.utils.jinja_filters"
+# 	"filters": "akf_hrms.utils.jinja_filters",
 # }
 
 # Installation
