@@ -20,16 +20,10 @@ app_include_js = [
     "/assets/akf_hrms/js/highcharts_apis/exporting.js",
     "/assets/akf_hrms/js/highcharts_apis/accessibility.js",
     "/assets/akf_hrms/js/highcharts_apis/variable-pie.js",
-    
-    # "assets/akf_hrms/js/hierarchy-chart.min.js",
-    # "/assets/akf_hrms/js/orgchart.js",
     "/assets/akf_hrms/js/d3.v7.min.js",
     "/assets/akf_hrms/js/d3-org-chart.js",
-    # "/assets/akf_hrms/js/jspdf.min.js",
     "/assets/akf_hrms/js/d3-flextree.js",
     "/assets/akf_hrms/js/html2canvas.js",
-    # "/assets/akf_hrms/js/d3.v5.min.js",
-    
 ]
 
 # include js, css files in header of web template
@@ -170,8 +164,9 @@ override_doctype_class = {
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
     "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
     "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
-    "Leave Application": "akf_hrms.extends.leave_application_wf.leave_application_wf.XLeaveApplication",
     "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
+    "Project": "akf_accounts.customizations.extends.project_override.XProject",
+    "Leave Application": "akf_hrms.overrides.leave_application.OLeaveApplication",
 }
 
 # Document Events

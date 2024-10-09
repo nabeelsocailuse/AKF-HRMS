@@ -35,6 +35,7 @@ def get_columns(filters):
 	]
 
 def get_data(filters):
+	frappe.msgprint("Late arrival report")
 	return_list = []
 	conditions, filters = get_conditions(filters)
 	emp_info = []
@@ -83,7 +84,7 @@ def get_data(filters):
 				""", (emp_id[0], filters.get("from_date"), filters.get("to_date")))
 
 				return_list.extend(emp_info)
-
+	frappe.msgprint(frappe.as_json(return_list))
 	return return_list
 
 def get_conditions(filters):
