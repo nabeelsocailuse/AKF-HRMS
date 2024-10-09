@@ -31,7 +31,8 @@ frappe.query_reports["Attendance Report"] = {
 			"label": "Report Type",
 			"fieldtype": "Select",
 			"fieldname": "report_type",
-			"options": ["Absentees", "Late Arrival", "Early Leavers", "Check In/Out Missing" ,"Pending Attendance Requests", "Pending Leaves", "Approved Leaves", "Pending Comp Off Requests", "Approved Comp Off" ],
+			"options": ["Absentees", "Late Arrival", "Early Leavers", "Check In/Out Missing" ,"Pending Attendance Requests", "Pending Leaves", "Approved Leaves"],
+			// "options": ["Absentees", "Late Arrival", "Early Leavers", "Check In/Out Missing" ,"Pending Attendance Requests", "Pending Leaves", "Approved Leaves", "Pending Comp Off Requests", "Approved Comp Off" ],
 			"reqd": 0,
 		}	
 

@@ -6,6 +6,7 @@ class XEmployee(Employee):
 	def validate(self):
 		super().validate()
 		self.verify_identity_card_no()
+		self.set_base64_image()
 	
 	def verify_identity_card_no(self):
 		details = get_country_details(self.custom_country)
@@ -33,6 +34,22 @@ class XEmployee(Employee):
 				frappe.throw(f"Row#{row.idx}: Increment amount cannot be negative.")
 		except (ValueError, TypeError):
 			frappe.throw("Invalid input for increment amount. Please enter a positive number.")
+
+	def set_base64_image(self):		
+		if (self.is_new()): return 
+		import base64, requests
+
+		image_path = self.image
+		url = frappe.utils.get_url()
+		
+		if image_path:
+			image_path = f'{url}{image_path}' 
+		else:
+			image_path = f"{url}/files/male-avatar.png"
+
+		my_string = base64.b64encode(requests.get(image_path).content)
+		my_string = "data:image/png;base64,"+(my_string.decode("utf-8"))
+		self.custom_base64_image = my_string
 
 @frappe.whitelist()
 def get_country_details(country):

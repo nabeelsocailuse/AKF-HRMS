@@ -43,10 +43,10 @@ class CompensatoryLeaveRequest(Document):
 			arrival_date=getdate(result[0].arrival_date)
 
 			if (not departure_date<= getdate(self.work_from_date) <= arrival_date):
-				frappe.throw(_("Departure Date should be in between Work From Date and Work End Date"))
+				frappe.throw(_(f"Departure Date: {departure_date} should be in between Work From Date and Work End Date"))
 
 			if (not departure_date<= getdate(self.work_end_date) <= arrival_date):
-				frappe.throw(_("Arrival Date should be in between Work From Date and Work End Date"))
+				frappe.throw(_(f"Arrival Date: {arrival_date} should be in between Work From Date and Work End Date"))
 
 		elif(self.against == "Work on Holiday"):
 			self.validate_holidays()
@@ -80,7 +80,7 @@ class CompensatoryLeaveRequest(Document):
 			)
 
 		if len(attendance_records) < date_diff(self.work_end_date, self.work_from_date) + 1:
-			frappe.throw(_("You are not present all day(s) between compensatory leave request days"))
+			frappe.throw(_(f"You are not present all day(s) between 'From date: {self.work_from_date}' and 'End date: {self.work_end_date}'"))
 
 	def validate_holidays(self):
 		holidays = get_holiday_dates_for_employee(self.employee, self.work_from_date, self.work_end_date)
@@ -101,11 +101,13 @@ class CompensatoryLeaveRequest(Document):
 
 		company = frappe.db.get_value("Employee", self.employee, "company")
 		holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
-		compensatory_off=frappe.db.get_value("Holiday",{"parent":holiday_list,"holiday_date":self.work_from_date },"custom_compensatory_leave")
-		frappe.throw(f"{compensatory_off}")
+		compensatory_off=frappe.db.sql(f"""
+									SELECT custom_compensatory_leave
+									FROM `tabHoliday`
+								 	WHERE parent='{holiday_list}' and holiday_date BETWEEN '{self.work_from_date}' AND '{self.work_end_date}'""",as_dict=1)
 		
 		if(self.against == "Work on Holiday"):
-			date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off
+			date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off[0].custom_compensatory_leave
 		else:
 			date_difference = date_diff(self.work_end_date, self.work_from_date) + 1
 
@@ -145,8 +147,11 @@ class CompensatoryLeaveRequest(Document):
 		if self.leave_allocation:
 			if(self.against == "Work on Holiday"):
 				holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
-				compensatory_off=frappe.db.get_value("Holiday",{"parent":holiday_list},"custom_compensatory_leave")
-				date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off
+				compensatory_off=frappe.db.sql(f"""
+									SELECT custom_compensatory_leave
+									FROM `tabHoliday`
+								 	WHERE parent='{holiday_list}' and holiday_date BETWEEN '{self.work_from_date}' AND '{self.work_end_date}'""",as_dict=1)
+				date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off[0].custom_compensatory_leave
 			else:
 				date_difference = date_diff(self.work_end_date, self.work_from_date) + 1
 
@@ -231,4 +236,4 @@ class CompensatoryLeaveRequest(Document):
 		)
 		
 		if expense_claim_request:
-			frappe.throw(f"You can't apply for Leave against travel request: {self.travel_request}")
+			frappe.throw(f"You can't apply for Leave against Travel Request: {self.travel_request}, as an Expense Claim ({expense_claim_request}) already exist!")

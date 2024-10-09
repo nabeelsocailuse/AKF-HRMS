@@ -1,10 +1,13 @@
-import frappe
+import frappe, ast
 
 @frappe.whitelist()
-def get_children(doctype, parent=None, company=None, is_root=False, is_tree=False):
-
+def get_children(doctype, params=None, parent=None, company=None, is_root=False, is_tree=False):
+	params = ast.literal_eval(params)
+	
 	filters = [["status", "!=", "Left"]]
-	filters.append(["company", "=", company])
+	filters.append(["company", "=", params.get("company")])
+	filters.append(["branch", "=", params.get("branch")])
+
 	if parent and company and parent != company:
 		filters.append(["reports_to", "=", parent])
 	else:
@@ -13,7 +16,7 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 	# case_statement = """ case when image is not null then image else '' END as img".format(avatar) """
 	
 	first_level = frappe.db.get_list('Employee',
-	fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else 'CEO' END as title","branch","cluster"],
+	fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else 'CEO' END as title","branch","cluster"],
 	filters = filters,
 	order_by="name")
 
@@ -21,7 +24,7 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 	second_lev = []
 	for emp in first_level:
 		second_lev.append(frappe.get_list("Employee",
-		fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+		fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 		filters=[["reports_to", "=", emp.id],["status", "!=", "Left"]],
 		order_by="name"))
 	second_level = []
@@ -43,42 +46,42 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 		if len(emp) == 1:
 			ultimate_nodes.append(emp[0])
 			third_level.append(frappe.get_list("Employee",
-		fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+		fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 		filters=[["reports_to", "=", emp.id],["status", "!=", "Left"]],
 		order_by="name"))
 		elif len(emp) > 1:
 			for em in emp:
 				ultimate_nodes.append(em)
 				third_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 			order_by="name"))
 	for emp in third_level:
 		if len(emp) == 1:
 			ultimate_nodes.append(emp[0])
 			fourth_level.append(frappe.get_list("Employee",
-		fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+		fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 		filters=[["reports_to", "=", emp[0].id],["status", "!=", "Left"]],
 		order_by="name"))
 		elif len(emp) > 1:
 			for em in emp:
 				ultimate_nodes.append(em)
 				fourth_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 			order_by="name"))
 	for emp in fourth_level:
 		if len(emp) == 1:
 			ultimate_nodes.append(emp[0])
 			fifth_level.append(frappe.get_list("Employee",
-		fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+		fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 		filters=[["reports_to", "=", emp[0].id],["status", "!=", "Left"]],
 		order_by="name"))
 		elif len(emp) > 1:
 			for em in emp:
 				ultimate_nodes.append(em)
 				fifth_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 			order_by="name"))
 	if fifth_level:
@@ -86,14 +89,14 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 			if len(emp) == 1:
 				ultimate_nodes.append(emp[0])
 				sixth_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", emp[0].id],["status", "!=", "Left"]],
 			order_by="name"))
 			elif len(emp) > 1:
 				for em in emp:
 					ultimate_nodes.append(em)
 					sixth_level.append(frappe.get_list("Employee",
-				fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+				fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 				filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 				order_by="name"))
 	if sixth_level:
@@ -101,14 +104,14 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 			if len(emp) == 1:
 				ultimate_nodes.append(emp[0])
 				seventh_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", emp[0].id],["status", "!=", "Left"]],
 			order_by="name"))
 			elif len(emp) > 1:
 				for em in emp:
 					ultimate_nodes.append(em)
 					seventh_level.append(frappe.get_list("Employee",
-				fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+				fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 				filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 				order_by="name"))
 	if seventh_level:
@@ -116,14 +119,14 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 			if len(emp) == 1:
 				ultimate_nodes.append(emp[0])
 				eighth_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", emp[0].id],["status", "!=", "Left"]],
 			order_by="name"))
 			elif len(emp) > 1:
 				for em in emp:
 					ultimate_nodes.append(em)
 					eighth_level.append(frappe.get_list("Employee",
-				fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+				fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 				filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 				order_by="name"))
 	if eighth_level:
@@ -131,14 +134,14 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 			if len(emp) == 1:
 				ultimate_nodes.append(emp[0])
 				ninth_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", emp[0].id],["status", "!=", "Left"]],
 			order_by="name"))
 			elif len(emp) > 1:
 				for em in emp:
 					ultimate_nodes.append(em)
 					ninth_level.append(frappe.get_list("Employee",
-				fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+				fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 				filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 				order_by="name"))
 	if ninth_level:
@@ -146,14 +149,14 @@ def get_children(doctype, parent=None, company=None, is_root=False, is_tree=Fals
 			if len(emp) == 1:
 				ultimate_nodes.append(emp[0])
 				tenth_level.append(frappe.get_list("Employee",
-			fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+			fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 			filters=[["reports_to", "=", emp[0].id],["status", "!=", "Left"]],
 			order_by="name"))
 			elif len(emp) > 1:
 				for em in emp:
 					ultimate_nodes.append(em)
 					tenth_level.append(frappe.get_list("Employee",
-				fields = ["employee_name as name", "name as id", "base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
+				fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else '-' END as title","branch","cluster"],
 				filters=[["reports_to", "=", em.id],["status", "!=", "Left"]],
 				order_by="name"))
 	if tenth_level:
@@ -185,19 +188,19 @@ def convert_image_to_base64():
 		# image_path   = "http://172.104.34.13:6001/files/Muhammad_Ejaz_Asif_Picture.jpg"
 		my_string = base64.b64encode(requests.get(image_path).content)
 		my_string = "data:image/png;base64,"+(my_string.decode("utf-8"))
-		frappe.db.set_value("Employee", url.name, "base64_image", my_string)
+		frappe.db.set_value("Employee", url.name, "custom_base64_image", my_string)
 	# return my_string
 
 @frappe.whitelist()
 def organo_dict():
-	root = frappe.db.get_list("Employee", filters={"designation": "CEO"}, fields=["name", "employee_name", "designation", "branch", "reports_to as parentId", "base64_image", "cluster"])
+	root = frappe.db.get_list("Employee", filters={"designation": "CEO"}, fields=["name", "employee_name", "designation", "branch", "reports_to as parentId", "custom_base64_image", "cluster"])
 	ultimate_nodes = []
 	for d in root:
 		root_employee = d.name
 		ultimate_nodes.append({
 			"name": d.employee_name,
 			"id": d.name,
-			"img": d.base64_image,  
+			"img": d.custom_base64_image,  
 			"parentId": d.reports_to,
 			"title": d.designation,
 			"branch": d.branch, 
@@ -246,7 +249,7 @@ def organo_dict():
 def get_reports_to_employees():
 	result = frappe.db.sql(""" 
 		select 
-			employee_name as name, name as id, base64_image as img, reports_to as parentId, designation as title, branch, cluster
+			employee_name as name, name as id, custom_base64_image as img, reports_to as parentId, designation as title, branch, cluster
 		from 
 			tabEmployee
 		where 
@@ -260,7 +263,7 @@ def get_reports_to_employees():
 def get_next_level_employees():
 	return frappe.db.sql(""" 
 		select 
-			employee_name as name, name as id, base64_image as img, reports_to as parentId, designation as title, branch, cluster
+			employee_name as name, name as id, custom_base64_image as img, reports_to as parentId, designation as title, branch, cluster
 
 		from 
 			tabEmployee

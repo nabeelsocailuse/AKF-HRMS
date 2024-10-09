@@ -8,18 +8,83 @@ frappe.pages["organogram"].on_page_load = function (wrapper) {
   });
   main = page.main;
   // $("#temp-container").html(`<div id="previewicon" style="text-align:center;"> <i class="fa fa-refresh fa-spin" style="font-size:24px"></i> </div>`)
-  
-  $(frappe.render_template("organogram")).appendTo(page.main);
-  
-  
+  filters.init(page);
   // console.log()
-  $("#page-organogram .page-body")
-    .addClass("container-fluid")
-    .removeClass("container");
-  server.make_call(page);
+  // $("#page-organogram .page-body")
+  //   .addClass("container-fluid")
+  //   .removeClass("container");
+  // server.make_call(page);
 };
-server = {
-  make_call: function (page) {
+filters = {
+  init: function (page) {
+    filters.add(page);
+    filters.actions(page);
+    $(frappe.render_template("organogram")).appendTo(page.main);
+  },
+  add: function (page) {
+    let params = {};
+
+    let company = page.add_field({
+      fieldname: "company",
+      label: __("Company"),
+      fieldtype: "Link",
+      options: "Company",
+      default: frappe.defaults.get_default("company"),
+      reqd: 1,
+      change: (e) => {
+        if (e.target.value) {
+          // fetchDashboardData(page);
+        } else {
+          frappe.msgprint(__("Please select a company"));
+        }
+      },
+    });
+    let branch = page.add_field({
+      fieldname: "branch",
+      label: __("Branch"),
+      fieldtype: "Link",
+      options: "Branch",
+      default: "",
+      reqd: 1,
+      change: (e) => {
+        if (e.target.value) {
+          // fetchDashboardData(page);
+        } else {
+          frappe.msgprint(__("Please select a branch"));
+        }
+      },
+    });
+
+    let filters_btn = page.add_field({
+      fieldname: "filters_btn",
+      label: __("Filters"),
+      fieldtype: "Button",
+      options: "",
+      default: "",
+      reqd: 0,
+      click: (e) => {
+        params = {
+          "company": company.get_value(),
+          "branch": branch.get_value(),
+        }
+        if (company.get_value() != "" && branch.get_value() != "") {
+          $("#page-organogram .page-body")
+            .addClass("container-fluid")
+            .removeClass("container");
+          server.make_call(params);
+        }else{
+          let msg = ``;
+          msg += company.get_value()=="" ? " <b>Company</b>,": "";
+          msg += branch.get_value()=="" ? " <b>Branch</b>": "";
+          if(msg!=""){
+            frappe.msgprint(__(`Please select filter(s): ${msg}`), title="Missing Filters");
+          }
+        }
+
+      },
+    });
+  },
+  actions: function (page) {
     let exportImage = page.set_primary_action(
       "Export",
       () => export_chart(),
@@ -30,87 +95,91 @@ server = {
       () => setImageDimension(),
       "octicon octicon-sync"
     );
+  }
+}
+
+server = {
+  make_call: function (params) {
     // var startTime = performance.now()
     frappe.call({
       method: "akf_hrms.akf_hrms.page.organogram.organogram.get_children",
       async: false,
       args: {
         doctype: "Employee",
-        company: "Alkhidmat Foundation Pakistan",
+        params: params,
       },
       callback: function (r) {
-        console.log(r.message);
-        let data =  [{name: 'Saad Saeed', id: 'AKFP-PK-CO-00068', parentId: '', branch: 'Central Office'},
-        {name: 'Sheikh Ahsan Farid', id: 'AKFP-PK-CO-00072', parentId: 'AKFP-PK-CO-00068', branch: 'Central Office'},
-
-        {name: 'Muhammad Bilal Arshad', id: 'AKFP-PK-CO-00125', parentId: 'AKFP-PK-CO-00068', branch: 'Central Office'}]
+        let data = r.message;
+        console.log(data);
+        let raw = [
+          { name: 'Saad Saeed', id: 'AKFP-PK-CO-00068', parentId: '', branch: 'Central Office' },
+          { name: 'Sheikh Ahsan Farid', id: 'AKFP-PK-CO-00072', parentId: 'AKFP-PK-CO-00068', branch: 'Central Office' },
+          { name: 'Muhammad Bilal Arshad', id: 'AKFP-PK-CO-00125', parentId: 'AKFP-PK-CO-00068', branch: 'Central Office' }
+        ];
         // var endTime = performance.now()
         // console.log(`Call to getdata took ${endTime - startTime} milliseconds`)
-        console.log(typeof(d3.OrgChart));
-        chart = new d3.OrgChart()
-          .container(".chart-container")
-          .data(data)
-          .nodeHeight((d) => 95)
-          .nodeWidth((d) => {
-            return 260;
-          })
-          .childrenMargin((d) => 50)
-          .compactMarginBetween((d) => 25)
-          .compactMarginPair((d) => 50)
-          .siblingsMargin((d) => 25)
-          .buttonContent(({ node, state }) => {
-            return `<div style="px;color:#716E7B;border-radius:5px;padding:4px;font-size:10px;margin:auto auto;background-color:white;border: 1px solid #E4E2E9"> <span style="font-size:9px">${
-              node.children
-                ? `<i class="fa fa-angle-up"></i>`
-                : `<i class="fa fa-angle-down"></i>`
-            }</span> ${node.data._directSubordinates}  </div>`;
-          })
-          .linkUpdate(function (d, i, arr) {
-            d3.select(this)
-              .attr("stroke", (d) =>
-                d.data._upToTheRootHighlighted ? "#152785" : "#E4E2E9"
-              )
-              .attr("stroke-width", (d) =>
-                d.data._upToTheRootHighlighted ? 5 : 1
-              );
-
-            if (d.data._upToTheRootHighlighted) {
-              d3.select(this).raise();
-            }
-          })
-          .nodeContent(function (d, i, arr, state) {
-            const color = "#FFFFFF";
-            return `
-					  <div style="font-family: 'Inter', sans-serif;background-color:${color}; position:absolute;margin-top:-1px; margin-left:-1px;width:${d.width}px;height:${d.height}px;border-radius:10px;border: 1px solid #E4E2E9">
-						 <div style="background-color:${color};position:absolute;margin-top:-25px;margin-left:${15}px;border-radius:100px;width:50px;height:50px;" ></div>
-						 <img src="${
-               d.data.img
-             }" style="object-fit:cover;position:absolute;margin-top:-20px;margin-left:${20}px;border-radius:100px;width:40px;height:40px;" crossorigin="anonymous" />
-						 
-						<div style="color:#08011E;position:absolute;right:20px;top:17px;font-size:10px;">${
-              d.data.id
-            }</div>
-						<div style="font-size:14px;color:#08011E;margin-left:20px;margin-top:32px"> ${
-              d.data.name
-            } </div>
-						<div style="color:#716E7B;margin-left:20px;margin-top:3px;font-size:10px;font-weight:600;"> ${
-              d.data.title
-            } </div>
-							<div style="color:#716E7B;margin-left:20px;font-size:10px"> ${
-                d.data.branch
-              }</div>
-							<div style="color:#716E7B;margin-left:20px;font-size:10px"> ${
-                d.data.cluster
-              }</div>
-
-					 </div>
-			`;
-          })
-          .render();
+        loadOrgChart(data);
       },
     });
+
   },
 };
+
+function loadOrgChart(data) {
+  chart = new d3.OrgChart()
+    .container(".chart-container")
+    .data(data)
+    .nodeHeight((d) => 95)
+    .nodeWidth((d) => {
+      return 260;
+    })
+    .childrenMargin((d) => 50)
+    .compactMarginBetween((d) => 25)
+    .compactMarginPair((d) => 50)
+    .siblingsMargin((d) => 25)
+    .buttonContent(({ node, state }) => {
+      return `<div style="px;color:#716E7B;border-radius:5px;padding:4px;font-size:10px;margin:auto auto;background-color:white;border: 1px solid #E4E2E9"> <span style="font-size:9px">${node.children
+        ? `<i class="fa fa-angle-up"></i>`
+        : `<i class="fa fa-angle-down"></i>`
+        }</span> ${node.data._directSubordinates}  </div>`;
+    })
+    .linkUpdate(function (d, i, arr) {
+      d3.select(this)
+        .attr("stroke", (d) =>
+          d.data._upToTheRootHighlighted ? "#152785" : "#E4E2E9"
+        )
+        .attr("stroke-width", (d) =>
+          d.data._upToTheRootHighlighted ? 5 : 1
+        );
+
+      if (d.data._upToTheRootHighlighted) {
+        d3.select(this).raise();
+      }
+    })
+    .nodeContent(function (d, i, arr, state) {
+      const color = "#FFFFFF";
+      return `
+        <div style="font-family: 'Inter', sans-serif;background-color:${color}; position:absolute;margin-top:-1px; margin-left:-1px;width:${d.width}px;height:${d.height}px;border-radius:10px;border: 1px solid #E4E2E9">
+         <div style="background-color:${color};position:absolute;margin-top:-25px;margin-left:${15}px;border-radius:100px;width:50px;height:50px;" ></div>
+         <img src="${d.data.img
+        }" style="object-fit:cover;position:absolute;margin-top:-20px;margin-left:${20}px;border-radius:100px;width:40px;height:40px;" crossorigin="anonymous" />
+         
+        <div style="color:#08011E;position:absolute;right:20px;top:17px;font-size:10px;">${d.data.id
+        }</div>
+        <div style="font-size:14px;color:#08011E;margin-left:20px;margin-top:32px"> ${d.data.name
+        } </div>
+        <div style="color:#716E7B;margin-left:20px;margin-top:3px;font-size:10px;font-weight:600;"> ${d.data.title
+        } </div>
+          <div style="color:#716E7B;margin-left:20px;font-size:10px"> ${d.data.branch
+        }</div>
+          <div style="color:#716E7B;margin-left:20px;font-size:10px"> ${d.data.cluster
+        }</div>
+
+       </div>
+  `;
+    })
+    .render();
+}
 
 function setImageDimension() {
   let chart = document.querySelector(".chart").getBoundingClientRect();
