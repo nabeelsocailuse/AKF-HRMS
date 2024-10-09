@@ -111,11 +111,11 @@ server = {
       callback: function (r) {
         let data = r.message;
         console.log(data);
-        let raw = [
+        /* let raw = [
           { name: 'Saad Saeed', id: 'AKFP-PK-CO-00068', parentId: '', branch: 'Central Office' },
           { name: 'Sheikh Ahsan Farid', id: 'AKFP-PK-CO-00072', parentId: 'AKFP-PK-CO-00068', branch: 'Central Office' },
           { name: 'Muhammad Bilal Arshad', id: 'AKFP-PK-CO-00125', parentId: 'AKFP-PK-CO-00068', branch: 'Central Office' }
-        ];
+        ]; */
         // var endTime = performance.now()
         // console.log(`Call to getdata took ${endTime - startTime} milliseconds`)
         loadOrgChart(data);

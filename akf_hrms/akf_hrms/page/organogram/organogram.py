@@ -16,10 +16,13 @@ def get_children(doctype, params=None, parent=None, company=None, is_root=False,
 	# case_statement = """ case when image is not null then image else '' END as img".format(avatar) """
 	
 	first_level = frappe.db.get_list('Employee',
-	fields = ["employee_name as name", "name as id", "custom_base64_image as img","reports_to as parentId", "case when designation is not null then designation else 'CEO' END as title","branch","cluster"],
+	fields = ["employee_name as name", "name as id", "custom_base64_image as img", "reports_to as parentId", "case when designation is not null then designation else 'CEO' END as title","branch","cluster"],
 	filters = filters,
 	order_by="name")
 
+	if(len(first_level)==0): frappe.throw("No record found!")
+	if(len(first_level)>1): frappe.throw("There must be 1 head employee in a branch.")
+	
 	ultimate_nodes = []
 	second_lev = []
 	for emp in first_level:
