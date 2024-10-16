@@ -4,9 +4,58 @@ from datetime import datetime, timedelta
 from frappe.model.document import Document
 
 class AttendanceAdjustment(Document):
-    def validate(self):
+    @frappe.whitelist()
+    def get_attendance_stats(self, adjust=None):
+        
+        attendance_date =""
+        if(not adjust):
+            attendance_date =f" and attendance_date between DATE_SUB('{self.posting_date}', INTERVAL 7 DAY) and '{self.posting_date}'"
+        elif(adjust==1):
+            attendance_date = f" and attendance_date = '{self.adjustment_date}' "
+       
+        return frappe.db.sql(f""" 
+            select name, attendance_date,  custom_total_working_hours, custom_hours_worked, custom_overtime_hours
+            from `tabAttendance`
+            where docstatus=1
+            and status='Present'
+            and custom_overtime_claim=0
+            and custom_attendance_adjustment=0
+            and ifnull(custom_overtime_hours, "")!=""
+            and custom_overtime_hours > 0
+            and employee='{self.employee}'
+            {attendance_date}
+            order by attendance_date
+        """, as_dict=1)
+    
+    @frappe.whitelist()
+    def get_compensation_date_stats(self):
+        return frappe.db.sql(f""" 
+            select name, custom_total_working_hours, in_time, out_time, custom_hours_worked, custom_overtime_hours
+            from `tabAttendance`
+            where docstatus=1
+            and status='Present'
+            and custom_overtime_claim=0
+            and custom_attendance_adjustment=0
+            and (ifnull(custom_overtime_hours, "")="" or custom_overtime_hours <= 0)
+            and employee='{self.employee}'
+            and attendance_date = '{self.compensation_date}'
+            
+        """, as_dict=1)
+    
+    @frappe.whitelist()
+    def get_adjustment_for(self):
+        resp = self.get_attendance_stats(adjust=1)
+        return resp[0].name if(resp) else None
+    
+    @frappe.whitelist()
+    def get_compensation_for(self):
+       resp = self.get_compensation_date_stats()
+       return resp[0].name if(resp) else None
+   
+    def validate_(self):
         if self.compensation_date:
             self.check_and_mark_attendance_adjustment()
+    
     def check_and_mark_attendance_adjustment(self):
         attendance_doc = frappe.get_doc("Attendance", {"attendance_date": self.compensation_date, "employee": self.employee})
         if attendance_doc:

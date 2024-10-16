@@ -1,15 +1,39 @@
 frappe.ui.form.on('Attendance Adjustment', {
-    employee: function(frm) {
-        frm.set_value('custom_adjustment_date', '');
-        frm.set_value('custom_adjustment_hours', '');
+    refresh: function (frm) {
+        if(!frm.is_new()){
+            loadSevenDaysStats(frm);
+            loadCompensateOnStats(frm);
+        }
     },
-    custom_adjustment_date: function(frm) {
-        frm.set_value('custom_adjustment_hours', '');
-        validate_custom_adjustment_date(frm);
+    employee: function (frm) {
+        loadSevenDaysStats(frm);
+        // frm.set_value('custom_adjustment_date', '');
+        // frm.set_value('custom_adjustment_hours', '');
     },
-    compensation_date: function(frm) {
-        validateAttendanceExistence(frm);
-    }
+    custom_adjustment_date: function (frm) {
+        // frm.set_value('custom_adjustment_hours', '');
+        // validate_custom_adjustment_date(frm);
+    },
+    adjustment_date: function(frm){
+        if(frm.doc.adjustment_date!=undefined){
+            frm.call('get_adjustment_for').then(r=>{
+                frm.set_value('adjustment_for', r.message);
+            });
+        }else{
+            frm.set_value('adjustment_for', null);
+        }
+    },
+    compensation_date: function (frm) {
+        // validateAttendanceExistence(frm);
+        if(frm.doc.compensation_date!=undefined){
+            frm.call('get_compensation_for').then(r=>{
+                frm.set_value('compensation_for', r.message);
+            });
+        }else{
+            frm.set_value('compensation_for', null);
+        }
+        loadCompensateOnStats(frm);
+    },
 });
 
 
@@ -24,12 +48,12 @@ function validate_custom_adjustment_date(frm) {
                 custom_adjustment_date: custom_adjustment_date,
                 employee: employee
             },
-            callback: function(response) {
+            callback: function (response) {
                 if (response.message) {
                     frm.set_value('custom_adjustment_hours', response.message);
                 }
             },
-            error: function(response) {
+            error: function (response) {
                 frappe.msgprint(response.message);
                 frm.set_value('custom_adjustment_date', '');
             }
@@ -47,9 +71,9 @@ function validateAttendanceExistence(frm) {
                 compensation_date: compensation_date,
                 employee: employee
             },
-            callback: function(response) {
+            callback: function (response) {
             },
-            error: function(response) {
+            error: function (response) {
                 // Clear the compensation_date field if validation fails
                 frm.set_value('compensation_date', '');
                 frappe.msgprint(response.message);
@@ -58,6 +82,96 @@ function validateAttendanceExistence(frm) {
     }
 }
 
+function loadSevenDaysStats(frm) {
+    frm.call('get_attendance_stats').then(r => {
+        let data = r.message;
+        let rows = ``;
+        let idx = 1
+        data.forEach(row => {
+            let attendance_date = moment(row.attendance_date).format("DD-MM-YYYY")
+            rows += `
+                <tr>
+                    <th scope="row">${idx}</th>
+                    <td class=""><a href="/app/attendance/${row.name}">${row.name}</a></td>
+                    <td class="">${attendance_date}</td>
+                    <td>${row.custom_total_working_hours}</td>
+                    <td>${row.custom_hours_worked}</td>
+                    <td>${row.custom_overtime_hours}</td>
+                </tr>`;
+            idx += 1;
+        });
+        if(rows==''){
+            rows = `
+                <tr>
+                    <td class="text-center" style="color:lightgray;" colspan="6">No records found.</td>
+                </tr>`;
+        }
+        let _html_ = `
+            <h3 style="">Attendance Stats (7 Days)</h3>
+            <table class="table">
+                <thead class="thead-dark" >
+                    <tr>
+                    <th scope="col">#</th>
+                    <th class="" scope="col">Attendance ID</th>
+                    <th class="" scope="col">Date</th>
+                    <th scope="col">Working Hours</th>
+                    <th scope="col">Hours Worked</th>
+                    <th scope="col">Extra Hours</th>
+                    </tr>
+                </thead>
+                <tbody  style="font-size: 13px;">
+                    ${rows}
+                </tbody>
+            </table>`;
+        frm.set_df_property("seven_days_stats", "options", _html_);
+    });
+}
+
+function loadCompensateOnStats(frm) {
+    if(frm.doc.compensation_date==undefined) return;
+    frm.call('get_compensation_date_stats').then(r => {
+        let data = r.message;
+        let rows = ``;
+        data.forEach(row => {
+            // let attendance_date = moment(row.attendance_date).format("DD-MM-YYYY")
+            rows += `
+                <tr>
+                    <td class=""><a href="/app/attendance/${row.name}">${row.name}</a></td>
+                    <td class="">${row.in_time}</td>
+                    <td class="">${row.out_time}</td>
+                    <td>${row.custom_hours_worked}</td>
+                    <td>${row.custom_total_working_hours}</td>
+                    <td>${row.custom_overtime_hours}</td>
+                </tr>`;
+        });
+        if(rows==''){
+            rows = `
+                <tr>
+                    <td class="text-center" style="color:lightgray;" colspan="6">No records found.</td>
+                </tr>`;
+        }
+        let _html_ = `
+            <h3 style="">Compensation Stats</h3>
+            <table class="table">
+                <thead class="thead-dark" style="font-size: 11px;">
+                    <tr>
+                    <th class="" scope="col">Attendance ID</th>
+                    <th class="" scope="col">In Time</th>
+                    <th class="" scope="col">Out Time</th>
+                    <th scope="col">Hours Worked</th>
+                    <th scope="col">Working Hours</th>
+                    <th scope="col">Extra Hours</th>
+                    
+
+                    </tr>
+                </thead>
+                <tbody style="font-size: 11px;">
+                    ${rows}
+                </tbody>
+            </table>`;
+        frm.set_df_property("compensation_on_stats", "options", _html_);
+    });
+}
 
 
 

@@ -1,0 +1,48 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-15 15:37:40.369814",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "qualifications_section",
+  "degree",
+  "institution",
+  "year_of_graduation"
+ ],
+ "fields": [
+  {
+   "fieldname": "qualifications_section",
+   "fieldtype": "Section Break",
+   "label": "Qualifications"
+  },
+  {
+   "fieldname": "degree",
+   "fieldtype": "Data",
+   "label": "Degree"
+  },
+  {
+   "fieldname": "institution",
+   "fieldtype": "Data",
+   "label": "Institution"
+  },
+  {
+   "fieldname": "year_of_graduation",
+   "fieldtype": "Int",
+   "label": "Year of Graduation"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-15 15:47:30.923998",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Job Applicant Qualification",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

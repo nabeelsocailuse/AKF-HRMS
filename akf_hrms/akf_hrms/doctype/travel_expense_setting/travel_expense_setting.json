@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-14 15:08:49.867477",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "travel_expense_setting_table"
+ ],
+ "fields": [
+  {
+   "fieldname": "travel_expense_setting_table",
+   "fieldtype": "Table",
+   "label": "Travel Expense Setting Table",
+   "options": "Travel Expense Setting Table"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-10-14 15:11:18.363861",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Travel Expense Setting",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -57,6 +57,26 @@ frappe.ui.form.on('Expense Claim Detail', {
             return;
         }
 
+       
+        frappe.call({
+            method: "akf_hrms.akf_hrms.doctype.expense_claim.expense_claim.get_travel_expense_amount",
+
+            args: {
+                "expense_type": d.expense_type,
+                "company": frm.doc.company,
+                "custom_grade": frm.doc.custom_grade  
+            },
+            callback: function (r) {
+                if (r.message) {
+                    d.amount = r.message.amount || 0;
+                    d.sanctioned_amount = r.message.amount || 0;
+                    frm.refresh_field('expenses'); 
+                } else {
+                    frappe.msgprint(__("No amount defined for the selected expense type."));
+                }
+            }
+        });
+
 
         return frappe.call({
             method: "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center",

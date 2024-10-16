@@ -188,6 +188,9 @@ doc_events = {
     "Expense Claim": {
         "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
     },
+    "Attendance Log": {
+        "after_insert": "akf_hrms.utils.hr_policy.apply_policy"
+    },
 }
 
 # Scheduled Tasks

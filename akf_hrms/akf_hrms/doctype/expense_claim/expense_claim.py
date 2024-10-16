@@ -38,8 +38,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
     #Override
 	def validate(self):
 		self.validate_overlap_expense_claim()
-		self.validate_travel_dates()
+		# self.validate_travel_dates()
+		self.validate_ta_da_expense()
 		self.validate_compensatory_leave_request()
+
 
 		validate_active_employee(self.employee)
 		set_employee_name(self)
@@ -380,7 +382,125 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				]
 				
     # =================== > Custom Functions < =======================
-	
+
+
+	def validate_ta_da_expense(self):
+		from akf_hrms.patches.skip_validations import skip
+		if(skip()):
+			# frappe.msgprint("Validation is skipped") 
+			return
+		if not self.custom_grade:
+			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
+
+		travel_settings = frappe.get_all(
+			"Travel Expense Setting Table",
+			filters={},
+			fields=["band", "daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
+		)
+
+		allowed_expenses = {}
+		expense_mapping = {
+			"Daily Allowance": "daily_allowance",
+			"Breakfast": "breakfast",
+			"Lunch": "lunch",
+			"Dinner": "dinner",
+			"Refrehment": "refrehment",
+			"Dinner (Late Sitting)": "dinner_late_sitting",
+			"Lunch (Off Day)": "lunch_off_day"
+		}
+
+		grade_defined = False
+		for setting in travel_settings:
+			band = setting.get("band")
+			if band and self.custom_grade in band:
+				allowed_expenses = {expense_type: setting.get(field_name) for expense_type, field_name in expense_mapping.items()}
+				grade_defined = True
+				break
+
+		if not grade_defined:
+			frappe.throw(f"Please make settings for the grade '{self.custom_grade}' in the Travel Expense Setting Table.")
+
+		error_messages = []  # Collect all error messages here
+
+		for e in self.expenses:
+			allowed_amount = allowed_expenses.get(e.expense_type)
+
+			if allowed_amount is not None:  
+				try:
+					allowed_amount_float = float(allowed_amount)
+					expense_amount_float = float(e.amount)
+
+					if expense_amount_float > allowed_amount_float:
+						error_messages.append(f"<b>{e.expense_type.upper()}</b> expense exceeds the allowed limit of {allowed_amount_float}. Please adjust the amount.")
+				except ValueError as ve:
+					error_messages.append(f"Error: Allowed amount for {e.expense_type} is not a valid number: {allowed_amount}. Error details: {ve}")
+				except TypeError as te:
+					error_messages.append(f"Error processing expense for {e.expense_type} {te}")
+				except Exception as ex:
+					error_messages.append(f"Unexpected error processing expense for **{e.expense_type}**: {ex}")
+			else:
+				error_messages.append(f"No allowed amount found for **{e.expense_type}**. Please check the settings.")
+
+		if error_messages:
+			frappe.throw("<br>".join(error_messages))  # Throw all error messages at once, separated by new lines
+
+
+	# def validate_ta_da_expense(self):
+	# 	# from akf_hrms.patches.skip_validations import skip
+	# 	# if(skip()):
+	# 	# 	# frappe.msgprint("Validation is skipped") 
+	# 	# 	return
+	# 	if not self.custom_grade:
+	# 		frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
+
+	# 	travel_settings = frappe.get_all(
+	# 		"Travel Expense Setting Table",
+	# 		filters={},
+	# 		fields=["band", "daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
+	# 	)
+		
+	# 	allowed_expenses = {}
+	# 	expense_mapping = {
+	# 		"Daily Allowance": "daily_allowance",
+	# 		"Breakfast": "breakfast",
+	# 		"Lunch": "lunch",
+	# 		"Dinner": "dinner",
+	# 		"Refrehment": "refrehment",
+	# 		"Dinner (Late Sitting)": "dinner_late_sitting",
+	# 		"Lunch (Off Day)": "lunch_off_day"
+	# 	}
+
+	# 	grade_defined = False
+	# 	for setting in travel_settings:
+	# 		band = setting.get("band")
+	# 		if band and self.custom_grade in band:
+	# 			allowed_expenses = {expense_type: setting.get(field_name) for expense_type, field_name in expense_mapping.items()}
+	# 			grade_defined = True
+	# 			break
+
+	# 	if not grade_defined:
+	# 		frappe.throw(f"Please make settings for the grade '{self.custom_grade}' in the Travel Expense Setting Table.")
+
+	# 	for e in self.expenses:
+	# 		allowed_amount = allowed_expenses.get(e.expense_type)
+
+	# 		if allowed_amount is not None:  
+	# 			try:
+					
+	# 				allowed_amount_float = float(allowed_amount)
+	# 				expense_amount_float = float(e.amount)  
+					
+	# 				if expense_amount_float > allowed_amount_float:
+	# 					frappe.msgprint(f"{e.expense_type.upper()} expense exceeds the allowed limit of {allowed_amount_float}. Please adjust the amount.")
+	# 			except ValueError as ve:
+	# 				frappe.msgprint(f"Error: Allowed amount for {e.expense_type} is not a valid number: {allowed_amount}. Error details: {ve}")
+	# 			except TypeError as te:
+	# 				frappe.msgprint(f"Error processing expense for {e.expense_type}: {te}")
+	# 			except Exception as ex:
+	# 				frappe.msgprint(f"Unexpected error processing expense for {e.expense_type}: {ex}")
+	# 		else:
+	# 			frappe.msgprint(f"No allowed amount found for {e.expense_type}. Please check the settings.")
+
 	def validate_travel_dates(self):
 		query = f"""
 						SELECT departure_date, arrival_date
@@ -657,3 +777,33 @@ def make_expense_claim_for_delivery_trip(source_name, target_doc=None):
 	)
 
 	return doc
+
+
+
+@frappe.whitelist()
+def get_travel_expense_amount(expense_type, company, custom_grade):
+    if not custom_grade:
+        return {"amount": 0}
+
+    travel_settings = frappe.get_all(
+        "Travel Expense Setting Table",
+        filters={"band": ["like", f"%{custom_grade}%"]},
+        fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
+    )
+
+    expense_mapping = {
+        "Daily Allowance": "daily_allowance",
+        "Breakfast": "breakfast",
+        "Lunch": "lunch",
+        "Dinner": "dinner",
+        "Refrehment": "refrehment",
+        "Dinner (Late Sitting)": "dinner_late_sitting",
+        "Lunch (Off Day)": "lunch_off_day"
+    }
+
+    for setting in travel_settings:
+        if expense_type in expense_mapping:
+            return {"amount": setting.get(expense_mapping[expense_type])}
+    
+    return {"amount": 0}
+
