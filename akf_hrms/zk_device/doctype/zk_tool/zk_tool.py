@@ -101,15 +101,17 @@ class ZKTool(Document):
 							"device_id": row.attendance_device_id,
 							"device_ip": self.device_ip,
 							"device_port": "4370",
-							"log_type": self.log_type,
-							"log_from": "ZK Tool",
 							"attendance_date": getdate(flog),
 							"log": flog,
 						})
 						if(frappe.db.exists("Attendance Log", args)):
 							pass
 						else:
-							args.update({"doctype": "Attendance Log"})
+							args.update({
+           						"doctype": "Attendance Log",
+                 				"log_type": self.log_type,
+								"log_from": "ZK Tool",
+        					})
 							frappe.get_doc(args).insert(ignore_permissions=True)
 							marked = True
 		return {"marked": marked}

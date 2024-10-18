@@ -28,6 +28,7 @@ class AttendanceLog(Document):
 
 	def process_attendance(self):
 		attendance = self.get_attendance()
+		
 		if (attendance):
 			self.update_attendance(attendance)
 		else:
@@ -39,16 +40,20 @@ class AttendanceLog(Document):
 					"docstatus": 1,
 					"employee": self.employee,
 					"attendance_date": self.attendance_date,
+					
 				}, ["name", "in_time"], as_dict=1)
 
 	def update_attendance(self, attendance):
+		if(attendance.status!="Present"): return
 		frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
 		hours_worked = self.cal_hours_worked(attendance.in_time)
+		
 		frappe.db.set_value("Attendance", attendance.name, "custom_hours_worked", hours_worked)
 		frappe.db.set_value("Attendance", attendance.name, "custom_overtime_hours", self.cal_overtime_hours(hours_worked))
 		frappe.db.set_value("Attendance", attendance.name, "early_exit", self.early_exit())
 	
 	def cal_hours_worked(self, in_time):
+		# frappe.msgprint(f"{self.log} {in_time}")
 		return time_diff(str(self.log), str(in_time))
 
 	def create_attendance(self):
