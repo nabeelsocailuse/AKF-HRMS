@@ -21,9 +21,10 @@
   "amended_from",
   "column_break_usdx",
   "compensation_date",
-  "compensation_for",
   "compensation_type",
+  "compensation_for",
   "compensation_on_stats",
+  "section_break_ytsx",
   "reasonnotes"
  ],
  "fields": [
@@ -45,8 +46,10 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Employee",
-   "options": "Employee"
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "fetch_from": "employee.employee_name",
@@ -84,12 +87,14 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the CEO\nRejected by the CEO"
+   "options": "Open\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the CEO\nRejected by the CEO",
+   "read_only": 1
   },
   {
    "fieldname": "reasonnotes",
    "fieldtype": "Small Text",
-   "label": "Reason(Notes)"
+   "label": "Reason(Notes)",
+   "reqd": 1
   },
   {
    "fieldname": "last_seven_days_stats_section",
@@ -110,7 +115,9 @@
   {
    "fieldname": "adjustment_date",
    "fieldtype": "Date",
-   "label": "Adjustment Date"
+   "in_list_view": 1,
+   "label": "Adjustment Date",
+   "reqd": 1
   },
   {
    "fieldname": "compensation_on_stats",
@@ -120,31 +127,41 @@
   {
    "fieldname": "compensation_date",
    "fieldtype": "Date",
-   "label": "Compensation Date"
+   "in_list_view": 1,
+   "label": "Compensation Date",
+   "reqd": 1
   },
   {
    "fieldname": "adjustment_for",
    "fieldtype": "Link",
    "label": "Adjustment For",
-   "options": "Attendance"
+   "options": "Attendance",
+   "read_only": 1
   },
   {
    "fieldname": "compensation_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Compensation Type",
-   "options": "\nLate Entry\nEarly Exit"
+   "options": "\nLate Entry\nEarly Exit",
+   "reqd": 1
   },
   {
    "fieldname": "compensation_for",
    "fieldtype": "Link",
    "label": "Compensation For",
-   "options": "Attendance"
+   "options": "Attendance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ytsx",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-16 17:00:15.435796",
+ "modified": "2024-10-18 17:23:30.855495",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Adjustment",

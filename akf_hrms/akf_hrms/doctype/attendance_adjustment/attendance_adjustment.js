@@ -3,6 +3,7 @@ frappe.ui.form.on('Attendance Adjustment', {
         if(!frm.is_new()){
             loadSevenDaysStats(frm);
             loadCompensateOnStats(frm);
+            de_link(frm);
         }
     },
     employee: function (frm) {
@@ -11,8 +12,7 @@ frappe.ui.form.on('Attendance Adjustment', {
         // frm.set_value('custom_adjustment_hours', '');
     },
     custom_adjustment_date: function (frm) {
-        // frm.set_value('custom_adjustment_hours', '');
-        // validate_custom_adjustment_date(frm);
+       
     },
     adjustment_date: function(frm){
         if(frm.doc.adjustment_date!=undefined){
@@ -24,7 +24,8 @@ frappe.ui.form.on('Attendance Adjustment', {
         }
     },
     compensation_date: function (frm) {
-        // validateAttendanceExistence(frm);
+    },
+    compensation_type: function (frm) {
         if(frm.doc.compensation_date!=undefined){
             frm.call('get_compensation_for').then(r=>{
                 frm.set_value('compensation_for', r.message);
@@ -36,50 +37,30 @@ frappe.ui.form.on('Attendance Adjustment', {
     },
 });
 
-
-function validate_custom_adjustment_date(frm) {
-    const custom_adjustment_date = frm.doc.custom_adjustment_date;
-    const employee = frm.doc.employee;
-
-    if (custom_adjustment_date && employee) {
-        frappe.call({
-            method: 'akf_hrms.akf_hrms.doctype.attendance_adjustment.attendance_adjustment.validate_custom_adjustment_date',
-            args: {
-                custom_adjustment_date: custom_adjustment_date,
-                employee: employee
-            },
-            callback: function (response) {
-                if (response.message) {
-                    frm.set_value('custom_adjustment_hours', response.message);
-                }
-            },
-            error: function (response) {
-                frappe.msgprint(response.message);
-                frm.set_value('custom_adjustment_date', '');
+function de_link(frm){
+    if(frm.doc.docstatus!=1) return;
+    
+        frm.call('verify_linkages').then(r=>{
+            if(r.message){
+                frm.add_custom_button(__('De Link'), () => {
+                    frappe.confirm('Are you sure you want to proceed?',
+                    () => {
+                        // action to perform if Yes is selected
+                        frm.call('de_link').then(r=>{
+                            // show_alert with indicator
+                            frappe.show_alert({
+                                message:__('All attendance linkages are reset!'),
+                                indicator:'green'
+                            }, 5);
+                            frm.refresh();
+                        });
+                    },
+                    () => {
+                        // action to perform if No is selected
+                    })
+                });
             }
         });
-    }
-}
-function validateAttendanceExistence(frm) {
-    const compensation_date = frm.doc.compensation_date;
-    const employee = frm.doc.employee;
-
-    if (compensation_date && employee) {
-        frappe.call({
-            method: 'akf_hrms.akf_hrms.doctype.attendance_adjustment.attendance_adjustment.validate_compensation_date',
-            args: {
-                compensation_date: compensation_date,
-                employee: employee
-            },
-            callback: function (response) {
-            },
-            error: function (response) {
-                // Clear the compensation_date field if validation fails
-                frm.set_value('compensation_date', '');
-                frappe.msgprint(response.message);
-            }
-        });
-    }
 }
 
 function loadSevenDaysStats(frm) {
@@ -126,7 +107,6 @@ function loadSevenDaysStats(frm) {
         frm.set_df_property("seven_days_stats", "options", _html_);
     });
 }
-
 function loadCompensateOnStats(frm) {
     if(frm.doc.compensation_date==undefined) return;
     frm.call('get_compensation_date_stats').then(r => {
@@ -172,83 +152,3 @@ function loadCompensateOnStats(frm) {
         frm.set_df_property("compensation_on_stats", "options", _html_);
     });
 }
-
-
-
-// frappe.ui.form.on("Attendance Adjustment", {
-//     refresh(frm) {
-//     },
-//     start_time(frm) {
-//         validate_time(frm);
-//     },
-//     end_time(frm) {
-//         validate_time(frm);
-//     },
-//     custom_adjustment_date: function(frm) {
-//         check_attendance_existence(frm);
-//         check_overtime_claim(frm);
-//         fill_custom_adjustment_hours(frm);
-//     },
-//     compensation_date: function(frm) {
-//         check_attendance_existence(frm);
-//     }
-// });
-
-// function validate_time(frm) {
-//     var startTime = frm.doc.start_time;
-//     var endTime = frm.doc.end_time;
-
-//     if (startTime && endTime) {
-//         if (startTime >= endTime) {
-//             frappe.throw("The Start Time must be less than the End Time.");
-//         } 
-//     }
-// }
-
-// function fill_custom_adjustment_hours(frm) {
-//     if(frm.doc.custom_adjustment_date){
-//     frappe.call({
-//         method: "akf_hrms.akf_hrms.doctype.attendance_adjustment.attendance_adjustment.get_custom_overtime_hours",
-//         args: {
-//             employee: frm.doc.employee,
-//             custom_adjustment_date: custom_adjustment_date
-//         },
-//         callback: function(response) {
-//             if (response.message) {
-//                 frm.set_value('custom_adjustment_hours', response.message);
-//             }
-//         }
-//     });
-// }
-// }
-// function check_attendance_existence(frm) {
-//     if (frm.doc.employee && frm.doc.custom_adjustment_date && frm.doc.compensation_date) {
-//         frappe.call({
-//             method: "akf_hrms.akf_hrms.doctype.attendance_adjustment.attendance_adjustment.check_attendance",
-//             args: {
-//                 employee: frm.doc.employee,
-//                 custom_adjustment_date: frm.doc.custom_adjustment_date,
-//                 compensation_date: frm.doc.compensation_date
-//             },
-//             callback: function(attendance_response) {
-//                 frappe.msgprint(attendance_response.message);
-//                 check_overtime_claim(frm); 
-//             }
-//         });
-//     }
-// }
-
-// function check_overtime_claim(frm) {
-//     if (frm.doc.custom_adjustment_date) {
-//         frappe.call({
-//             method: "akf_hrms.akf_hrms.doctype.attendance_adjustment.attendance_adjustment.check_overtime_claim",
-//             args: {
-//                 employee: frm.doc.employee,
-//                 custom_adjustment_date: frm.doc.custom_adjustment_date
-//             },
-//             callback: function(overtime_response) {
-//                 frappe.msgprint(overtime_response.message);
-//             }
-//         });
-//     }
-// }

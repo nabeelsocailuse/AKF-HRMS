@@ -111,7 +111,9 @@ class CompensatoryLeaveRequest(Document):
 		else:
 			date_difference = date_diff(self.work_end_date, self.work_from_date) + 1
 
-		if self.half_day:
+		if self.half_day and (self.against == "Work on Holiday"):
+			date_difference = date_difference/2	
+		elif self.half_day:
 			date_difference -= 0.5
 
 		comp_leave_valid_from = add_days(self.work_end_date, 1)
