@@ -221,7 +221,7 @@ position:relative;
 						<div id="${sort_order}" class="panel-collapse collapse">
                             <br>
                             <div style="text-align:center;">
-                                <img class="img-settings" src="/files/alkhidmat-logo.png" alt="AKFP Header" >  
+                              
                             </div>
                             <br>
 							<div class="panel-body"> 
@@ -286,4 +286,5 @@ position:relative;
 	}
 });
 
-
+// Removed from div
+{/* <img class="img-settings" src="/files/alkhidmat-logo.png" alt="AKFP Header" >   */}

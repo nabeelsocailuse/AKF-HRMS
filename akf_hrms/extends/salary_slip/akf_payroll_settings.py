@@ -4,7 +4,7 @@ from dateutil import relativedelta
 import frappe
 from frappe import _
 from hrms.payroll.doctype.salary_slip.salary_slip import SalarySlip
-from frappe.utils import (flt, month_diff, add_months, get_datetime)
+from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
 
 class XSalarySlip(SalarySlip):
     
@@ -12,6 +12,7 @@ class XSalarySlip(SalarySlip):
         super(XSalarySlip, self).validate()
         self.validate_other_info()
         self.get_eobi_pf_social_security_details()
+        self.create_deduction_leave_ledger_entry()
     
     def validate_other_info(self):
         self.custom_pf_eligibility = self.start_date
@@ -61,11 +62,9 @@ class XSalarySlip(SalarySlip):
         self.custom_service_duration_for_6_months_pf_eligibility = '{} years, {} months, {} days'.format(years_, months_, days_)
          
     @frappe.whitelist()
-    def get_eobi_pf_social_security_details(self):  
-        
+    def get_eobi_pf_social_security_details(self):      
     # Validate EOBI Employer Contribution
-        self.custom_eobi_employer_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employer_contribution")
-        
+        self.custom_eobi_employer_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employer_contribution")   
     # Validate EOBI Employee Contribution
         eobi_employee_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employee_contribution")
         for d in self.deductions:
@@ -112,6 +111,41 @@ class XSalarySlip(SalarySlip):
             for d in self.deductions:
                 if d.salary_component == "Takaful Plan":
                     d.amount = tk_plan.employee_contribution
-			
-			
+		
+    def create_deduction_leave_ledger_entry(self):
+        
+        def create_dlle(leave_type, leaves):
+            doc = frappe.get_doc({
+                'doctype': 'Leave Ledger Entry',
+                'employee': self.employee,
+                'leave_type': leave_type,
+                'transaction_type': 'Salary Slip',
+                'transaction_name': self.name,
+                'company': self.company,
+                'leaves': leaves,
+                'from_date': add_to_date(self.start_date, months=1),
+                'to_date': add_to_date(self.start_date, months=1)
+            })
+            doc.insert(ignore_permissions=True)
+        # casual leave
+        if(self.custom_casual_leaves>0.0):
+             create_dlle('Casual Leave', self.custom_casual_leaves)
+        # medical leave
+        if(self.custom_medical_leaves>0.0):
+            create_dlle('Medical Leave', self.custom_medical_leaves)
+        # # earned leave
+        if(self.custom_earned_leaves>0.0):
+            create_dlle('Earned Leave', self.custom_earned_leaves)
+        # # lwp
+        if(self.custom_leaves_without_pay>0.0): 
+            create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
     
+    def on_cancel(self):
+        self.reverse_leave_ledger()
+    
+    def reverse_leave_ledger(self):
+        if(frappe.db.exists('Leave Ledger Entry', {'transaction_name': self.name})):
+            frappe.db.sql(f""" 
+                delete from `tabLeave Ledger Entry`
+                where  transaction_name = '{self.name}'  
+            """)

@@ -20,7 +20,7 @@ class AttendanceAdjustment(Document):
             and custom_overtime_claim=0
             and ifnull(custom_attendance_adjustment, "")=""
             and ifnull(custom_overtime_hours, "")!=""
-            and custom_overtime_hours > 0
+            and TIME_TO_SEC(custom_overtime_hours) > 0
             and employee='{self.employee}'
             {attendance_date}
             order by attendance_date
@@ -63,6 +63,8 @@ class AttendanceAdjustment(Document):
     @frappe.whitelist()
     def de_link(self):
         frappe.db.set_value('Attendance Adjustment', self.name, 'docstatus', 2)
+        frappe.db.set_value('Attendance Adjustment', self.name, 'adjustment_for', None)
+        frappe.db.set_value('Attendance Adjustment', self.name, 'compensation_for', None)
         self.update_attendance(True)
         self.reload()
         frappe.msgprint('Documents are delinked successfully!', alert=1)

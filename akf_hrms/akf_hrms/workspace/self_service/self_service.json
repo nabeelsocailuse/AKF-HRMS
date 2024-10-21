@@ -1,0 +1,89 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"LtNKFUQKKu\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"SS\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"WfRo_TeIdZ\",\"type\":\"paragraph\",\"data\":{\"text\":\"&lt;div class=\\\"layout-main-section edit-mode\\\"&gt;\",\"col\":12}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}}]",
+ "creation": "2024-10-17 11:28:57.774003",
+ "custom_blocks": [
+  {
+   "custom_block_name": "SS",
+   "label": "SS"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "share-people",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Self Service",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Click here to view Employee Profile",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Profile",
+   "link_count": 0,
+   "link_to": "Employee",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Click here to view Policy",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Policy",
+   "link_count": 0,
+   "link_to": "policy",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2024-10-21 18:16:27.303601",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Self Service",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Attendance",
+   "label": "Attendance",
+   "quick_list_filter": "[[\"Attendance\",\"docstatus\",\"=\",\"1\",false]]"
+  },
+  {
+   "document_type": "Leave Application",
+   "label": "Leave Application",
+   "quick_list_filter": "[[\"Leave Application\",\"docstatus\",\"=\",\"0\",false]]"
+  },
+  {
+   "document_type": "Attendance Request",
+   "label": "Attendance Request",
+   "quick_list_filter": "[[\"Attendance Request\",\"docstatus\",\"=\",\"0\",false]]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 39.0,
+ "shortcuts": [],
+ "title": "Self Service"
+}

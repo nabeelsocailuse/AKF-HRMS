@@ -29,7 +29,10 @@ def apply_policy(doc, method=None):
     args = frappe._dict({
         'company': doc.company,
         'employee': doc.employee,
-        'posting_date': doc.attendance_date
+        'posting_date': doc.attendance_date,
+        'transition_type': 'Attendance',
+        'transition_name': doc.name,
+        
     })
     two_hours_three_late_comings_times_in_a_month(args)
     above_two_and_less_four_hours_in_months(args)
@@ -55,7 +58,7 @@ def two_hours_three_late_comings_times_in_a_month(args):
             and month(attendance_date)=month(%(posting_date)s)
             and ((TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)>0 and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)<=2)
         having
-            hours>0.0
+            hours>0
     """, args)
     if(result):
         hours = result[0][0]
@@ -109,8 +112,10 @@ def late_entry_above_four_hours_in_months(args):
             and employee=%(employee)s
             and attendance_date=%(posting_date)s
             and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)>=4
+        having 
+            hours>0
     """, args)
-
+    print(f'---------------late_entry_above_four_hours_in_months: {result}')
     if(result): 
         args.update({"reason": "Above or equal to 4 hours late in a month."})
         verify_case_no(args, 3)
@@ -161,6 +166,7 @@ def verify_case_no(args, case_no=0):
     if(case_no == 1):
         if(args.deduction_type == "Salary"):
             args.update({
+                'total_deduction': 1,
                 'reason': f"CaseNo#{case_no}, {args.reason} One day salary deducted.",
             })
         elif(args.deduction_type == "Leave"):
@@ -172,7 +178,7 @@ def verify_case_no(args, case_no=0):
     elif(case_no == 2):
         if(args.deduction_type == "Salary"):
             args.update({
-                'total_deduction': args.total_deduction/2,
+                'total_deduction': 0.5,
                 'reason': f"CaseNo#{case_no}, {args.reason} Half day salary deducted.",
             })
         elif(args.deduction_type == "Leave"):
@@ -184,7 +190,7 @@ def verify_case_no(args, case_no=0):
     elif(case_no == 3):
         if(args.deduction_type == "Salary"):
             args.update({
-                'total_deduction': args.total_deduction,
+                'total_deduction': 1,
                 'reason': f"CaseNo#{case_no}, {args.reason} One day salary deducted.",
             })
         elif(args.deduction_type == "Leave"):
@@ -195,9 +201,9 @@ def verify_case_no(args, case_no=0):
         print(f"args: {args}")
     elif(case_no == 4):
         args.update({
-                'leave_type': None,
                 'deduction_type': 'Salary',
-                'total_deduction': args.total_deduction/2,
+                'leave_type': 'Leave Without Pay',
+                'total_deduction': 0.5,
                 'reason': f"CaseNo#{case_no}, {args.reason} Half day salary deducted.",
             })
         print(f"args: {args}")
@@ -226,18 +232,18 @@ def get_balance(args):
             remaining_leaves = leave_allocation[key]['remaining_leaves']
         elif(key == 'Earned leave'):
             remaining_leaves = leave_allocation[key]['remaining_leaves']
-
+            
         if(remaining_leaves>0.0): 
             deduction_type = 'Leave'
             break
         else: 
-            leave_type = None
+            leave_type = "Leave Without Pay"
             deduction_type = 'Salary'
 
     return args.update({
         "deduction_type":  deduction_type,
         "leave_type": leave_type,
-        "total_deduction": get_wage(args)
+        # "total_deduction": get_wage(args)
     })
 
 def get_wage(args):
@@ -258,8 +264,28 @@ def get_wage(args):
 def create_deduction_ledger_entry(args):
     args.update({"doctype": 'Deduction Ledger Entry'})
     filters = args.copy()
+    
+    filters.pop("transition_type")
+    filters.pop("transition_name")
     filters.pop("deduction_type")
     filters.pop("leave_type")
     filters.pop("total_deduction")
+    filters.pop("reason")
+    
     if(not frappe.db.exists(filters)): frappe.get_doc(args).insert(ignore_permissions=True)
 
+
+@frappe.whitelist()
+def get_deduction_ledger(employee=None, start_date=None, end_date=None):
+    return frappe.db.sql(f""" 
+        Select  ifnull(sum(total_deduction),0) as total,
+                leave_type
+        From
+            `tabDeduction Ledger Entry`
+        Where
+            ifnull(leave_type, "")!=""
+            and employee='{employee}'
+            and (posting_date between '{start_date}' and '{end_date}')
+        Group By
+            leave_type
+    """, as_dict=1)

@@ -7,6 +7,8 @@
  "field_order": [
   "employee",
   "company",
+  "transition_type",
+  "transition_name",
   "column_break_nmsf",
   "posting_date",
   "deduction_type",
@@ -75,11 +77,21 @@
    "in_standard_filter": 1,
    "label": "Deduction Type",
    "options": "\nLeave\nSalary"
+  },
+  {
+   "fieldname": "transition_type",
+   "fieldtype": "Data",
+   "label": "Transition Type"
+  },
+  {
+   "fieldname": "transition_name",
+   "fieldtype": "Data",
+   "label": "Transition Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-11 19:20:04.794705",
+ "modified": "2024-10-21 18:06:02.707085",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Deduction Ledger Entry",
