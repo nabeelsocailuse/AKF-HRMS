@@ -228,9 +228,9 @@ def get_balance(args):
 
         if(key == 'Casual Leave'):
             remaining_leaves = leave_allocation[key]['remaining_leaves']
-        elif(key == 'Medical leave'):
+        elif(key == 'Medical Leave'):
             remaining_leaves = leave_allocation[key]['remaining_leaves']
-        elif(key == 'Earned leave'):
+        elif(key == 'Earned Leave'):
             remaining_leaves = leave_allocation[key]['remaining_leaves']
             
         if(remaining_leaves>0.0): 

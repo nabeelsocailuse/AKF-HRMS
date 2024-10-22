@@ -17,13 +17,13 @@ def get_employee_columns():
 		_("Father") + ":Data:120",
 		_("Department") + ":Link/Department:120",
 		_("Designation") + ":Link/Designation:120",
-		_("Contract Signed") + ":Date:120",
-		_("Contract End") + ":Date:120",
+		_("Contract Signed") + ":Data:120",
+		_("Contract End") + ":Data:120",
 		_("Branch") + ":Link/Branch:120",
 		_("Reported to") + ":Link/Employee:120",
 		# _("Experience") + ":Data:120",
-		_("DOB") + ":Date:120",
-		_("Joining Date") + ":Date:120",
+		_("DOB") + ":Data:120",
+		_("Joining Date") + ":Data:120",
 		_("Address") + ":Data:120",
 		_("Primary Number") + ":Data:120",
 		# _("Land line") + ":Data:120",
@@ -40,15 +40,15 @@ def get_employee_columns():
 		_("Confirmation Date") + ":Data:120",
 		_("Grade") + ":Data:120",
 		# _("Allowance") + ":Data:120",
-		# _("Last Promotion Date") + ":Date:120",
+		_("Last Promotion Date") + ":Date:120",
 		# _("Last Increment Date") + ":Date:120",
 		# _("Qualification") + ":Data:120",
-		# _("Gross Salary") + ":Data:120",
-		# _("Salary Type") + ":Data:120",
+		_("Gross Salary") + ":Data:120",
+		_("Salary Type") + ":Data:120",
 		_("Gender") + ":Data:120",
 		_("Marital Status") + ":Data:120",
-		# _("From Shift") + ":Data:120",
-		# _("To Shift") + ":Data:120",
+		_("From Shift") + ":Data:120",
+		_("To Shift") + ":Data:120",
 		_("Blood Group") + ":Data:120",
 	]
 # 
@@ -62,19 +62,34 @@ def get_employee_data(filters):
 			e.employee_name, e.custom_father_name, e.department, e.designation,
 			e.final_confirmation_date, e.contract_end_date, e.branch, e.reports_to,
 			e.date_of_birth, e.date_of_joining, e.current_address, e.cell_number,
-			e.bank_ac_no, e.custom_cnic, e.employment_type, e.custom_religeon,
-			e.prefered_email, e.personal_email,
-			e.bank_name, e.bank_ac_no, final_confirmation_date, e.grade, e.gender,
-			e.marital_status, e.blood_group
-
+			e.custom_cnic, e.employment_type, e.custom_religeon, e.prefered_email,
+			e.personal_email, e.bank_name, e.bank_ac_no, final_confirmation_date,
+			e.grade, ep.latest_promotion_date,
+			(
+				SELECT ssa.base 
+				FROM `tabSalary Structure Assignment` ssa 
+				WHERE ssa.employee = e.name 
+				ORDER BY ssa.from_date DESC 
+				LIMIT 1
+			) AS base, 
+			e.salary_mode, e.gender, e.marital_status, st.start_time, st.end_time,
+			e.blood_group
 
 		FROM `tabEmployee` e
+		LEFT JOIN `tabShift Type` st ON e.default_shift = st.name
+		LEFT JOIN (
+				SELECT employee, MAX(promotion_date) AS latest_promotion_date
+				FROM `tabEmployee Promotion`
+				GROUP BY employee	
+			  ) ep ON e.name = ep.employee
 		WHERE {condition}
 		""".format(condition = conditions)		
 	
 	
 
 	data = frappe.db.sql(emp_record, filters)
+
+	frappe.msgprint(frappe.as_json(data))
 	
 	return data
 
