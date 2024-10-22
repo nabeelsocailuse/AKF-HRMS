@@ -32,18 +32,18 @@ frappe.ui.form.on("Salary Slip", {
 				},
 				callback: function (r) {
 					let data = r.message;
-					if(data){
+					if(data.length>0){
 						data.forEach(d => {
-							if(d.leave_type == "Casual Leave"){
-								frm.set_value('custom_casual_leaves', d.total);
-							}else if(d.leave_type == "Medical Leave"){
-								frm.set_value('custom_medical_leaves', d.total);
-							}else if(d.leave_type == "Earned Leave"){
-								frm.set_value('custom_earned_leaves', d.total);
-							}else if(d.leave_type == "Leave Without Pay"){
-								frm.set_value('custom_leaves_without_pay', d.total);
-							}	
+							frm.set_value('custom_casual_leaves', d.leave_type == "Casual Leave"? d.total: 0);
+							frm.set_value('custom_medical_leaves', d.leave_type == "Medical Leave"? d.total: 0);
+							frm.set_value('custom_earned_leaves', d.leave_type == "Earned Leave"? d.total: 0);
+							frm.set_value('custom_leaves_without_pay', d.leave_type == "Leave Without Pay"? d.total: 0);
 						});
+					}else{
+						frm.set_value('custom_casual_leaves', 0);
+						frm.set_value('custom_medical_leaves', 0);
+						frm.set_value('custom_earned_leaves', 0);
+						frm.set_value('custom_leaves_without_pay', 0);
 					}
 				},
 			});

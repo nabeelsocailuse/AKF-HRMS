@@ -1,7 +1,7 @@
 import frappe
 
 def execute():
-    if (frappe.db.exists("Workspace", "Self Service Version-1")):
+    if (frappe.db.exists("Workspace", "Self Service Version")):
         if not frappe.db.exists("Custom HTML Block", "Self Service Dashboard"):
             frappe.get_doc({
                 "doctype": "Custom HTML Block",
