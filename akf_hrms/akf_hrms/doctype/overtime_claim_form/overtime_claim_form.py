@@ -44,7 +44,9 @@ class OvertimeClaimForm(Document):
 		for row in self.detail_of_overtime:
 			if(row.attendance):
 				custom_overtime_claim = 0 if(cancelled) else 1 
+				ocfName = None if(cancelled) else self.name 
 				frappe.db.set_value("Attendance", row.attendance, "custom_overtime_claim", custom_overtime_claim)
+				frappe.db.set_value("Attendance", row.attendance, "custom_overtime_claim_form", ocfName)
 
 	def on_cancel(self):
 		self.delete_additional_salary()
@@ -108,7 +110,7 @@ class OvertimeClaimForm(Document):
 			Where
 				docstatus=1
 				and custom_overtime_claim = 0
-				and custom_attendance_adjustment = 0
+				and ifnull(custom_attendance_adjustment,"")=""
 				and ifnull(custom_hours_worked, "")!=""
 				and ifnull(custom_overtime_hours, "")!=""
 				and year(attendance_date) = '{self.year}'

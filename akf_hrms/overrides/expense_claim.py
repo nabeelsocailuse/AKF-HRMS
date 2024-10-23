@@ -411,17 +411,21 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			# frappe.msgprint(f'ss {0}, branch {1}, company {2}, emp type {3}, emp {4}, cur salary {5} max reimb {6}'.format(social_security_amount, branch, self.company, employment_type, self.employee, current_salary, max_reimbursement))
 
 
+			medical_amount = 0  
 			for d in self.get("expenses"):
 				if d.expense_type == 'Medical':
-					# Calculate the 60% of the claimed amount.
-					allowed_reimbursement = min(d.amount * 0.6, max_reimbursement)
+					medical_amount += d.amount
+			# Calculate the 60% of the claimed amount.
+			allowed_reimbursement = min(medical_amount * 0.6, max_reimbursement)
 
-					if d.amount > allowed_reimbursement:
-						frappe.throw(
-							_("The medical expense for {0} cannot exceed 60% of the total claim, "
-							"up to a maximum of {1}. Please adjust the amount.")
-							.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
-						)
+			# frappe.msgprint(f'max_reimbursement {max_reimbursement}, allowed_reimbursement {allowed_reimbursement} ')
+
+			if allowed_reimbursement > max_reimbursement:
+				frappe.throw(
+					_("The medical expense for {0} cannot exceed 60% of the total claim, "
+					"up to a maximum of {1}. Please adjust the amount.")
+					.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
+				)
 
 
 
