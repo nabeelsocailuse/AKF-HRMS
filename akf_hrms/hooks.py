@@ -60,6 +60,10 @@ doctype_js = {
     "Company": [
     "public/js/custom_doctype_js/company/company.js",
     ],
+
+    "Expense Claim": [
+    "public/js/custom_doctype_js/expense_claim/expense_claim.js"
+    ],
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -160,15 +164,18 @@ override_doctype_class = {
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
     "Payroll Entry": "akf_hrms.overrides.payroll_entry.OverridePayrollEntry",
-    "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
+    # "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
+    "Salary Slip": "akf_hrms.overrides.salary_slip.SalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
     "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
     "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
     "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
     "Project": "akf_accounts.customizations.extends.project_override.XProject",
     "Leave Application": "akf_hrms.overrides.leave_application.OLeaveApplication",
+    "Expense Claim": "akf_hrms.overrides.expense_claim.ExpenseClaim",
+    "Additional Salary": "akf_hrms.overrides.xadditional_salary.XAdditionalSalary"
 }
-
+# /home/frappe/frappe-bench/apps/akf_hrms/akf_hrms/overrides/xadditional_salary.py
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -188,7 +195,7 @@ doc_events = {
     "Expense Claim": {
         "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
     },
-    "Attendance Log": {
+    "Attendance": {
         "after_insert": "akf_hrms.utils.hr_policy.apply_policy"
     },
 }

@@ -1,10 +1,18 @@
 // frappe.ui.form.off("Salary Slip",employee)
 frappe.ui.form.on("Salary Slip", {
-    employee: function (frm){
+   /*  employee: function (frm){
         frm.events.get_eobi_pf_social_security_details(frm);
 		frm.events.set_deduction_ledger(frm);
     },
 	start_date: function(frm){
+		frappe.call({
+			method: "akf_hrms.utils.hr_policy.get_no_attendance",
+			doc: frm.doc,
+			callback: function (r) {
+				// frm.refresh();
+			},
+		});
+
 		frm.events.set_deduction_ledger(frm);
 	},
 	end_date: function(frm){
@@ -48,5 +56,5 @@ frappe.ui.form.on("Salary Slip", {
 				},
 			});
 		}
-	}
+	} */
 })

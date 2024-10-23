@@ -6,14 +6,17 @@ from frappe import _
 from hrms.payroll.doctype.salary_slip.salary_slip import SalarySlip
 from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
 
+# from akf_hrms.utils.hr_policy import get_no_attendance
 class XSalarySlip(SalarySlip):
     
     def validate(self):
         super(XSalarySlip, self).validate()
         self.validate_other_info()
         self.get_eobi_pf_social_security_details()
-        self.create_deduction_leave_ledger_entry()
     
+    def after_insert(self):
+        self.create_deduction_leave_ledger_entry()
+        
     def validate_other_info(self):
         self.custom_pf_eligibility = self.start_date
         employment_type = frappe.get_value("Employee", self.employee, "employment_type")

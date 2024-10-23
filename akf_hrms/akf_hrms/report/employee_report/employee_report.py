@@ -21,30 +21,26 @@ def get_employee_columns():
 		_("Contract End") + ":Data:120",
 		_("Branch") + ":Link/Branch:120",
 		_("Reported to") + ":Link/Employee:120",
-		# _("Experience") + ":Data:120",
+		_("Experience") + ":Data:120",
 		_("DOB") + ":Data:120",
 		_("Joining Date") + ":Data:120",
 		_("Address") + ":Data:120",
 		_("Primary Number") + ":Data:120",
-		# _("Land line") + ":Data:120",
 		_("CNIC") + ":Data:120",
-		# _("Disability") + ":Data:120",
 		_("Employment Type") + ":Data:120",
 		_("Religion") + ":Data:120",
 		_("Email") + ":Data:120",
 		_("Personal Email") + ":Data:120",
-		# _("Working Hours") + ":Data:120",
-		# _("Pay by") + ":Data:120",
+		_("Working Hours") + ":Data:120",
 		_("Bank Name") + ":Data:120",
 		_("Bank Account") + ":Data:120",
 		_("Confirmation Date") + ":Data:120",
 		_("Grade") + ":Data:120",
-		# _("Allowance") + ":Data:120",
 		_("Last Promotion Date") + ":Date:120",
-		# _("Last Increment Date") + ":Date:120",
-		# _("Qualification") + ":Data:120",
-		_("Gross Salary") + ":Data:120",
-		_("Salary Type") + ":Data:120",
+		_("Last Increment Date") + ":Date:120",
+		_("Qualification") + ":Data:120",
+		_("Gross Salary") + ":Currency:120",
+		_("Pay by") + ":Data:120",
 		_("Gender") + ":Data:120",
 		_("Marital Status") + ":Data:120",
 		_("From Shift") + ":Data:120",
@@ -52,19 +48,53 @@ def get_employee_columns():
 		_("Blood Group") + ":Data:120",
 	]
 # 
+
+
 def get_employee_data(filters):
 	
 	conditions = get_conditions(filters)
-	
 
 	emp_record = """ 
 		SELECT 
 			e.employee_name, e.custom_father_name, e.department, e.designation,
-			e.final_confirmation_date, e.contract_end_date, e.branch, e.reports_to,
+			e.final_confirmation_date, e.contract_end_date, e.branch, e.reports_to,			
+			(
+				SELECT SUM(ewh.total_experience)
+				FROM `tabEmployee External Work History` ewh
+				WHERE ewh.parent = e.name
+			) AS experience,
 			e.date_of_birth, e.date_of_joining, e.current_address, e.cell_number,
 			e.custom_cnic, e.employment_type, e.custom_religeon, e.prefered_email,
-			e.personal_email, e.bank_name, e.bank_ac_no, final_confirmation_date,
-			e.grade, ep.latest_promotion_date,
+			e.personal_email, st.custom_total_working_hours, e.bank_name, e.bank_ac_no,
+			e.final_confirmation_date, e.grade, ep.latest_promotion_date, lssa.latest_salary_structure,
+			(
+				SELECT 
+					CASE 
+						WHEN MAX(
+							CASE 
+								WHEN ed.level = 'Post Graduate' THEN 3
+								WHEN ed.level = 'Graduate' THEN 2
+								WHEN ed.level = 'Under Graduate' THEN 1
+								ELSE 0 
+							END
+						) = 3 THEN 'Post Graduate'
+						WHEN MAX(
+							CASE 
+								WHEN ed.level = 'Graduate' THEN 2
+								ELSE 0 
+							END
+						) = 2 THEN 'Graduate'
+						WHEN MAX(
+							CASE 
+								WHEN ed.level = 'Under Graduate' THEN 1
+								ELSE 0 
+							END
+						) = 1 THEN 'Under Graduate'
+						ELSE NULL
+					END AS highest_education
+				FROM `tabEmployee Education` ed
+				WHERE ed.parent = e.name
+			) AS qualification,
 			(
 				SELECT ssa.base 
 				FROM `tabSalary Structure Assignment` ssa 
@@ -82,6 +112,11 @@ def get_employee_data(filters):
 				FROM `tabEmployee Promotion`
 				GROUP BY employee	
 			  ) ep ON e.name = ep.employee
+		LEFT JOIN (
+				SELECT employee, MAX(from_date) AS latest_salary_structure
+				FROM `tabSalary Structure Assignment`
+				GROUP BY employee	
+			  ) lssa ON e.name = lssa.employee
 		WHERE {condition}
 		""".format(condition = conditions)		
 	
