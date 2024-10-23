@@ -7,7 +7,7 @@ frappe.provide("erpnext.accounts.dimensions");
 frappe.ui.form.on('Expense Claim', {
     onload: function (frm) {
         erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
-        
+
         // if (!frm.doc.employee && !frm.doc.expense_approver) {
         //     frappe.throw(__('Please select Employee and Approver first'));
         //     return;
@@ -22,7 +22,7 @@ frappe.ui.form.on('Expense Claim', {
             if (!expense.expense_type) {
                 continue;
             }
-            
+
             frappe.call({
                 method: "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center",
                 args: {
@@ -39,15 +39,15 @@ frappe.ui.form.on('Expense Claim', {
         }
     },
     employee: function (frm) {
-        
+
         if (!frm.doc.custom_grade) {
             frappe.throw(__('Grade is not set. Please provide a valid grade to proceed with the validation.'));
-            return; 
+            return;
         }
-                    }
-                }
-            );
-    
+    }
+}
+);
+
 
 frappe.ui.form.on('Expense Claim Detail', {
     expense_type: function (frm, cdt, cdn) {
@@ -78,19 +78,19 @@ frappe.ui.form.on('Expense Claim Detail', {
             return;
         }
 
-       
+
         frappe.call({
             method: "akf_hrms.overrides.expense_claim.get_travel_expense_amount",
 
             args: {
                 "expense_type": d.expense_type,
-                "custom_grade": frm.doc.custom_grade  
+                "custom_grade": frm.doc.custom_grade
             },
             callback: function (r) {
                 if (r.message) {
                     d.amount = r.message.amount || 0;
                     d.sanctioned_amount = r.message.amount || 0;
-                    frm.refresh_field('expenses'); 
+                    frm.refresh_field('expenses');
                 } else {
                     frappe.msgprint(__("No amount defined for the selected expense type."));
                 }

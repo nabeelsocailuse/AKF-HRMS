@@ -384,7 +384,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		branch = employee_doc.branch
 		employment_type = employee_doc.employment_type
 
-
+		
 		salary_structure = frappe.db.sql("""
 			SELECT base 
 			FROM `tabSalary Structure Assignment`
@@ -397,15 +397,19 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			frappe.throw(_("No Salary Structure Assignment found for the employee."))
 
 		current_salary = salary_structure[0].get('base', 0)
-		
-		frappe.msgprint(f'ss {0}, branch {1}, company {2}, emp type {3}, emp {4}, cur salary {5} max reimb {6}'.format(max_reimbursement))
 
+		frappe.msgprint(f'ss {social_security_amount}, branch {branch}, company {self.company}, emp type {employment_type}, emp {self.employee}, cur salary {current_salary}')
+
+		
 		if (self.company == "Alkhidmat Foundation Pakistan" and 
 			branch == "Central Office" and 
 			employment_type == "Permanent" and 
 			current_salary > social_security_amount):
 
 			max_reimbursement = max(current_salary * 2, 50000)
+				
+			# frappe.msgprint(f'ss {0}, branch {1}, company {2}, emp type {3}, emp {4}, cur salary {5} max reimb {6}'.format(social_security_amount, branch, self.company, employment_type, self.employee, current_salary, max_reimbursement))
+
 
 			for d in self.get("expenses"):
 				if d.expense_type == 'Medical':
@@ -772,9 +776,9 @@ def make_expense_claim_for_delivery_trip(source_name, target_doc=None):
 
 
 @frappe.whitelist()
-def get_travel_expense_amount(expense_type, custom_grade):
+def get_travel_expense_amount(expense_type=None, custom_grade=None):
 	
-	if not custom_grade:
+	if(not custom_grade):
 		frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
 	
 
