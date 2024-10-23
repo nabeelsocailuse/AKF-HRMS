@@ -7,7 +7,13 @@ frappe.provide("erpnext.accounts.dimensions");
 frappe.ui.form.on('Expense Claim', {
     onload: function (frm) {
         erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
+        
+        // if (!frm.doc.employee && !frm.doc.expense_approver) {
+        //     frappe.throw(__('Please select Employee and Approver first'));
+        //     return;
+        // }
     },
+
     company: function (frm) {
         erpnext.accounts.dimensions.update_dimension(frm, frm.doctype);
         var expenses = frm.doc.expenses;
@@ -33,6 +39,7 @@ frappe.ui.form.on('Expense Claim', {
         }
     },
     employee: function (frm) {
+        
         if (!frm.doc.custom_grade) {
             frappe.throw(__('Grade is not set. Please provide a valid grade to proceed with the validation.'));
             return; 
@@ -44,6 +51,11 @@ frappe.ui.form.on('Expense Claim', {
 
 frappe.ui.form.on('Expense Claim Detail', {
     expense_type: function (frm, cdt, cdn) {
+
+        if (!frm.doc.employee && !frm.doc.expense_approver) {
+            frappe.throw(__('Please select Employee and Approver first'));
+            return;
+        }
         var d = locals[cdt][cdn];
         if (d.expense_type === "Daily Allowance") {
             frm.toggle_reqd("travel_request", true);

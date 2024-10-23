@@ -173,7 +173,7 @@ override_doctype_class = {
     "Project": "akf_accounts.customizations.extends.project_override.XProject",
     "Leave Application": "akf_hrms.overrides.leave_application.OLeaveApplication",
     "Expense Claim": "akf_hrms.overrides.expense_claim.ExpenseClaim",
-    "Additional Salary": "akf_hrms.overrides.xadditional_salary.XAdditionalSalary"
+    "Additional Salary": "akf_hrms.overrides.xadditional_salary.XAdditionalSalary",
 }
 # /home/frappe/frappe-bench/apps/akf_hrms/akf_hrms/overrides/xadditional_salary.py
 # Document Events

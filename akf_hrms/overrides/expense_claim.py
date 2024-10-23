@@ -47,6 +47,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		validate_active_employee(self.employee)
 		set_employee_name(self)
 		self.validate_sanctioned_amount()
+		self.validate_medical_expense()
 		self.calculate_total_amount()
 		self.validate_advances()
 		self.set_expense_account(validate=True)
@@ -374,6 +375,51 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				frappe.throw(
 					_("Sanctioned Amount cannot be greater than Claim Amount in Row {0}.").format(d.idx)
 				)
+
+	def validate_medical_expense(self):
+		frappe.msgprint("Mubashir testing...")
+
+		social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
+		employee_doc = frappe.get_doc("Employee", self.employee)
+		branch = employee_doc.branch
+		employment_type = employee_doc.employment_type
+
+
+		salary_structure = frappe.db.sql("""
+			SELECT base 
+			FROM `tabSalary Structure Assignment`
+			WHERE docstatus = 1 AND employee = %s
+			ORDER BY from_date DESC
+			LIMIT 1
+		""", (self.employee), as_dict=True)
+
+		if not salary_structure:
+			frappe.throw(_("No Salary Structure Assignment found for the employee."))
+
+		current_salary = salary_structure[0].get('base', 0)
+		
+		frappe.msgprint(f'ss {0}, branch {1}, company {2}, emp type {3}, emp {4}, cur salary {5} max reimb {6}'.format(max_reimbursement))
+
+		if (self.company == "Alkhidmat Foundation Pakistan" and 
+			branch == "Central Office" and 
+			employment_type == "Permanent" and 
+			current_salary > social_security_amount):
+
+			max_reimbursement = max(current_salary * 2, 50000)
+
+			for d in self.get("expenses"):
+				if d.expense_type == 'Medical':
+					# Calculate the 60% of the claimed amount.
+					allowed_reimbursement = min(d.amount * 0.6, max_reimbursement)
+
+					if d.amount > allowed_reimbursement:
+						frappe.throw(
+							_("The medical expense for {0} cannot exceed 60% of the total claim, "
+							"up to a maximum of {1}. Please adjust the amount.")
+							.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
+						)
+
+
 
 	def set_expense_account(self, validate=False):
 		for expense in self.expenses:
@@ -727,6 +773,7 @@ def make_expense_claim_for_delivery_trip(source_name, target_doc=None):
 
 @frappe.whitelist()
 def get_travel_expense_amount(expense_type, custom_grade):
+	
 	if not custom_grade:
 		frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
 	

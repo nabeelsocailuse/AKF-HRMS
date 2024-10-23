@@ -26,14 +26,12 @@ frappe.query_reports["Manual Attendance Report"] = {
 		{
 			"fieldname":"from_time",
 			"label": __("From Time"),
-			"fieldtype": "Time",
-			"reqd": 1
+			"fieldtype": "Time"
 		},
 		{
 			"fieldname":"to_time",
 			"label": __("To Time"),
-			"fieldtype": "Time",
-			"reqd": 1
+			"fieldtype": "Time"
 		},
 		{
 			"fieldname":"branch",

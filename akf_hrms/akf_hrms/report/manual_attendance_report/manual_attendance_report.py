@@ -30,20 +30,16 @@ def get_employee_data(filters):
 	emp_record = """ 
 		SELECT 
 			employee, employee_name, from_date, custom_from,
-			custom_to, creation, reason, explanation
-			
+			custom_to, creation, reason, explanation	
 		FROM `tabAttendance Request`
-		# WHERE {condition}
+		WHERE {condition}
 		""".format(condition = conditions)		
 	
-	
-
 	data = frappe.db.sql(emp_record, filters)
 
 	# frappe.msgprint(frappe.as_json(data))
 	
 	return data
-
 
 def get_conditions(filters):
 	conditions = ""
