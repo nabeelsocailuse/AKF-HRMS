@@ -63,10 +63,10 @@ class OvertimeClaimForm(Document):
 		frappe.db.sql(f""" delete from `tabAdditional Salary` where name = '{self.additional_salary}' """)
 	
 	@frappe.whitelist()
-	def get_details_of_overtime(self):
+	def get_details_of_overtime(self, reset=False):
 		self.already_applied_for_overtime()
 		self.set_salary_structure_assignment()
-		self.set("detail_of_overtime", self.get_attendance())
+		if(reset): self.set("detail_of_overtime", self.get_attendance())
 		self.set_total_hours_worked()
 		self.set_total_overtime_hours()
 		self.set_amount_in_figures()

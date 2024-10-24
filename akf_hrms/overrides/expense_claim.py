@@ -376,8 +376,16 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					_("Sanctioned Amount cannot be greater than Claim Amount in Row {0}.").format(d.idx)
 				)
 
+
+# //////////////////////// MUBASHIR BASHIR \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+# ///////////////////////////// START \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 	def validate_medical_expense(self):
-		frappe.msgprint("Mubashir testing...")
+
+		from akf_hrms.patches.skip_validations import skip
+		if(skip()):
+			# frappe.msgprint("Validation is skipped") 
+			return
 
 		social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
 		employee_doc = frappe.get_doc("Employee", self.employee)
@@ -398,7 +406,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 		current_salary = salary_structure[0].get('base', 0)
 
-		frappe.msgprint(f'ss {social_security_amount}, branch {branch}, company {self.company}, emp type {employment_type}, emp {self.employee}, cur salary {current_salary}')
+		# frappe.msgprint(f'ss {social_security_amount}, branch {branch}, company {self.company}, emp type {employment_type}, emp {self.employee}, cur salary {current_salary}')
 
 		
 		if (self.company == "Alkhidmat Foundation Pakistan" and 
@@ -407,18 +415,13 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			current_salary > social_security_amount):
 
 			max_reimbursement = max(current_salary * 2, 50000)
-				
-			# frappe.msgprint(f'ss {0}, branch {1}, company {2}, emp type {3}, emp {4}, cur salary {5} max reimb {6}'.format(social_security_amount, branch, self.company, employment_type, self.employee, current_salary, max_reimbursement))
-
-
+			
 			medical_amount = 0  
 			for d in self.get("expenses"):
 				if d.expense_type == 'Medical':
 					medical_amount += d.amount
 			# Calculate the 60% of the claimed amount.
 			allowed_reimbursement = min(medical_amount * 0.6, max_reimbursement)
-
-			# frappe.msgprint(f'max_reimbursement {max_reimbursement}, allowed_reimbursement {allowed_reimbursement} ')
 
 			if allowed_reimbursement > max_reimbursement:
 				frappe.throw(
@@ -427,7 +430,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
 				)
 
-
+# //////////////////////// END \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 	def set_expense_account(self, validate=False):
 		for expense in self.expenses:
