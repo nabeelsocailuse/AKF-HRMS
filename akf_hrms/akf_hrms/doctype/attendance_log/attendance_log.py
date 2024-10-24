@@ -104,7 +104,6 @@ class AttendanceLog(Document):
 		if(not total_working_hours): 
 			return overtime_hours
 		if(hours_worked>total_working_hours):
-			frappe.msgprint(f"{hours_worked} ; {total_working_hours}")
 			overtime_hours = time_diff(str(hours_worked), str(total_working_hours))
 
 		return overtime_hours

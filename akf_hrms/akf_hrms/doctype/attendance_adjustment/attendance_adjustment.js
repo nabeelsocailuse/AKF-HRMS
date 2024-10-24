@@ -24,17 +24,21 @@ frappe.ui.form.on('Attendance Adjustment', {
         }
     },
     compensation_date: function (frm) {
+        frm.trigger('set_compensation');
     },
     compensation_type: function (frm) {
-        if(frm.doc.compensation_date!=undefined){
+        frm.trigger('set_compensation')
+    },
+    set_compensation: function(frm){
+        if(frm.doc.compensation_date!=undefined && frm.doc.compensation_type!=""){
             frm.call('get_compensation_for').then(r=>{
-                frm.set_value('compensation_for', r.message);
+                frm.set_value('compensation_for', r.message==undefined?null:r.message);
+                loadCompensateOnStats(frm);
             });
         }else{
             frm.set_value('compensation_for', null);
         }
-        loadCompensateOnStats(frm);
-    },
+    }
 });
 
 function de_link(frm){
