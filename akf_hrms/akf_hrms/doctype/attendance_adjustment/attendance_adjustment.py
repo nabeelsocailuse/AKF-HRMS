@@ -30,7 +30,8 @@ class AttendanceAdjustment(Document):
     def get_compensation_date_stats(self):
         if(not self.compensation_type): return
         conditions = " and late_entry = 1 " if(self.compensation_type=="Late Entry") else ""
-        conditions = " and early_exit = 1 " if(self.compensation_type=="Early Exit") else ""
+        conditions += " and early_exit = 1 " if(self.compensation_type=="Early Exit") else ""
+       
         return frappe.db.sql(f""" 
             select name, custom_total_working_hours, in_time, out_time, custom_hours_worked, custom_overtime_hours
             from `tabAttendance`
@@ -42,7 +43,7 @@ class AttendanceAdjustment(Document):
             and attendance_date = '{self.compensation_date}'
             {conditions}
         """, as_dict=1)
-    
+
     @frappe.whitelist()
     def get_adjustment_for(self):
         resp = self.get_attendance_stats(adjust=1)
@@ -51,6 +52,7 @@ class AttendanceAdjustment(Document):
     @frappe.whitelist()
     def get_compensation_for(self):
        resp = self.get_compensation_date_stats()
+       
        return resp[0].name if(resp) else None
     
     
