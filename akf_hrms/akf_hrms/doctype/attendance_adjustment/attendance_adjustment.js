@@ -30,6 +30,7 @@ frappe.ui.form.on('Attendance Adjustment', {
         frm.trigger('set_compensation')
     },
     set_compensation: function(frm){
+        
         if(frm.doc.compensation_date!=undefined && frm.doc.compensation_type!=""){
             frm.call('get_compensation_for').then(r=>{
                 frm.set_value('compensation_for', r.message==undefined?null:r.message);
@@ -37,6 +38,7 @@ frappe.ui.form.on('Attendance Adjustment', {
             });
         }else{
             frm.set_value('compensation_for', null);
+            loadCompensateOnStats(frm);
         }
     }
 });
@@ -114,7 +116,8 @@ function loadSevenDaysStats(frm) {
 function loadCompensateOnStats(frm) {
     if(frm.doc.compensation_date==undefined) return;
     frm.call('get_compensation_date_stats').then(r => {
-        let data = r.message;
+        
+        let data = r.message==undefined?[]: r.message;
         let rows = ``;
         data.forEach(row => {
             // let attendance_date = moment(row.attendance_date).format("DD-MM-YYYY")
@@ -153,6 +156,7 @@ function loadCompensateOnStats(frm) {
                     ${rows}
                 </tbody>
             </table>`;
+        
         frm.set_df_property("compensation_on_stats", "options", _html_);
     });
 }
