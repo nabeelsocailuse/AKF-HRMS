@@ -278,19 +278,33 @@ def make_attendance_deduction_ledger_entry(args):
     if(not frappe.db.exists(filters)): frappe.get_doc(args).insert(ignore_permissions=True)
 
 @frappe.whitelist()
-def get_deduction_ledger(employee=None, start_date=None, end_date=None):
-    return frappe.db.sql(f""" 
+def get_deduction_ledger(self=None):
+    
+    result = frappe.db.sql(f""" 
         Select  ifnull(sum(total_deduction),0) as total,
                 leave_type
         From
             `tabDeduction Ledger Entry`
         Where
             ifnull(leave_type, "")!=""
-            and employee='{employee}'
-            and (posting_date between '{start_date}' and '{end_date}')
+            and employee='{self.employee}'
+            and (posting_date between '{self.start_date}' and '{self.end_date}')
         Group By
             leave_type
     """, as_dict=1)
+    self.custom_casual_leaves =  0
+    self.custom_medical_leaves = 0
+    self.custom_earned_leaves = 0
+    self.custom_leaves_without_pay = 0 
+    for d in result:
+        if(d.leave_type=="Casual Leave"):
+            self.custom_casual_leaves = d.total
+        elif(d.leave_type=="Medical Leave"):
+            self.custom_medical_leaves = d.total
+        elif(d.leave_type=="Earned Leave"):
+            self.custom_earned_leaves = d.total
+        elif(d.leave_type=="Leave Without Pay"):
+            self.custom_leaves_without_pay = d.total
 
 """ SALARY SLIP POLICIES """
 

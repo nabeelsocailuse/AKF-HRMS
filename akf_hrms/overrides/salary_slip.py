@@ -62,7 +62,7 @@ TAX_COMPONENTS_BY_COMPANY = "tax_components_by_company"
 
 from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
 
-from akf_hrms.utils.hr_policy import (validate_other_info, get_eobi_pf_social_security_details, make_leave_ledger_entry, 
+from akf_hrms.utils.hr_policy import (validate_other_info, get_eobi_pf_social_security_details, get_deduction_ledger, make_leave_ledger_entry, 
     cancel_leave_ledger_entry, get_no_attendance)
 
 class SalarySlip(TransactionBase):
@@ -331,6 +331,7 @@ class SalarySlip(TransactionBase):
 				)
 				self.set_time_sheet()
 				self.pull_sal_struct()
+			get_deduction_ledger(self)
 
 	def set_time_sheet(self):
 		if self.salary_slip_based_on_timesheet:
