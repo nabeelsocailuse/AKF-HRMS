@@ -17,6 +17,7 @@ import hrms
 from hrms.hr.utils import set_employee_name, share_doc_with_approver, validate_active_employee
 from hrms.mixins.pwa_notifications import PWANotificationsMixin
 from frappe.utils import today
+from datetime import datetime, timedelta
 
 
 class InvalidExpenseApproverError(frappe.ValidationError):
@@ -377,10 +378,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				)
 
 
-# //////////////////////// MUBASHIR BASHIR \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-# ///////////////////////////// START \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-	def validate_medical_expense(self):
+	def validate_medical_expense(self):			#Mubashir Bashir
 
 		from akf_hrms.patches.skip_validations import skip
 		if(skip()):
@@ -430,7 +428,6 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
 				)
 
-# //////////////////////// END \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 	def set_expense_account(self, validate=False):
 		for expense in self.expenses:
@@ -814,7 +811,7 @@ def get_travel_expense_amount(expense_type=None, custom_grade=None):
 @frappe.whitelist()
 def get_employee_details():
 	user_id = frappe.session.user
-	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'first_name', 'branch', 'designation', 'department' , 'image', 'date_of_birth', 'date_of_joining', 'custom_cnic', 'employment_type', 'gender'])
+	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'first_name', 'branch', 'designation', 'department' , 'image', 'date_of_birth', 'date_of_joining', 'custom_cnic', 'employment_type', 'gender', 'custom_reports_to_line_manager_name'])
 	
 	if employee:
 	
@@ -830,7 +827,8 @@ def get_employee_details():
 			"date_of_joining": emp_details.date_of_joining,
 			"cnic": emp_details.custom_cnic,
 			"gender":emp_details.gender,
-			"employment_type":emp_details.employment_type
+			"employment_type":emp_details.employment_type,
+			"custom_reports_to_line_manager_name": emp_details.custom_reports_to_line_manager_name
 			
 		}
 	else:
@@ -856,3 +854,81 @@ def get_employee_date():
             "message": "No Leave Record exists."
         }
 
+@frappe.whitelist()
+def get_attendance_logs_when_no_attendance():
+    user_id = frappe.session.user
+    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+    
+    if employee:
+        employee_name = employee[0].name
+        
+        today = datetime.now()
+        start_date = today - timedelta(days=30) 
+        
+        attendance_logs = frappe.db.get_all(
+            "Attendance",
+            filters={
+                'employee': employee_name,
+                'attendance_date': ['between', [start_date, today]]
+            },
+            fields=['attendance_date']
+        )
+        
+        attended_dates = {log.attendance_date for log in attendance_logs}
+
+        all_dates = [
+            (start_date + timedelta(days=i)).date() for i in range((today - start_date).days + 1)
+        ]
+
+        missing_attendance_dates = [date for date in all_dates if date not in attended_dates]
+        limited_missing_dates = missing_attendance_dates[:5]
+
+        if not limited_missing_dates:
+            return {"message": "All attendance marked for the last 30 days."}
+        else:
+            return {"missing_attendance_dates": limited_missing_dates}
+    else:
+        return {"message": "Employee not found."}
+
+@frappe.whitelist()
+def get_employee_salary():			#Mubashir Bashir
+	user_id = frappe.session.user
+	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+
+	if not employee:
+		return 0
+	employee_name = employee[0].get('name')
+	
+	salary_structure = frappe.db.sql("""
+		SELECT base 
+		FROM `tabSalary Structure Assignment`
+		WHERE employee = %s
+		AND docstatus = 1 
+		ORDER BY from_date DESC
+		LIMIT 1
+	""", (employee_name,), as_dict=True)
+
+	if salary_structure:
+		return salary_structure[0].get('base')
+	else:
+		return 0
+	
+@frappe.whitelist()
+def get_employee_dependents():				#Mubashir Bashir
+    user_id = frappe.session.user
+    
+    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+
+    if not employee:
+        return []
+
+    employee_name = employee[0].get('name')
+
+    dependents = frappe.db.get_all(
+        'Employee Dependents',
+        filters={'parent': employee_name},
+        fields=['dependent_name', 'date_of_birth', 'gender', 'relation', 'cnic'],
+		limit = 2
+    )
+
+    return dependents

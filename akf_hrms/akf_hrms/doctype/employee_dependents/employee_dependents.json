@@ -1,0 +1,56 @@
+{
+ "creation": "2020-08-12 13:14:47.222679",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "dependent_name",
+  "date_of_birth",
+  "gender",
+  "relation",
+  "cnic"
+ ],
+ "fields": [
+  {
+   "fieldname": "dependent_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Dependent Name"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date of Birth"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "relation",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Relation"
+  },
+  {
+   "fieldname": "cnic",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "CNIC"
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-08-12 13:18:12.910032",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Employee Dependents",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

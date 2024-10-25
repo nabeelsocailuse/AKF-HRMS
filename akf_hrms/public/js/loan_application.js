@@ -65,7 +65,9 @@ frappe.ui.form.on("Loan Application", {
     } 
     
     if (frm.doc.loan_product == "Vehicle Loan") {
-        frappe.msgprint(__("Vehicle Loan Triggered"));
+        // frappe.msgprint(__("Vehicle Loan Triggered"));
+        if (frm.doc.loan_amount > 1000000)
+          frappe.msgprint(__("Vehicle Loan cannot exceed the limit of PKR 1,000,000"));
     }
 },
 

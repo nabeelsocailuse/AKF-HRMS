@@ -51,6 +51,8 @@ class XEmployee(Employee):
 		my_string = "data:image/png;base64,"+(my_string.decode("utf-8"))
 		self.custom_base64_image = my_string
 
+
+
 @frappe.whitelist()
 def get_country_details(country):
 	return frappe.db.get_value('Country', {'name': country}, ["custom_label", "custom_id_mask", "custom_id_regex"], as_dict=1)

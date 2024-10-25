@@ -16,7 +16,7 @@ class XAdditionalSalary(AdditionalSalary):
             "employee": self.employee,
             "docstatus": 1 
         }):
-            frappe.msgprint("You have already applied for the Marriage Allowance and cannot apply again.")
+            frappe.throw("You have already applied for the Marriage Allowance and cannot apply again.")
             return
 
         employee_type = frappe.db.get_value("Employee", {"name": self.employee, "status": "Active"}, "employment_type")
@@ -31,17 +31,17 @@ class XAdditionalSalary(AdditionalSalary):
 
                 if gross_salary:
                     if float(gross_salary) < float(self.amount):
-                        frappe.msgprint(f"The requested amount exceeds the gross salary PKR: {gross_salary}")
+                        frappe.throw(f"The requested amount exceeds the gross salary PKR: {gross_salary}")
                         return
                     else:
                         pass
                 else:
-                    frappe.msgprint("No salary structure found for this employee. Please ensure the employee has a valid salary structure.")
+                    frappe.throw("No salary structure found for this employee. Please ensure the employee has a valid salary structure.")
             else:
-                frappe.msgprint("You are not eligible to apply for the Marriage Allowance as you are not a permanent employee.")
+                frappe.throw("You are not eligible to apply for the Marriage Allowance as you are not a permanent employee.")
                 return
         else:
-            frappe.msgprint("Employee type could not be determined. Please check the employee record.")
+            frappe.throw("Employee type could not be determined. Please check the employee record.")
             return
 
 
