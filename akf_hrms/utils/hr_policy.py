@@ -29,12 +29,13 @@ from dateutil import relativedelta
 
 @frappe.whitelist(allow_guest=True)
 def apply_policy(doc, method=None):
+    frappe.throw(f"{doc}")
     args = frappe._dict({
         'company': doc.company,
         'employee': doc.employee,
         'posting_date': doc.attendance_date,
         'transition_type': 'Attendance',
-        'transition_name': doc.name,
+        'transition_name': doc.attendance_id,
         
     })
     two_hours_three_late_comings_times_in_a_month(args)
