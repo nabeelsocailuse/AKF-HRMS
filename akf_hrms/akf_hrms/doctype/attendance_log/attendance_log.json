@@ -19,6 +19,7 @@
   "device_port",
   "log_detail_section",
   "log_type",
+  "attendance_id",
   "column_break_jzpo",
   "attendance_date",
   "log"
@@ -111,11 +112,17 @@
    "label": "Company",
    "options": "Company",
    "read_only": 1
+  },
+  {
+   "fieldname": "attendance_id",
+   "fieldtype": "Small Text",
+   "label": "Attendance ID",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-11 19:20:12.177843",
+ "modified": "2024-10-28 12:13:06.782701",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Log",
