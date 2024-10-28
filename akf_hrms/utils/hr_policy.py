@@ -29,7 +29,6 @@ from dateutil import relativedelta
 
 @frappe.whitelist(allow_guest=True)
 def apply_policy(doc, method=None):
-    frappe.throw(f"{doc}")
     args = frappe._dict({
         'company': doc.company,
         'employee': doc.employee,
