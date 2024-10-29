@@ -58,11 +58,13 @@ doctype_js = {
         "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
         ],
     "Company": [
-    "public/js/custom_doctype_js/company/company.js",
+        "public/js/custom_doctype_js/company/company.js",
     ],
-
     "Expense Claim": [
-    "public/js/custom_doctype_js/expense_claim/expense_claim.js"
+        "public/js/custom_doctype_js/expense_claim/expense_claim.js"
+    ],
+    "Leave Application": [
+        "public/js/custom_doctype_js/leave_application.js"
     ],
 }
 # doctype_js = {
@@ -171,7 +173,7 @@ override_doctype_class = {
     "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
     "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
     "Project": "akf_accounts.customizations.extends.project_override.XProject",
-    "Leave Application": "akf_hrms.overrides.leave_application.OLeaveApplication",
+    "Leave Application": "akf_hrms.overrides.leave_application.LeaveApplication",
     "Expense Claim": "akf_hrms.overrides.expense_claim.ExpenseClaim",
     "Additional Salary": "akf_hrms.overrides.xadditional_salary.XAdditionalSalary",
 }

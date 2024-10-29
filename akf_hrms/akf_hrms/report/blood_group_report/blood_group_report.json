@@ -1,0 +1,23 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2024-10-22 15:56:29.692650",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{\"filters\":[],\"fields\":[[\"name\",\"Employee\"],[\"docstatus\",\"Employee\"],[\"employee_name\",\"Employee\"],[\"status\",\"Employee\"],[\"company\",\"Employee\"],[\"custom_cnic\",\"Employee\"],[\"blood_group\",\"Employee\"],[\"branch\",\"Employee\"],[\"designation\",\"Employee\"],[\"department\",\"Employee\"]],\"order_by\":\"`tabEmployee`.`modified` desc\",\"add_totals_row\":0,\"page_length\":20,\"column_widths\":{\"name\":120,\"employee_name\":210,\"status\":116,\"company\":156,\"custom_cnic\":120,\"blood_group\":120,\"branch\":167,\"designation\":166,\"department\":79},\"group_by\":null}",
+ "letterhead": null,
+ "modified": "2024-10-29 12:07:23.720396",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Blood Group Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Employee",
+ "report_name": "Blood Group Report",
+ "report_type": "Report Builder",
+ "roles": []
+}

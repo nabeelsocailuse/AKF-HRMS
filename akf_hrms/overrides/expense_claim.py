@@ -881,12 +881,15 @@ def get_attendance_logs_when_no_attendance():
         ]
 
         missing_attendance_dates = [date for date in all_dates if date not in attended_dates]
-        limited_missing_dates = missing_attendance_dates[:5]
+        limited_missing_dates = missing_attendance_dates[-5:]
 
-        if not limited_missing_dates:
+		# Format the dates as DD-MM-YYYY
+        formatted_dates = [date.strftime("%d-%m-%Y") for date in limited_missing_dates]
+
+        if not formatted_dates:
             return {"message": "All attendance marked for the last 30 days."}
         else:
-            return {"missing_attendance_dates": limited_missing_dates}
+            return {"missing_attendance_dates": formatted_dates}
     else:
         return {"message": "Employee not found."}
 

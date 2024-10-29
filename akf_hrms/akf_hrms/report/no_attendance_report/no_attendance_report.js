@@ -11,12 +11,24 @@ frappe.query_reports["No Attendance Report"] = {
 			"default": frappe.defaults.get_user_default("Company"),
 			"reqd": 1
 		},
-		// {
-		// 	"fieldname":"employee",
-		// 	"label": __("Employee"),
-		// 	"fieldtype": "Link",
-		// 	"options": "Employee"
-		// },
+		{
+			"fieldname":"employee",
+			"label": __("Employee"),
+			"fieldtype": "Link",
+			"options": "Employee"
+		},
+		{
+			"fieldname":"branch",
+			"label": __("Branch"),
+			"fieldtype": "Link",
+			"options": "Branch"
+		},
+		{
+			"fieldname":"department",
+			"label": __("Department"),
+			"fieldtype": "Link",
+			"options": "Department"
+		},
 		{
 			"fieldname":"from_date",
 			"label": __("From Date"),
