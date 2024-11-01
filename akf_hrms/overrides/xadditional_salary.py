@@ -37,17 +37,9 @@ class XAdditionalSalary(AdditionalSalary):
                         pass
                 else:
                     frappe.throw("No salary structure found for this employee. Please ensure the employee has a valid salary structure.")
-            else:
+            elif(self.salary_component!="Overtime"):
                 frappe.throw("You are not eligible to apply for the Marriage Allowance as you are not a permanent employee.")
                 return
         else:
             frappe.throw("Employee type could not be determined. Please check the employee record.")
             return
-
-
-
-            
-            
-            
-
-                    
