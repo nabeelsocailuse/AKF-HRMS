@@ -816,6 +816,22 @@ def get_employee_details():
 	if employee:
 	
 		emp_details = employee[0]
+
+		# Fetch education levels for the employee
+		education_records = frappe.db.get_all('Employee Education', filters={'parent': emp_details.name}, fields=['level'])
+
+		education_hierarchy = {
+			'Post Graduate': 3,
+			'Graduate': 2,
+			'Under Graduate': 1
+		}
+		highest_level = None
+		for record in education_records:
+			level = record.level
+			if level in education_hierarchy:
+				if highest_level is None or education_hierarchy[level] > education_hierarchy[highest_level]:
+					highest_level = level
+
 		return {
 			"first_name": emp_details.first_name,
 			"branch": emp_details.branch,
@@ -828,9 +844,9 @@ def get_employee_details():
 			"cnic": emp_details.custom_cnic,
 			"gender":emp_details.gender,
 			"employment_type":emp_details.employment_type,
-			"custom_reports_to_line_manager_name": emp_details.custom_reports_to_line_manager_name
-			
-		}
+			"custom_reports_to_line_manager_name": emp_details.custom_reports_to_line_manager_name,
+            "latest_education_level": highest_level if highest_level else "No education record"
+        }
 	else:
 		return {
 			"message": "No record exists."
@@ -854,37 +870,64 @@ def get_employee_date():
             "message": "No Leave Record exists."
         }
 
+
 @frappe.whitelist()
-def get_attendance_logs_when_no_attendance():
+def get_attendance_logs_when_no_attendance():             # Mubashir Bashir
     user_id = frappe.session.user
-    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'holiday_list'])
     
     if employee:
         employee_name = employee[0].name
-        
+        holiday_list = employee[0].holiday_list
         today = datetime.now()
-        start_date = today - timedelta(days=30) 
-        
+        start_date = today - timedelta(days=30)
+
         attendance_logs = frappe.db.get_all(
             "Attendance",
-            filters={
-                'employee': employee_name,
-                'attendance_date': ['between', [start_date, today]]
-            },
+            filters={'employee': employee_name, 'attendance_date': ['between', [start_date, today]]},
             fields=['attendance_date']
         )
-        
         attended_dates = {log.attendance_date for log in attendance_logs}
-
         all_dates = [
             (start_date + timedelta(days=i)).date() for i in range((today - start_date).days + 1)
         ]
+        
+        holiday_dates = []
+        if holiday_list:
+            holiday_dates = frappe.db.get_all(
+                "Holiday",
+                filters={
+                    'parent': holiday_list,
+                    'holiday_date': ['between', [start_date, today]]
+                },
+                fields=['holiday_date']
+            )
+        
+        holiday_dates_set = {holiday.holiday_date for holiday in holiday_dates}
 
-        missing_attendance_dates = [date for date in all_dates if date not in attended_dates]
+        request_statuses_to_exclude = [
+			'Pending', 
+			'Approved by the Line Manager', 
+			'Approved by the Head of Department'
+		]
+
+        pending_request_dates = frappe.db.get_all(
+            "Attendance Request",
+            filters={
+                'employee': employee_name,
+                'custom_approval_status': ['in', request_statuses_to_exclude],
+                'from_date': ['between', [start_date, today]]
+            },
+            fields=['from_date']
+        )
+        pending_dates_set = {request.from_date for request in pending_request_dates}
+        
+        missing_attendance_dates = [
+            date for date in all_dates
+            if date not in attended_dates and date not in holiday_dates_set and date not in pending_dates_set
+        ]
         limited_missing_dates = missing_attendance_dates[-5:]
-
-		# Format the dates as DD-MM-YYYY
-        formatted_dates = [date.strftime("%d-%m-%Y") for date in limited_missing_dates]
+        formatted_dates = [date for date in limited_missing_dates]
 
         if not formatted_dates:
             return {"message": "All attendance marked for the last 30 days."}
@@ -892,6 +935,7 @@ def get_attendance_logs_when_no_attendance():
             return {"missing_attendance_dates": formatted_dates}
     else:
         return {"message": "Employee not found."}
+
 
 @frappe.whitelist()
 def get_employee_salary():			#Mubashir Bashir
@@ -930,7 +974,7 @@ def get_employee_dependents():				#Mubashir Bashir
     dependents = frappe.db.get_all(
         'Employee Dependents',
         filters={'parent': employee_name},
-        fields=['dependent_name', 'date_of_birth', 'gender', 'relation', 'cnic'],
+        fields=['dependent_name', 'mobile_number', 'relation', 'cnic'],
 		limit = 2
     )
 

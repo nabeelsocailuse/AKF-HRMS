@@ -13,6 +13,7 @@ frappe.pages['employment-history'].on_page_load = function(wrapper) {
             "fieldname": "company",
             "fieldtype": "Link",
             "options": "Company",
+            "default": frappe.defaults.get_user_default("Company"),
             "reqd": 1,
             change() {
                 filters.company = company.get_value();
