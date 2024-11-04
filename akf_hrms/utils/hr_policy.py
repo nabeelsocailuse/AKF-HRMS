@@ -226,23 +226,20 @@ def get_balance(args):
     leave_type = None
     deduction_type = None
 
-    for key in leave_allocation:
-        leave_type = key
-
-        if(key == 'Casual Leave'):
-            remaining_leaves = leave_allocation[key]['remaining_leaves']
-        elif(key == 'Medical Leave'):
-            remaining_leaves = leave_allocation[key]['remaining_leaves']
-        elif(key == 'Earned Leave'):
-            remaining_leaves = leave_allocation[key]['remaining_leaves']
-            
-        if(remaining_leaves>0.0): 
-            deduction_type = 'Leave'
-            break
-        else: 
-            leave_type = "Leave Without Pay"
-            deduction_type = 'Salary'
-
+    if('Casual Leave' in leave_allocation):
+        leave_type = 'Casual Leave'
+        remaining_leaves = leave_allocation[key]['remaining_leaves']
+    if('Medical Leave' in leave_allocation):
+        leave_type = 'Medical Leave'
+        remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
+    elif('Earned Leave' in leave_allocation):
+        leave_type = 'Earned Leave'
+        remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
+    else:
+        leave_type = "Leave Without Pay"
+        
+    deduction_type = 'Leave' if(remaining_leaves>0.0) else 'Salary'
+    
     return args.update({
         "deduction_type":  deduction_type,
         "leave_type": leave_type,
@@ -279,6 +276,8 @@ def make_attendance_deduction_ledger_entry(args):
 
 @frappe.whitelist()
 def get_deduction_ledger(self=None):
+    from akf_hrms.overrides.leave_application import get_leave_details
+    leave_allocation = get_leave_details(self.employee, self.start_date)
     
     result = frappe.db.sql(f""" 
         Select  ifnull(sum(total_deduction),0) as total,
@@ -292,19 +291,103 @@ def get_deduction_ledger(self=None):
         Group By
             leave_type
     """, as_dict=1)
-    self.custom_casual_leaves =  0
-    self.custom_medical_leaves = 0
-    self.custom_earned_leaves = 0
-    self.custom_leaves_without_pay = 0 
+    
+    leave_balance = leave_allocation['leave_allocation']
+    rcl = leave_balance["Casual Leave"]['remaining_leaves'] if("Casual Leave" in leave_balance) else 0
+    rml = leave_balance["Medical Leave"]['remaining_leaves'] if("Medical Leave" in leave_balance) else 0
+    rel = leave_balance["Earned Leave"]['remaining_leaves'] if("Earned Leave" in leave_balance) else 0
+    rlwp = leave_balance["Leave Without Pay"]['remaining_leaves'] if("Leave Without Pay" in leave_balance) else 0
+    
+    def get_actual_deductions(balance, actual_balance):
+        if(balance>0):
+            if(actual_balance<=balance):
+                return {
+                    'cutbal': actual_balance,
+                    'forwordbal': 0
+                }
+            else: 
+                forwordbal = (actual_balance - balance) # leftbalance = 5 - 2  = 3
+                cutbal =  (actual_balance - leftbalance) # remain = 5 - 3  = 2
+                return {
+                        'cutbal': cutbal,
+                        'forwordbal': forwordbal
+                    }
+        else:
+            return {
+                'cutbal': 0,
+                'forwordbal': actual_balance
+            }
+    
+    scl = sml = sel = slwp = 0
     for d in result:
+        actual_balance = d.total
         if(d.leave_type=="Casual Leave"):
-            self.custom_casual_leaves = d.total
+            rdict = get_actual_deductions(rcl, actual_balance)
+            rcl = rcl - rdict['cutbal']
+            scl += rdict['cutbal']
+            forwordbal = rdict['forwordbal']
+            
+            if(forwordbal>0):
+                rdict = get_actual_deductions(rml, forwordbal)
+                rml = rml - rdict['cutbal']
+                sml += rdict['cutbal']
+                forwordbal = rdict['forwordbal']
+                
+                if(forwordbal>0):
+                    rdict = get_actual_deductions(rel, forwordbal)
+                    rel = rel - rdict['cutbal']
+                    sel += rdict['cutbal']
+                    forwordbal = rdict['forwordbal']
+                    
+                    if(forwordbal>0):
+                        slwp += forwordbal
+                        
         elif(d.leave_type=="Medical Leave"):
-            self.custom_medical_leaves = d.total
+            rdict = get_actual_deductions(rml, actual_balance)
+            rml = rml - rdict['cutbal']
+            sml += rdict['cutbal']
+            forwordbal = rdict['forwordbal']
+            
+            if(forwordbal>0):
+                rdict = get_actual_deductions(rel, forwordbal)
+                rel = rel - rdict['cutbal']
+                sel += rdict['cutbal']
+                forwordbal = rdict['forwordbal']
+                
+                if(forwordbal>0):
+                    rdict = get_actual_deductions(rcl, forwordbal)
+                    rcl = rcl - rdict['cutbal']
+                    scl += rdict['cutbal']
+                    forwordbal = rdict['forwordbal']
+                    
+                    if(forwordbal>0):
+                        slwp += forwordbal
+                        
         elif(d.leave_type=="Earned Leave"):
-            self.custom_earned_leaves = d.total
+            rdict = get_actual_deductions(rel, rdict['forwordbal'])
+            rel = rel - rdict['cutbal']
+            sel += rdict['cutbal']
+            forwordbal = rdict['forwordbal']
+            if(forwordbal>0):
+                rdict = get_actual_deductions(rml, forwordbal)
+                rml = rml - rdict['cutbal']
+                sml += rdict['cutbal']
+                forwordbal = rdict['forwordbal']
+                if(forwordbal>0):
+                    rdict = get_actual_deductions(rcl, forwordbal)
+                    rcl = rcl - rdict['cutbal']
+                    scl += rdict['cutbal']
+                    forwordbal = rdict['forwordbal']
+                    if(forwordbal>0):
+                        slwp += forwordbal
+                
         elif(d.leave_type=="Leave Without Pay"):
-            self.custom_leaves_without_pay = d.total
+            slwp += actual_balance
+            
+    self.custom_casual_leaves =  scl
+    self.custom_medical_leaves = sml
+    self.custom_earned_leaves = sel
+    self.custom_leaves_without_pay = slwp
 
 """ SALARY SLIP POLICIES """
 
@@ -403,9 +486,30 @@ def get_set_takful_plan(self=None):
         for d in self.deductions:
             if d.salary_component == "Takaful Plan":
                 d.amount = tk_plan.employee_contribution
-                    
+
+
+""" 
+args = dict(
+					leaves=self.total_leave_days * -1,
+					from_date=self.from_date,
+					to_date=self.to_date,
+					is_lwp=lwp,
+					holiday_list=get_holiday_list_for_employee(self.employee, raise_exception=raise_exception)
+					or "",
+				)
+				create_leave_ledger_entry(self, args, submit)
+
+"""             
 def make_leave_ledger_entry(self=None):
-        def create_dlle(leave_type, leaves):
+        def _create_(leave_type, leaves):
+            from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+            
+            from_date = add_to_date(self.start_date)
+            to_date = add_to_date(self.start_date, days=(leaves-1))
+            if(leave_type == "Leave Without Pay"):
+                from_date = add_months(self.start_date, months=1)
+                to_date = add_to_date(from_date, days=(leaves-1))
+                
             doc = frappe.get_doc({
                 'doctype': 'Leave Ledger Entry',
                 'employee': self.employee,
@@ -413,23 +517,50 @@ def make_leave_ledger_entry(self=None):
                 'transaction_type': 'Salary Slip',
                 'transaction_name': self.name,
                 'company': self.company,
-                'leaves': leaves,
-                'from_date': add_to_date(self.start_date, months=1),
-                'to_date': add_to_date(self.start_date, months=1)
+                'leaves': (-1 * leaves),
+                'from_date': from_date,
+                'to_date': to_date,
+                "holiday_list": get_holiday_list_for_employee(self.employee, raise_exception=False)
             })
-            doc.insert(ignore_permissions=True)
+            doc.flags.ignore_permissions=1
+            doc.submit()
+            
+        # def create_deduction_ledger_entry(leave_type):
+        #     response = frappe.db.sql(f""" 
+        #         Select  *
+        #         From
+        #             `tabDeduction Ledger Entry`
+        #         Where
+        #             ifnull(leave_type, "")!=""
+        #             and leave_type = '{leave_type}'
+        #             and employee='{self.employee}'
+        #             and (posting_date between '{self.start_date}' and '{self.end_date}')
+        #         """, as_dict=1)
+            
+        #     for args in response:
+        #         _create_(args)
+                    
         # casual leave
+        leave_type = None
         if(self.custom_casual_leaves>0.0):
-             create_dlle('Casual Leave', self.custom_casual_leaves)
+            leave_type = 'Casual Leave'
+            _create_(leave_type, self.custom_casual_leaves)
+            # create_dlle('Casual Leave', self.custom_casual_leaves)
         # medical leave
         if(self.custom_medical_leaves>0.0):
-            create_dlle('Medical Leave', self.custom_medical_leaves)
-        # # earned leave
+            leave_type = 'Medical Leave'
+            _create_(leave_type, self.custom_medical_leaves)
+            # create_dlle('Medical Leave', self.custom_medical_leaves)
+        # earned leave
         if(self.custom_earned_leaves>0.0):
-            create_dlle('Earned Leave', self.custom_earned_leaves)
-        # # lwp
+            leave_type = 'Earned Leave'
+            _create_(leave_type, self.custom_earned_leaves)
+            # create_dlle('Earned Leave', self.custom_earned_leaves)
+        # lwp
         if(self.custom_leaves_without_pay>0.0): 
-            create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
+            leave_type = 'Leave Without Pay'
+            _create_(leave_type, self.custom_leaves_without_pay)
+            # create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
 
 def cancel_leave_ledger_entry(self=None):
     if(frappe.db.exists('Leave Ledger Entry', {'transaction_name': self.name})):
@@ -443,6 +574,3 @@ def get_no_attendance(self=None):
     if (frappe.db.exists('Employee', {'status': 'Active', 'name': self.employee, 'custom_no_attendance': 1})):
         return True
     return False
-
-
-    

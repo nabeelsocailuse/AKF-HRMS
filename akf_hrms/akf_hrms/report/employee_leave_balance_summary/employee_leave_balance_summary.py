@@ -5,7 +5,7 @@
 import frappe
 from frappe import _
 
-from hrms.hr.doctype.leave_application.leave_application import get_leave_details
+from akf_hrms.overrides.leave_application import get_leave_details
 
 
 def execute(filters=None):
@@ -58,7 +58,7 @@ def get_data(filters, leave_types):
 	for employee in active_employees:
 		row = [employee.name, employee.employee_name, employee.department]
 		available_leave = get_leave_details(employee.name, filters.date)
-  
+		frappe.throw(f"{available_leave}")
 		for leave_type in leave_types:
 			remaining = 0
 			leaves_taken = 0
@@ -67,7 +67,7 @@ def get_data(filters, leave_types):
 				remaining = available_leave["leave_allocation"][leave_type]["remaining_leaves"]
 				leaves_taken = available_leave["leave_allocation"][leave_type]["leaves_taken"]
 				# nabeel
-    			if(leave_type in ['Half Leave', 'Half Day Leave', 'Short Leave']):
+				if(leave_type in ['Half Leave', 'Half Day Leave', 'Short Leave']):
 					remaining = (remaining - leaves_taken)
 			row += [remaining]
 

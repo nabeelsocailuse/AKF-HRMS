@@ -1,3 +1,5 @@
+# Developer Mubashir Bashir
+
 from __future__ import unicode_literals
 import frappe
 from frappe import _
@@ -42,33 +44,11 @@ def get_data(filters):
             WHERE employee = %(employee)s 
             AND attendance_date BETWEEN %(from_date)s AND %(to_date)s
             AND docstatus = 1
+            AND ((in_time IS NULL AND out_time IS NOT NULL) OR (out_time IS NULL AND in_time IS NOT NULL))
+            AND status IN ('Present', 'Half Day', 'Work From Home')
         """, {"employee": emp.get("name"), "from_date": filters.get("from_date"), "to_date": filters.get("to_date")}, as_dict=1)
 
-        attendance_dates_set = {d['attendance_date'].strftime('%Y-%m-%d') for d in attendance_dates}
-
-        from_date = frappe.utils.getdate(filters.get("from_date"))
-        to_date = frappe.utils.getdate(filters.get("to_date"))
-        
-        all_dates = []
-        current_date = from_date
-        while current_date <= to_date:
-            all_dates.append(current_date)
-            current_date += timedelta(days=1)
-
-        holiday_dates = frappe.db.sql(f"""
-            SELECT holiday_date 
-            FROM `tabHoliday`
-            WHERE parent = %(holiday_list)s
-            AND holiday_date BETWEEN %(from_date)s AND %(to_date)s
-        """, {"holiday_list": emp.get("holiday_list"), "from_date": filters.get("from_date"), "to_date": filters.get("to_date")}, as_dict=1)
-        
-        holiday_dates_set = {h['holiday_date'].strftime('%Y-%m-%d') for h in holiday_dates}
-
-        missing_dates = [
-            d for d in all_dates 
-            if d.strftime('%Y-%m-%d') not in attendance_dates_set
-            and d.strftime('%Y-%m-%d') not in holiday_dates_set
-        ]
+        missing_dates = [d['attendance_date'].strftime('%d-%m-%Y') for d in attendance_dates]
 
         if missing_dates:
             first_row = [
@@ -80,12 +60,12 @@ def get_data(filters):
                 emp.get("employment_type"),
                 emp.get("grade"),
                 emp.get("custom_region"),
-                missing_dates[0].strftime('%d-%m-%Y') 
+                missing_dates[0]
             ]
             return_list.append(first_row)
 
-            for missing_date in missing_dates[1:]:
-                return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', missing_date.strftime('%d-%m-%Y')])
+            for date in missing_dates[1:]:
+                return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', date])
 
     return return_list
 

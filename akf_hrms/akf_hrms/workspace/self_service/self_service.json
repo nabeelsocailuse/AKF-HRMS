@@ -1,11 +1,11 @@
 {
  "charts": [],
- "content": "[{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"LtNKFUQKKu\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"SS\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"uMpv8Or9hR\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"heLMb-oGJv\",\"type\":\"card\",\"data\":{\"card_name\":\"Employee Leave Balance Report\",\"col\":4}},{\"id\":\"LEXGdVwEUx\",\"type\":\"card\",\"data\":{\"card_name\":\"No Attendance Report \",\"col\":4}}]",
+ "content": "[{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"LtNKFUQKKu\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"SS\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"uMpv8Or9hR\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"heLMb-oGJv\",\"type\":\"card\",\"data\":{\"card_name\":\"Employee Leave Balance Report\",\"col\":4}},{\"id\":\"LEXGdVwEUx\",\"type\":\"card\",\"data\":{\"card_name\":\"In Out Missing Report\",\"col\":4}}]",
  "creation": "2024-10-17 11:28:57.774003",
  "custom_blocks": [
   {
-   "custom_block_name": "SS",
-   "label": "SS"
+   "custom_block_name": "Self Service",
+   "label": "Self Service"
   }
  ],
  "docstatus": 0,
@@ -97,7 +97,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "No Attendance Report ",
+   "label": "In Out Missing Report",
    "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
@@ -106,15 +106,15 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "No Attendance Report ",
+   "label": "In Out Missing Report",
    "link_count": 0,
-   "link_to": "No Attendance Report",
+   "link_to": "In Out Missing Report",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2024-10-25 18:26:03.592056",
+ "modified": "2024-10-29 17:55:53.332332",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Self Service",

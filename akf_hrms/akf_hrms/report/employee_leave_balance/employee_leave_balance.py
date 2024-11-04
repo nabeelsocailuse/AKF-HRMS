@@ -9,7 +9,7 @@ from frappe import _
 from frappe.utils import add_days, cint, flt, getdate
 
 from hrms.hr.doctype.leave_allocation.leave_allocation import get_previous_allocation
-from hrms.hr.doctype.leave_application.leave_application import (
+from akf_hrms.overrides.leave_application import (
 	get_leave_balance_on,
 	get_leaves_for_period,
 )
@@ -110,7 +110,7 @@ def get_data(filters: Filters) -> list:
 			leaves_taken = (
 				get_leaves_for_period(employee.name, leave_type, filters.from_date, filters.to_date) * -1
 			)
-
+			
 			new_allocation, expired_leaves, carry_forwarded_leaves = get_allocated_and_expired_leaves(
 				filters.from_date, filters.to_date, employee.name, leave_type
 			)

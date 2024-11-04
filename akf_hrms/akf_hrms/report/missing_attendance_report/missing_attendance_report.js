@@ -1,6 +1,7 @@
+
 // Developer Mubashir Bashir
 
-frappe.query_reports["Absent Days Report"] = {
+frappe.query_reports["Missing Attendance Report"] = {
 	"filters": [
 		{
 			"fieldname":"company",
@@ -110,5 +111,4 @@ function get_default_to_date() {
 	console.log("Calculated to_date:", to_date);
 	return to_date;
 }
-
 

@@ -7,11 +7,28 @@ from frappe.utils import time_diff, getdate, get_datetime, time_diff_in_hours
 
 
 class AttendanceLog(Document):
+	def validate(self):
+		self.set_employee_and_shift_type()
+
+	def set_employee_and_shift_type(self):
+		query = f""" 
+				select 
+					e.name,
+					(Select shift_type from `tabShift Assignment` where docstatus=1 and status="Active" and employee=e.name order by start_date limit 1) as shift_type
+				from `tabEmployee` e inner join `tabZK IP Detail` zk on (e.company=zk.company)
+				where attendance_device_id='{self.device_id}' and zk.device_ip = '{self.device_ip}'
+				group by e.attendance_device_id
+				"""
+		for d in frappe.db.sql(query, as_dict=1):
+			self.employee = d.name
+			self.shift = d.shift_type
+			
 	def after_insert(self):
 		self.process_attendance()
 
 	def process_attendance(self):
 		attendance = self.get_attendance()
+		
 		if (attendance):
 			self.update_attendance(attendance)
 		else:
@@ -23,17 +40,21 @@ class AttendanceLog(Document):
 					"docstatus": 1,
 					"employee": self.employee,
 					"attendance_date": self.attendance_date,
-				}, ["name", "in_time"], as_dict=1)
+					
+				}, ["name", "in_time", "status"], as_dict=1)
 
 	def update_attendance(self, attendance):
+		
+		if(attendance.status!="Present"): return
 		frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
 		hours_worked = self.cal_hours_worked(attendance.in_time)
+		
 		frappe.db.set_value("Attendance", attendance.name, "custom_hours_worked", hours_worked)
 		frappe.db.set_value("Attendance", attendance.name, "custom_overtime_hours", self.cal_overtime_hours(hours_worked))
 		frappe.db.set_value("Attendance", attendance.name, "early_exit", self.early_exit())
-		frappe.db.set_value('Attendance Log', self.name, 'attendance_id', attendance.name)
 	
 	def cal_hours_worked(self, in_time):
+		# frappe.msgprint(f"{self.log} {in_time}")
 		return time_diff(str(self.log), str(in_time))
 
 	def create_attendance(self):
@@ -47,10 +68,8 @@ class AttendanceLog(Document):
 				"late_entry": self.late_entry(),
 				# "custom_2_hours_late": self.get_2_hours_late()
 			}
-		doc = frappe.get_doc(args)
-		doc.save(ignore_permissions=True)
+		doc = frappe.get_doc(args).save(ignore_permissions=True)
 		doc.submit()
-		frappe.db.set_value('Attendance Log', self.name, 'attendance_id', doc.name)
 
 	def late_entry(self):
 		if (not self.shift or not self.log): 
@@ -99,7 +118,6 @@ class AttendanceLog(Document):
 		else:
 			return False
 
-
 	def cal_overtime_hours(self, hours_worked):
 		overtime_hours = None
 		if(not self.shift): 
@@ -111,6 +129,8 @@ class AttendanceLog(Document):
 			overtime_hours = time_diff(str(hours_worked), str(total_working_hours))
 
 		return overtime_hours
+
+
 
 @frappe.whitelist()
 def get_logs_details(filters=None):

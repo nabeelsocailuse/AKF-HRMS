@@ -200,6 +200,7 @@ class SalarySlip(TransactionBase):
 					self.email_salary_slip()
 
 		self.update_payment_status_for_gratuity()
+		get_deduction_ledger(self)
 		make_leave_ledger_entry(self)
 
 	def update_payment_status_for_gratuity(self):
@@ -219,6 +220,9 @@ class SalarySlip(TransactionBase):
 			status = "Paid" if self.docstatus == 1 else "Unpaid"
 			if additional_salary[0].name in [entry.additional_salary for entry in self.earnings]:
 				frappe.db.set_value("Gratuity", additional_salary[0].ref_docname, "status", status)
+
+	def before_cancel(self):
+		self.status = "Cancelled"
 
 	def on_cancel(self):
 		self.set_status()

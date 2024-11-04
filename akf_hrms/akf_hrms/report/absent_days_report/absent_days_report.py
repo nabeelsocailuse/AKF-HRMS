@@ -21,7 +21,7 @@ def get_columns():
         _("Employment Type") + ":Link/Employment Type:150",
         _("Grade") + "::150",
         _("Region") + "::150",
-        _("Missing Attendance Dates") + "::250"
+        _("Absent Days") + "::250"
     ]
 
 def get_data(filters):

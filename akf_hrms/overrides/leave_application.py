@@ -946,7 +946,7 @@ def get_leave_details(employee, date):
 			"leaves_pending_approval": flt(leaves_pending, precision),
 			"remaining_leaves": flt(remaining_leaves, precision),
 		}
-
+	
 	# is used in set query
 	lwp = frappe.get_list("Leave Type", filters={"is_lwp": 1}, pluck="name")
 
@@ -1165,15 +1165,15 @@ def get_leaves_for_period(
 ) -> float:
 	leave_entries = get_leave_entries(employee, leave_type, from_date, to_date)
 	leave_days = 0
-
+	
 	for leave_entry in leave_entries:
 		inclusive_period = leave_entry.from_date >= getdate(
 			from_date
 		) and leave_entry.to_date <= getdate(to_date)
-
+		
 		if inclusive_period and leave_entry.transaction_type == "Leave Encashment":
 			leave_days += leave_entry.leaves
-
+		
 		elif (
 			inclusive_period
 			and leave_entry.transaction_type == "Leave Allocation"
@@ -1181,8 +1181,8 @@ def get_leaves_for_period(
 			and not skip_expired_leaves
 		):
 			leave_days += leave_entry.leaves
-
-		elif leave_entry.transaction_type == "Leave Application":
+		# nabeel updated
+		elif leave_entry.transaction_type in ["Leave Application", "Salary Slip"]:
 			if leave_entry.from_date < getdate(from_date):
 				leave_entry.from_date = from_date
 			if leave_entry.to_date > getdate(to_date):
@@ -1209,7 +1209,8 @@ def get_leaves_for_period(
 				)
 				* -1
 			)
-
+			# frappe.msgprint(f'{leave_type} {leave_days}')
+	
 	return leave_days
 
 # nabeel code updated.

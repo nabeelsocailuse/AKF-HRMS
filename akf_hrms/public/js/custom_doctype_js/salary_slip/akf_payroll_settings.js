@@ -1,5 +1,9 @@
 // frappe.ui.form.off("Salary Slip",employee)
 frappe.ui.form.on("Salary Slip", {
+	onload: function(frm){
+		// Ignore cancellation of doctype on cancel all.
+		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry"];
+	}
    /*  employee: function (frm){
         frm.events.get_eobi_pf_social_security_details(frm);
 		frm.events.set_deduction_ledger(frm);
