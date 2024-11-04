@@ -57,7 +57,7 @@ def get_employee_history(filters):
             COALESCE(NULLIF(history.custom_disparity, ''), '-') as disparity,
             COALESCE(NULLIF(history.custom_salary_slab_adjustment, ''), '-') as salary_slab_adjustment,
             COALESCE(NULLIF(history.custom_confirmation, ''), '-') as confirmation,
-            COALESCE(NULLIF(ROUND(history.salary, 0), ''), '-') as salary
+            COALESCE(NULLIF(ROUND(history.custom_salary, 0), ''), '-') as salary
         FROM
             `tabEmployee Internal Work History` history
         WHERE

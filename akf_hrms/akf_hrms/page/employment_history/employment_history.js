@@ -18,6 +18,7 @@ frappe.pages['employment-history'].on_page_load = function(wrapper) {
             change() {
                 filters.company = company.get_value();
                 set_employee_query();
+                api.loadRealTimeInformation(page, filters);
             }
         });
 
@@ -78,6 +79,13 @@ frappe.pages['employment-history'].on_page_load = function(wrapper) {
         }
 
         set_employee_query();
+
+        // Set the default company and trigger the change event
+        let defaultCompany = frappe.defaults.get_user_default("Company");
+        company.set_value(defaultCompany);
+        filters.company = defaultCompany;
+        // Trigger change event manually to refresh employees
+        company.$input.trigger('change');
     };
 
     const api = {
