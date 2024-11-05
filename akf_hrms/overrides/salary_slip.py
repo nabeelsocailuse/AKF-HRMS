@@ -335,6 +335,7 @@ class SalarySlip(TransactionBase):
 				)
 				self.set_time_sheet()
 				self.pull_sal_struct()
+			get_eobi_pf_social_security_details(self)
 			get_deduction_ledger(self)
 
 	def set_time_sheet(self):
