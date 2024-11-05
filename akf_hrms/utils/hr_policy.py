@@ -22,7 +22,7 @@
 
 6. Any employee can adjust his late sittings in office/ In-station duties against upcoming late arrivals within a week. Late sitting should be
 """
-import frappe
+import frappe, math
 from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
 from datetime import datetime, timedelta
 from dateutil import relativedelta
@@ -504,11 +504,12 @@ def make_leave_ledger_entry(self=None):
         def _create_(leave_type, leaves):
             from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
             
+            days = math.ceil(leaves)
             from_date = add_to_date(self.start_date)
-            to_date = add_to_date(self.start_date, days=(leaves-1))
+            to_date = add_to_date(self.start_date, days=(days-1))
             if(leave_type == "Leave Without Pay"):
                 from_date = add_months(self.start_date, months=1)
-                to_date = add_to_date(from_date, days=(leaves-1))
+                to_date = add_to_date(from_date, days=(days-1))
                 
             doc = frappe.get_doc({
                 'doctype': 'Leave Ledger Entry',
@@ -522,6 +523,7 @@ def make_leave_ledger_entry(self=None):
                 'to_date': to_date,
                 "holiday_list": get_holiday_list_for_employee(self.employee, raise_exception=False)
             })
+            
             doc.flags.ignore_permissions=1
             doc.submit()
             
