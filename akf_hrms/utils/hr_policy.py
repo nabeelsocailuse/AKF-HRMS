@@ -307,7 +307,7 @@ def get_deduction_ledger(self=None):
                 }
             else: 
                 forwordbal = (actual_balance - balance) # leftbalance = 5 - 2  = 3
-                cutbal =  (actual_balance - leftbalance) # remain = 5 - 3  = 2
+                cutbal =  (actual_balance - forwordbal) # remain = 5 - 3  = 2
                 return {
                         'cutbal': cutbal,
                         'forwordbal': forwordbal
@@ -387,7 +387,7 @@ def get_deduction_ledger(self=None):
     self.custom_casual_leaves =  scl
     self.custom_medical_leaves = sml
     self.custom_earned_leaves = sel
-    self.custom_leaves_without_pay = slwp
+    self.custom_leaves_without_pay = (slwp+rlwp)
 
 """ SALARY SLIP POLICIES """
 
