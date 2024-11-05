@@ -818,19 +818,11 @@ def get_employee_details():
 		emp_details = employee[0]
 
 		# Fetch education levels for the employee
-		education_records = frappe.db.get_all('Employee Education', filters={'parent': emp_details.name}, fields=['level'])
+		education_records = frappe.db.get_all('Employee Education', filters={'parent': emp_details.name}, fields=['qualification', 'year_of_passing'], order_by='year_of_passing desc', limit=1)
 
-		education_hierarchy = {
-			'Post Graduate': 3,
-			'Graduate': 2,
-			'Under Graduate': 1
-		}
-		highest_level = None
-		for record in education_records:
-			level = record.level
-			if level in education_hierarchy:
-				if highest_level is None or education_hierarchy[level] > education_hierarchy[highest_level]:
-					highest_level = level
+		latest_qualification = None
+		if education_records:
+			latest_qualification = education_records[0].qualification
 
 		return {
 			"first_name": emp_details.first_name,
@@ -845,7 +837,7 @@ def get_employee_details():
 			"gender":emp_details.gender,
 			"employment_type":emp_details.employment_type,
 			"custom_reports_to_line_manager_name": emp_details.custom_reports_to_line_manager_name,
-            "latest_education_level": highest_level if highest_level else "No education record"
+            "latest_education_level": latest_qualification if latest_qualification else "No education record"
         }
 	else:
 		return {

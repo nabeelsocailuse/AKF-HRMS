@@ -228,7 +228,7 @@ def get_balance(args):
 
     if('Casual Leave' in leave_allocation):
         leave_type = 'Casual Leave'
-        remaining_leaves = leave_allocation[key]['remaining_leaves']
+        remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
     if('Medical Leave' in leave_allocation):
         leave_type = 'Medical Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
