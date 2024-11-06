@@ -1023,6 +1023,161 @@ def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
     else:
         return {"message": "Employee not found."}
 
+@frappe.whitelist()
+def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
+    user_id = frappe.session.user
+    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+
+    if employee:
+        employee_name = employee[0].name
+        today = datetime.now()
+        
+        # Calculate the start_date (from_date)
+        day = today.day
+        if day > 20:
+            start_date = datetime(today.year, today.month, 21)
+        else:
+            if today.month == 1:  # Handle January edge case
+                start_date = datetime(today.year - 1, 12, 21)
+            else:
+                start_date = datetime(today.year, today.month - 1, 21)
+				
+
+        start_date = start_date.date()  
+
+        attendance_logs = frappe.db.sql(
+            """
+            SELECT attendance_date 
+            FROM `tabAttendance`
+            WHERE employee = %s 
+            AND attendance_date BETWEEN %s AND %s 
+            AND docstatus = 1 
+            AND status IN ('Present', 'Half Day', 'Work From Home') 
+            AND ((in_time IS NULL AND out_time IS NOT NULL) OR (out_time IS NULL AND in_time IS NOT NULL))
+            """,
+            (employee_name, start_date, today),
+            as_dict=True
+        )
+        
+        attended_dates = {log.attendance_date for log in attendance_logs}
+        
+        request_statuses_to_exclude = [
+            'Pending', 
+            'Approved by the Line Manager', 
+            'Approved by the Head of Department'
+        ]
+
+        pending_request_dates = frappe.db.get_all(
+            "Attendance Request",
+            filters={
+                'employee': employee_name,
+                'custom_approval_status': ['in', request_statuses_to_exclude],
+                'from_date': ['between', [start_date, today]]
+            },
+            fields=['from_date']
+        )
+        pending_dates_set = {request.from_date for request in pending_request_dates}
+        
+        missing_attendance_dates = [
+            date for date in attended_dates
+            if date not in pending_dates_set
+        ]
+        
+        # limited_missing_dates = missing_attendance_dates[-5:]  
+        formatted_dates = [date for date in missing_attendance_dates]
+
+        if not formatted_dates:
+            return {"message": "All attendance marked for the last 30 days."}
+        else:
+            return {"missing_attendance_dates": formatted_dates}
+    else:
+        return {"message": "Employee not found."}
+
+
+@frappe.whitelist()
+def get_absent_days_dates():  # Mubashir Bashir
+    user_id = frappe.session.user
+    employee = frappe.db.get_all('Employee', filters={'user_id': user_id, 'custom_no_attendance': 0}, fields=['name', 'holiday_list'])
+
+    if employee:
+        employee_name = employee[0].name
+        employee_holiday_list = employee[0].holiday_list
+        today = datetime.now()
+        
+        # Calculate the start_date (from_date)
+        day = today.day
+        if day > 20:
+            start_date = datetime(today.year, today.month, 21)
+        else:
+            if today.month == 1:  # Handle January edge case
+                start_date = datetime(today.year - 1, 12, 21)
+            else:
+                start_date = datetime(today.year, today.month - 1, 21)
+				
+
+        start_date = start_date.date()  
+
+        attendance_logs = frappe.db.sql(
+            """
+            SELECT attendance_date 
+            FROM `tabAttendance`
+            WHERE employee = %s 
+            AND attendance_date BETWEEN %s AND %s 
+            AND docstatus = 1
+            """,
+            (employee_name, start_date, today),
+            as_dict=True
+        )
+        
+        attended_dates = {log.attendance_date for log in attendance_logs}
+        
+        request_statuses_to_exclude = [
+            'Pending', 
+            'Approved by the Line Manager', 
+            'Approved by the Head of Department'
+        ]
+
+        pending_request_dates = frappe.db.get_all(
+            "Attendance Request",
+            filters={
+                'employee': employee_name,
+                'custom_approval_status': ['in', request_statuses_to_exclude],
+                'from_date': ['between', [start_date, today]]
+            },
+            fields=['from_date']
+        )
+        pending_dates_set = {request.from_date for request in pending_request_dates}
+
+        all_dates = []
+        current_date = start_date
+        while current_date <= today:
+            all_dates.append(current_date)
+            current_date += timedelta(days=1)
+
+        holiday_dates = frappe.db.sql(f"""
+			SELECT holiday_date 
+			FROM `tabHoliday`
+			WHERE parent = %(holiday_list)s
+			AND holiday_date BETWEEN %(from_date)s AND %(to_date)s
+		""", {"holiday_list": employee_holiday_list, "from_date": start_date, "to_date": today}, as_dict=1)
+
+        holiday_dates_set = {h['holiday_date'].strftime('%Y-%m-%d') for h in holiday_dates}
+        
+        missing_attendance_dates = [
+            date for date in attended_dates
+            if date not in pending_dates_set
+            and date not in holiday_dates_set
+        ]
+         
+        formatted_dates = [date for date in missing_attendance_dates]
+
+        if not formatted_dates:
+            return {"message": "All attendance marked for the last 30 days."}
+        else:
+            return {"missing_attendance_dates": formatted_dates}
+    else:
+        return {"message": "Employee not found."}
+
 
 
 @frappe.whitelist()

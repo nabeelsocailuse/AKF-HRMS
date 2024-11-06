@@ -61,9 +61,9 @@ doctype_js = {
     "Company": [
         "public/js/custom_doctype_js/company/company.js",
     ],
-    "Expense Claim": [
-        "public/js/custom_doctype_js/expense_claim/expense_claim.js"
-    ],
+    # "Expense Claim": [
+    #     "public/js/custom_doctype_js/expense_claim/expense_claim.js"
+    # ],
     "Leave Application": [
         "public/js/custom_doctype_js/leave_application.js"
     ],
@@ -175,7 +175,7 @@ override_doctype_class = {
     "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
     "Project": "akf_accounts.customizations.extends.project_override.XProject",
     "Leave Application": "akf_hrms.overrides.leave_application.LeaveApplication",
-    "Expense Claim": "akf_hrms.overrides.expense_claim.ExpenseClaim",
+    # "Expense Claim": "akf_hrms.overrides.expense_claim.ExpenseClaim",
     "Additional Salary": "akf_hrms.overrides.xadditional_salary.XAdditionalSalary",
 }
 # /home/frappe/frappe-bench/apps/akf_hrms/akf_hrms/overrides/xadditional_salary.py
@@ -195,9 +195,9 @@ doc_events = {
     "Employee Separation": {
         "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
-    "Expense Claim": {
-        "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
-    },
+    # "Expense Claim": {
+    #     "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
+    # },
     "Attendance Log": {
         "after_insert": "akf_hrms.utils.hr_policy.apply_policy"
     },
