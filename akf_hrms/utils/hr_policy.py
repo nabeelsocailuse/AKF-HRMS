@@ -441,12 +441,14 @@ def validate_other_info(self=None):
 @frappe.whitelist()
 def get_eobi_pf_social_security_details(self=None):      
     # Validate EOBI Employer Contribution
-    self.custom_eobi_employer_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employer_contribution")   
-    # Validate EOBI Employee Contribution
-    eobi_employee_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employee_contribution")
-    for d in self.deductions:
-        if d.salary_component == "EOBI":
-            d.amount = eobi_employee_contribution
+    employee = frappe.get_doc("Employee", {"name": self.employee}, ["name", "custom_eobi_applicable"])
+    if employee.custom_eobi_applicable == 1:
+        self.custom_eobi_employer_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employer_contribution")   
+        # Validate EOBI Employee Contribution
+        eobi_employee_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employee_contribution")
+        for d in self.deductions:
+            if d.salary_component == "EOBI":
+                d.amount = eobi_employee_contribution
     # Validate Provident Employee/Employer Contribution
     date_of_joining = frappe.db.get_value("Employee", {"name": self.employee}, "date_of_joining")
     delay_of_provident_fund_deduction = frappe.db.get_value("AKF Payroll Settings", None, "delay_of_provident_fund_deduction")
