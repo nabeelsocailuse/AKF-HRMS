@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Overtime Claim Form", {
+	onload: function(frm){
+		frm.ignore_doctypes_on_cancel_all = ["Attendance"];
+	},
 	refresh(frm) {
 		acf.set_queries(frm);
 		acf.employee_info(frm);

@@ -55,7 +55,7 @@ class OvertimeClaimForm(Document):
 		
 	def update_fields(self):
 		frappe.db.sql(f""" update `tab{self.doctype}` 
-			set approval_by = "Cancelled", additional_salary=""
+			set approval_status = "Cancelled", additional_salary=""
 				where name = '{self.name}' """)
 		self.reload()
 	
