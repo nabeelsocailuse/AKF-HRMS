@@ -40,9 +40,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
     #Override
 	def validate(self):
 		self.validate_overlap_expense_claim()
-		# self.validate_travel_dates()
+		self.validate_travel_dates()
 		self.validate_ta_da_expense()
 		self.validate_compensatory_leave_request()
+		self.validate_travel_expenses()
 
 
 		validate_active_employee(self.employee)
@@ -552,7 +553,31 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		
 		if expense_claim:
 			frappe.throw(f"You can't apply twice for Expense Claim against travel request: {self.travel_request}")
-					
+
+	def validate_travel_expenses(self): #by mubarrim
+		travel_settings = frappe.get_all(
+		"Travel Expense Setting Table",
+		filters={"band": ["like", f"%{self.custom_grade}%"]},
+		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
+	)
+
+		expense_mapping = {
+			"Daily Allowance": "daily_allowance",
+			"Breakfast": "breakfast",
+			"Lunch": "lunch",
+			"Dinner": "dinner",
+			"Refrehment": "refrehment",
+			"Dinner (Late Sitting)": "dinner_late_sitting",
+			"Lunch (Off Day)": "lunch_off_day"
+		}
+
+		for setting in travel_settings:
+			for expense in self.expenses:
+				if expense.expense_type in expense_mapping:
+					amount = int(setting.get(expense_mapping[expense.expense_type]))
+					# frappe.throw(f"{amount}")
+					if int(expense.amount) > int(amount):
+						frappe.throw(f"{expense.expense_type} amount for Grade '{self.custom_grade}' can't exceed {amount}")
 
 
 # ================================================================================================================================================== #
@@ -927,6 +952,7 @@ def get_employee_date():
 #             return {"missing_attendance_dates": formatted_dates}
 #     else:
 #         return {"message": "Employee not found."}
+
 @frappe.whitelist()
 def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
     user_id = frappe.session.user
@@ -987,8 +1013,8 @@ def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
             if date not in pending_dates_set
         ]
         
-        limited_missing_dates = missing_attendance_dates[-5:]  
-        formatted_dates = [date for date in limited_missing_dates]
+        # limited_missing_dates = missing_attendance_dates[-5:]  
+        formatted_dates = [date for date in missing_attendance_dates]
 
         if not formatted_dates:
             return {"message": "All attendance marked for the last 30 days."}

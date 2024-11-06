@@ -9,12 +9,12 @@ class AttendanceAdjustment(Document):
 	def get_attendance_stats(self, adjust=None):
 		attendance_date =""
 		if(not adjust):
-			attendance_date =f" and attendance_date between DATE_SUB('{self.posting_date}', INTERVAL 7 DAY) and '{self.posting_date}'"
+			attendance_date =f" and (attendance_date between DATE_SUB('{self.posting_date}', INTERVAL 7 DAY) and '{self.posting_date}')"
 		elif(adjust==1):
 			attendance_date = f" and attendance_date = '{self.adjustment_date}' "
 
 		if(self.docstatus==0):
-			attendance_date += """ and ifnull(custom_attendance_adjustment, "")="" """
+			attendance_date += f""" and ifnull(attendance_adjustment, "")=""  """
 		elif(self.docstatus==1):
 			attendance_date += f""" and name = '{self.adjustment_for}' """
 
@@ -63,13 +63,14 @@ class AttendanceAdjustment(Document):
 
 	@frappe.whitelist()
 	def verify_linkages(self):
-		link1 = frappe.db.get_value('Attendance', self.adjustment_for, 'custom_attendance_adjustment')
-		link2 = frappe.db.get_value('Attendance', self.compensation_for, 'custom_attendance_adjustment')
+		link1 = frappe.db.get_value('Attendance', self.adjustment_for, 'attendance_adjustment')
+		link2 = frappe.db.get_value('Attendance', self.compensation_for, 'attendance_adjustment')
 		return True if(link1 or link2) else False
 
 	@frappe.whitelist()
 	def de_link(self):
 		frappe.db.set_value('Attendance Adjustment', self.name, 'docstatus', 2)
+		frappe.db.set_value('Attendance Adjustment', self.name, 'status', 'Cancelled')
 		frappe.db.set_value('Attendance Adjustment', self.name, 'adjustment_for', None)
 		frappe.db.set_value('Attendance Adjustment', self.name, 'compensation_for', None)
 		self.update_attendance(True)
@@ -95,7 +96,7 @@ class AttendanceAdjustment(Document):
 			custom_adjustment = 0 if(cancel) else 1
 			attendance_adjustment = None if(cancel) else self.name
 			frappe.db.set_value('Attendance', self.adjustment_for, 'custom_adjustment', custom_adjustment)
-			frappe.db.set_value('Attendance', self.adjustment_for, 'custom_attendance_adjustment', attendance_adjustment)
+			frappe.db.set_value('Attendance', self.adjustment_for, 'attendance_adjustment', attendance_adjustment)
 			
 		def compensation_for_attendance():
 			overtime_hours = frappe.db.get_value('Attendance', self.adjustment_for, 'custom_overtime_hours')
@@ -119,7 +120,7 @@ class AttendanceAdjustment(Document):
 				if(resp):
 					r = resp[0]
 					frappe.db.set_value('Attendance', self.compensation_for, 'custom_adjustment', 0 if(cancel) else 1) 
-					frappe.db.set_value('Attendance', self.compensation_for, 'custom_attendance_adjustment', None if(cancel) else self.name)
+					frappe.db.set_value('Attendance', self.compensation_for, 'attendance_adjustment', None if(cancel) else self.name)
 					frappe.db.set_value('Attendance', self.compensation_for, 'in_time', r.in_time)
 					frappe.db.set_value('Attendance', self.compensation_for, 'late_entry', r.late_entry)
 					hours_worked = time_diff(r.out_time, r.in_time)
@@ -145,7 +146,7 @@ class AttendanceAdjustment(Document):
 					r = resp[0]
 					print(f'Early Exit: {resp}')
 					frappe.db.set_value('Attendance', self.compensation_for, 'custom_adjustment', 0 if(cancel) else 1) 
-					frappe.db.set_value('Attendance', self.compensation_for, 'custom_attendance_adjustment', None if(cancel) else self.name)
+					frappe.db.set_value('Attendance', self.compensation_for, 'attendance_adjustment', None if(cancel) else self.name)
 					frappe.db.set_value('Attendance', self.compensation_for, 'out_time', r.out_time)
 					frappe.db.set_value('Attendance', self.compensation_for, 'early_exit', r.early_exit)
 					hours_worked = time_diff(r.out_time, r.in_time)
