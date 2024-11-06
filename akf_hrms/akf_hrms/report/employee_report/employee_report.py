@@ -124,7 +124,7 @@ def get_employee_data(filters):
 
 	data = frappe.db.sql(emp_record, filters)
 
-	frappe.msgprint(frappe.as_json(data))
+	# frappe.msgprint(frappe.as_json(data))
 	
 	return data
 
