@@ -1095,89 +1095,94 @@ def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
 
 
 @frappe.whitelist()
-def get_absent_days_dates():  # Mubashir Bashir
+def get_absent_days_dates():        #Mubashir Bashir
+    import frappe
+    from datetime import datetime, timedelta
+
     user_id = frappe.session.user
     employee = frappe.db.get_all('Employee', filters={'user_id': user_id, 'custom_no_attendance': 0}, fields=['name', 'holiday_list'])
 
     if employee:
         employee_name = employee[0].name
         employee_holiday_list = employee[0].holiday_list
-        today = datetime.now()
+        today = datetime.now().date() 
         
-        # Calculate the start_date (from_date)
-        day = today.day
-        if day > 20:
-            start_date = datetime(today.year, today.month, 21)
+        if today.day > 20:
+            start_date = datetime(today.year, today.month, 21).date()
         else:
-            if today.month == 1:  # Handle January edge case
-                start_date = datetime(today.year - 1, 12, 21)
+            if today.month == 1: 
+                start_date = datetime(today.year - 1, 12, 21).date()
             else:
-                start_date = datetime(today.year, today.month - 1, 21)
-				
+                start_date = datetime(today.year, today.month - 1, 21).date()
 
-        start_date = start_date.date()  
-
-        attendance_logs = frappe.db.sql(
-            """
+        attendance_logs = frappe.db.sql("""
             SELECT attendance_date 
             FROM `tabAttendance`
             WHERE employee = %s 
             AND attendance_date BETWEEN %s AND %s 
             AND docstatus = 1
-            """,
-            (employee_name, start_date, today),
-            as_dict=True
-        )
+        """, (employee_name, start_date, today), as_dict=True)
         
-        attended_dates = {log.attendance_date for log in attendance_logs}
-        
-        request_statuses_to_exclude = [
-            'Pending', 
-            'Approved by the Line Manager', 
-            'Approved by the Head of Department'
-        ]
+        attended_dates = {log['attendance_date'] for log in attendance_logs}
 
-        pending_request_dates = frappe.db.get_all(
+        pending_request_statuses = ['Pending', 'Approved by the Line Manager', 'Approved by the Head of Department']
+        pending_requests = frappe.db.get_all(
             "Attendance Request",
             filters={
                 'employee': employee_name,
-                'custom_approval_status': ['in', request_statuses_to_exclude],
+                'custom_approval_status': ['in', pending_request_statuses],
                 'from_date': ['between', [start_date, today]]
             },
             fields=['from_date']
         )
-        pending_dates_set = {request.from_date for request in pending_request_dates}
+        pending_dates_set = {request['from_date'] for request in pending_requests}
 
-        all_dates = []
-        current_date = start_date
-        while current_date <= today:
-            all_dates.append(current_date)
-            current_date += timedelta(days=1)
-
-        holiday_dates = frappe.db.sql(f"""
-			SELECT holiday_date 
-			FROM `tabHoliday`
-			WHERE parent = %(holiday_list)s
-			AND holiday_date BETWEEN %(from_date)s AND %(to_date)s
-		""", {"holiday_list": employee_holiday_list, "from_date": start_date, "to_date": today}, as_dict=1)
-
-        holiday_dates_set = {h['holiday_date'].strftime('%Y-%m-%d') for h in holiday_dates}
+        holiday_dates = frappe.db.sql("""
+            SELECT holiday_date 
+            FROM `tabHoliday`
+            WHERE parent = %(holiday_list)s
+            AND holiday_date BETWEEN %(from_date)s AND %(to_date)s
+        """, {"holiday_list": employee_holiday_list, "from_date": start_date, "to_date": today}, as_dict=True)
         
-        missing_attendance_dates = [
-            date for date in attended_dates
-            if date not in pending_dates_set
-            and date not in holiday_dates_set
-        ]
-         
-        formatted_dates = [date for date in missing_attendance_dates]
+        holiday_dates_set = {h['holiday_date'] for h in holiday_dates}
+        
+        open_leaves = frappe.db.get_all(
+            "Leave Application",
+            filters={
+                'employee': employee_name,
+                'status': 'Open',
+                'from_date': ['between', [start_date, today]]
+            },
+            fields=['from_date', 'to_date']
+        )
 
-        if not formatted_dates:
+        leave_dates_to_exclude = set()
+        for leave in open_leaves:
+            leave_from = leave['from_date']
+            leave_to = leave['to_date']
+
+            while leave_from <= leave_to:
+                leave_dates_to_exclude.add(leave_from)
+                leave_from += timedelta(days=1)
+
+        all_dates = set(start_date + timedelta(days=i) for i in range((today - start_date).days + 1))
+
+        absent_dates = [
+            date for date in all_dates
+            if date not in attended_dates
+            and date not in pending_dates_set
+            and date not in holiday_dates_set
+            and date not in leave_dates_to_exclude
+        ]
+
+        # Return the list of absent dates
+        if not absent_dates:
             return {"message": "All attendance marked for the last 30 days."}
         else:
-            return {"missing_attendance_dates": formatted_dates}
+            formatted_absent_dates = [date.strftime('%Y-%m-%d') for date in absent_dates]
+            return {"absent_dates": formatted_absent_dates}
     else:
         return {"message": "Employee not found."}
-
 
 
 @frappe.whitelist()
