@@ -16,7 +16,7 @@ frappe.query_reports["Missing Attendance Report"] = {
 			"label": __("Employee"),
 			"fieldtype": "Link",
 			"options": "Employee",
-			"reqd": 1
+			// "reqd": 1
 		},
 		{
 			"fieldname":"branch",

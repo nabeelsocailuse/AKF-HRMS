@@ -15,7 +15,7 @@ frappe.query_reports["Absent Days Report"] = {
 			"label": __("Employee"),
 			"fieldtype": "Link",
 			"options": "Employee",
-			"reqd": 1
+			// "reqd": 1
 		},
 		{
 			"fieldname":"branch",
