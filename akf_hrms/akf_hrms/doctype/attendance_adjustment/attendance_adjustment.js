@@ -6,6 +6,30 @@ frappe.ui.form.on('Attendance Adjustment', {
             de_link(frm);
         }
     },
+    onload: function (frm) {     // onload added by Mubashir Bashir
+        if (frappe.user.has_role("Employee")) {
+            frappe.call({
+                method: "frappe.client.get_value",
+                args: {
+                    doctype: "Employee",
+                    fieldname: "name",  
+                    filters: { user_id: frappe.session.user } 
+                },
+                callback: function(response) {
+                    if (response && response.message) {
+                        const employee_id = response.message.name;
+                        frm.set_value("employee", employee_id);
+                        console.log("Employee field populated with ID:", employee_id);
+                        
+                        // After setting employee, check for shift assignment
+                        frm.trigger("check_shift_assignment");
+                    } else {
+                        console.log("No employee found for the current user.");
+                    }
+                }
+            });
+        }
+    },
     employee: function (frm) {
         loadSevenDaysStats(frm);
         // frm.set_value('custom_adjustment_date', '');
