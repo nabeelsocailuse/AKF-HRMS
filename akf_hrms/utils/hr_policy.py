@@ -272,7 +272,8 @@ def make_attendance_deduction_ledger_entry(args):
     filters.pop("total_deduction")
     filters.pop("reason")
     
-    if(not frappe.db.exists(filters)): frappe.get_doc(args).insert(ignore_permissions=True)
+    # if(not frappe.db.exists(filters)): 
+    frappe.get_doc(args).insert(ignore_permissions=True)
 
 @frappe.whitelist()
 def get_deduction_ledger(self=None):
@@ -492,85 +493,136 @@ def get_set_takful_plan(self=None):
 
 """ 
 args = dict(
-					leaves=self.total_leave_days * -1,
-					from_date=self.from_date,
-					to_date=self.to_date,
-					is_lwp=lwp,
-					holiday_list=get_holiday_list_for_employee(self.employee, raise_exception=raise_exception)
-					or "",
-				)
-				create_leave_ledger_entry(self, args, submit)
-
+    leaves=self.total_leave_days * -1,
+    from_date=self.from_date,
+    to_date=self.to_date,
+    is_lwp=lwp,
+    holiday_list=get_holiday_list_for_employee(self.employee, raise_exception=raise_exception)
+    or "",
+)
+create_leave_ledger_entry(self, args, submit)
 """             
 def make_leave_ledger_entry(self=None):
-        def _create_(leave_type, leaves):
-            from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+    def create_leave_application(leave_type, leaves, reason):
+        from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+        from akf_hrms.overrides.leave_application import get_leave_approver
+        
+        # dates logic
+        days = math.ceil(leaves)
+        from_date = add_to_date(self.start_date)
+        to_date = add_to_date(self.start_date, days=(days-1))
+        # frappe.throw(f" {leave_type}:  {days} {from_date} {to_date}")
+        if(leave_type == "Leave Without Pay"):
+            from_date = add_months(self.start_date, months=1)
+            to_date = add_to_date(from_date, days=(days-1))
+        
+        # setup half day logic
+        fractional_part, integer_part = math.modf(leaves)
+        
+        half_day = 0
+        half_day_date = None
+        if(fractional_part>0.0 and integer_part>0.0):
+            half_day = 1
+            half_day_date = to_date
             
-            days = math.ceil(leaves)
-            from_date = add_to_date(self.start_date)
-            to_date = add_to_date(self.start_date, days=(days-1))
-            if(leave_type == "Leave Without Pay"):
-                from_date = add_months(self.start_date, months=1)
-                to_date = add_to_date(from_date, days=(days-1))
-                
-            doc = frappe.get_doc({
-                'doctype': 'Leave Ledger Entry',
-                'employee': self.employee,
-                'leave_type': leave_type,
-                'transaction_type': 'Salary Slip',
-                'transaction_name': self.name,
-                'company': self.company,
-                'leaves': (-1 * leaves),
-                'from_date': from_date,
-                'to_date': to_date,
-                "holiday_list": get_holiday_list_for_employee(self.employee, raise_exception=False)
-            })
+        elif(fractional_part>0.0 and integer_part==0.0):
+            half_day = 1
             
-            doc.flags.ignore_permissions=1
-            doc.submit()
+        args = frappe._dict({
+            'doctype': 'Leave Application',
+            'employee': self.employee,
+            'leave_type': leave_type,
+            'company': self.company,
+            'from_date': from_date,
+            'to_date': to_date,
+            'half_day': half_day,
+            'half_day_date': half_day_date,
+            'total_leave_days':  leaves,
+            'leave_approver': get_leave_approver(self.employee),
+            'follow_via_email': 0,
+            'salary_slip': self.name,
+            'reason': reason,
+            'status': 'Approved'
+        })
+        doc = frappe.get_doc(args)
+        doc.flags.ignore_permissions=1
+        doc.flags.ignore_validate=1
+        doc.submit()
+        
+    def _create_(leave_type, leaves):
+        from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+        from akf_hrms.overrides.leave_application import get_leave_approver
+        days = math.ceil(leaves)
+        from_date = add_to_date(self.start_date)
+        to_date = add_to_date(self.start_date, days=(days-1))
+        if(leave_type == "Leave Without Pay"):
+            from_date = add_months(self.start_date, months=1)
+            to_date = add_to_date(from_date, days=(days-1))
             
-        # def create_deduction_ledger_entry(leave_type):
-        #     response = frappe.db.sql(f""" 
-        #         Select  *
-        #         From
-        #             `tabDeduction Ledger Entry`
-        #         Where
-        #             ifnull(leave_type, "")!=""
-        #             and leave_type = '{leave_type}'
-        #             and employee='{self.employee}'
-        #             and (posting_date between '{self.start_date}' and '{self.end_date}')
-        #         """, as_dict=1)
-            
-        #     for args in response:
-        #         _create_(args)
-                    
-        # casual leave
-        leave_type = None
-        if(self.custom_casual_leaves>0.0):
-            leave_type = 'Casual Leave'
-            _create_(leave_type, self.custom_casual_leaves)
-            # create_dlle('Casual Leave', self.custom_casual_leaves)
-        # medical leave
-        if(self.custom_medical_leaves>0.0):
-            leave_type = 'Medical Leave'
-            _create_(leave_type, self.custom_medical_leaves)
-            # create_dlle('Medical Leave', self.custom_medical_leaves)
-        # earned leave
-        if(self.custom_earned_leaves>0.0):
-            leave_type = 'Earned Leave'
-            _create_(leave_type, self.custom_earned_leaves)
-            # create_dlle('Earned Leave', self.custom_earned_leaves)
-        # lwp
-        if(self.custom_leaves_without_pay>0.0): 
-            leave_type = 'Leave Without Pay'
-            _create_(leave_type, self.custom_leaves_without_pay)
-            # create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
+        doc = frappe.get_doc({
+            'doctype': 'Leave Ledger Entry',
+            'employee': self.employee,
+            'leave_type': leave_type,
+            'transaction_type': 'Salary Slip',
+            'transaction_name': self.name,
+            'company': self.company,
+            'leaves': (-1 * leaves),
+            'from_date': from_date,
+            'to_date': to_date,
+            "holiday_list": get_holiday_list_for_employee(self.employee, raise_exception=False)
+        })
+        
+        doc.flags.ignore_permissions=1
+        doc.submit()
+        
+    # casual leave
+    leave_type = None
+    if(self.custom_casual_leaves>0.0):
+        leave_type = 'Casual Leave'
+        create_leave_application
+        create_leave_application(leave_type, self.custom_casual_leaves, f'{leave_type}: {self.custom_casual_leaves}, deducted through Salary Slip.')
+        # _create_(leave_type, self.custom_casual_leaves)
+        # create_dlle('Casual Leave', self.custom_casual_leaves)
+    # medical leave
+    if(self.custom_medical_leaves>0.0):
+        leave_type = 'Medical Leave'
+        create_leave_application(leave_type, self.custom_medical_leaves, f'{leave_type}: {self.custom_medical_leaves}, deducted through Salary Slip.')
+        # _create_(leave_type, self.custom_medical_leaves)
+        # create_dlle('Medical Leave', self.custom_medical_leaves)
+    # earned leave
+    if(self.custom_earned_leaves>0.0):
+        leave_type = 'Earned Leave'
+        create_leave_application(leave_type, self.custom_earned_leaves, f'{leave_type}: {self.custom_earned_leaves}, deducted through Salary Slip.')
+        # _create_(leave_type, self.custom_earned_leaves)
+        # create_dlle('Earned Leave', self.custom_earned_leaves)
+    # lwp
+    if(self.custom_leaves_without_pay>0.0): 
+        leave_type = 'Leave Without Pay'
+        create_leave_application(leave_type, self.custom_leaves_without_pay, f'{leave_type}: {self.custom_leaves_without_pay}, deducted through Salary Slip.')
+        # _create_(leave_type, self.custom_leaves_without_pay)
+        # create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
 
 def cancel_leave_ledger_entry(self=None):
-    if(frappe.db.exists('Leave Ledger Entry', {'transaction_name': self.name})):
+    cancel_leave_application(self)
+    # if(frappe.db.exists('Leave Ledger Entry', {'transaction_name': self.name})):
+        # frappe.db.sql(f""" 
+        #     delete from `tabLeave Ledger Entry`
+        #     where  transaction_name = '{self.name}'  
+        # """)
+       
+def cancel_leave_application(self=None):
+    for d in frappe.db.get_list('Leave Application', 
+        filters={'docstatus': 1, 'employee': self.employee, 'salary_slip': self.name}, 
+        fields=['name']):
+        
         frappe.db.sql(f""" 
             delete from `tabLeave Ledger Entry`
-            where  transaction_name = '{self.name}'  
+            where transaction_name = '{d.name}'  
+        """)
+        
+        frappe.db.sql(f""" 
+            delete from `tabLeave Application`
+            where name = '{d.name}'  
         """)
        
 @frappe.whitelist()
