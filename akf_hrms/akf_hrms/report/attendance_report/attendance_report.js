@@ -5,28 +5,55 @@
 // Mubashir Bashir
 
 frappe.query_reports["Attendance Report"] = {
-	"filters": [{
-			"label": "Department",
+	"filters": [
+		{
+			"fieldname":"company",
+			"label": __("Company"),
 			"fieldtype": "Link",
-			"fieldname": "department",
-			"options": "Department",
-			"reqd": 0,
+			"options": "Company",
+			"default": frappe.defaults.get_user_default("Company"),
+			"reqd": 1
 		},
 		{
-			"label": "Region",
+			"fieldname":"employee",
+			"label": __("Employee"),
 			"fieldtype": "Link",
-			"fieldname": "region",
-			"options": "Region",
-			"reqd": 0,
-		}, 
+			"options": "Employee",
+			// "reqd": 1
+		},
 		{
-			"label": "Date",
+			"fieldname":"branch",
+			"label": __("Branch"),
+			"fieldtype": "Link",
+			"options": "Branch"
+		},
+		{
+			"fieldname":"department",
+			"label": __("Department"),
+			"fieldtype": "Link",
+			"options": "Department"
+		},
+		// {
+		// 	"label": "Date",
+		// 	"fieldtype": "Date",
+		// 	"fieldname": "date",
+		// 	"default": frappe.datetime.nowdate("dd-mm-yyyy"),
+		// 	"reqd": 0,
+		// },
+		{
+			"fieldname":"from_date",
+			"label": __("From Date"),
 			"fieldtype": "Date",
-			"fieldname": "date",
-			"default": frappe.datetime.nowdate("dd-mm-yyyy"),
-			"reqd": 0,
+			"default": get_default_from_date(),
+			"reqd": 1
 		},
-		
+		{
+			"fieldname":"to_date",
+			"label": __("To Date"),
+			"fieldtype": "Date",
+			"default": get_default_to_date(),
+			"reqd": 1
+		},
 		{
 			"label": "Report Type",
 			"fieldtype": "Select",
@@ -36,5 +63,71 @@ frappe.query_reports["Attendance Report"] = {
 			"reqd": 0,
 		}	
 
-	]
+	],
+	
+	
+	onload: function(report) {
+		if (frappe.user.has_role("Employee")) {
+			frappe.call({
+				method: "frappe.client.get_value",
+				args: {
+					doctype: "Employee",
+					fieldname: ["name", "branch", "department"],
+					filters: { user_id: frappe.session.user }
+				},
+				callback: function(response) {
+					if (response && response.message) {
+						const employee_id = response.message.name;
+						const branch = response.message.branch;
+						const department = response.message.department;
+
+						report.set_filter_value("employee", employee_id);
+						if (branch) {
+							report.set_filter_value("branch", branch);
+						}
+						if (department) {
+							report.set_filter_value("department", department);
+						}
+					}
+				}
+			});
+		}
+	}
 };
+
+
+function get_default_from_date() {
+	const today = new Date();
+	const day = today.getDate();
+	const month = today.getMonth();
+	const year = today.getFullYear();
+
+	let from_date;
+
+	if (day > 20) {
+		from_date = new Date(year, month, 22).toISOString().split("T")[0];
+	} else {
+		from_date = new Date(year, month - 1, 22).toISOString().split("T")[0];
+	}
+
+	console.log("Calculated from_date:", from_date);
+	return from_date;
+}
+
+function get_default_to_date() {
+	const today = new Date();
+	const day = today.getDate();
+	const month = today.getMonth();
+	const year = today.getFullYear();
+
+	let to_date;
+
+	if (day > 20) {
+		to_date = new Date(year, month + 1, 21).toISOString().split("T")[0];
+	} else {
+		to_date = new Date(year, month, 21).toISOString().split("T")[0];
+	}
+
+	console.log("Calculated to_date:", to_date);
+	return to_date;
+}

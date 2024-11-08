@@ -96,10 +96,10 @@ def get_late_arrival_columns():
 		_("Designation") + ":Data:120",
 		_("Department") + ":Data:120",
 		_("Branch") + ":Data:120",
-		_("Shift Check In") + ":Data:120",
+		_("Shift Check In") + ":Data:150",
 		_("Check In") + ":Data:120",
-		_("Total hours assigned") + ":Data:120",
-		_("Check In Status") + ":Data:120",
+		_("Late Entry Time") + ":Data:150",
+		_("Check In Status") + ":Data:150",
 		_("Status") + ":Data:120",
 		_("Attendance Date") + ":Date:120",
 
@@ -108,29 +108,34 @@ def get_late_arrival_columns():
 def get_late_arrival(filters, user):
 	
 	conditions = ""
+	if filters.get("company"):
+		conditions += " and att.company = %(company)s"
+	if filters.get("employee"):
+		conditions += " AND att.employee = %(employee)s"
+	if filters.get("branch"):
+		conditions += " AND att.custom_branch = %(branch)s"
 	if filters.get("department"):
-		conditions += " and att.department = %(department)s"
-	if filters.get("region"):
-		conditions += " and att.custom_region = %(region)s"
-	if filters.get("date"):
-		conditions += " and att.attendance_date = %(date)s"
+		conditions += " AND att.department = %(department)s"
+	if filters.get("from_date") and filters.get("to_date"):
+		conditions += " and att.attendance_date BETWEEN %(from_date)s AND %(to_date)s"
 	
 	if "HR Manager" in frappe.get_roles(user):
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
-				cast(att.in_time as time) as check_in_time, att.custom_total_working_hours, CASE WHEN att.late_entry = 1 THEN 'Late' WHEN att.late_entry = 0 THEN 'on Time' END AS late_status, att.status, att.attendance_date    
+				cast(att.in_time as time) as check_in_time, TIMEDIFF(cast(att.in_time as time), cast(att.custom_start_time as time)) AS late_entry_time, CASE WHEN att.late_entry = 1 THEN 'Late' WHEN att.late_entry = 0 THEN 'on Time' END AS late_status, att.status, att.attendance_date    
 				FROM `tabAttendance` att
 				WHERE  late_entry = 1 and att.status = "Present" {condition} order by  att.late_entry desc  """.format(condition = conditions)
 		# Database
 		late_arrival_result = frappe.db.sql(late_query, filters)
 	else:
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
-				cast(att.in_time as time) as check_in_time, att.custom_total_working_hours, CASE WHEN att.late_entry = 1 THEN 'Late' WHEN att.late_entry = 0 THEN 'on Time' END AS late_status, att.status, att.attendance_date      
+				cast(att.in_time as time) as check_in_time, TIMEDIFF(cast(att.in_time as time), cast(att.custom_start_time as time)) AS late_entry_time, CASE WHEN att.late_entry = 1 THEN 'Late' WHEN att.late_entry = 0 THEN 'on Time' END AS late_status, att.status, att.attendance_date      
 				FROM `tabAttendance` att INNER JOIN `tabUser Permission` per ON (att.employee=per.for_value)
 				WHERE  late_entry = 1 and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
 				group by att.employee
 				order by  att.late_entry desc  """.format(id=user,condition = conditions)
         # Database
 		late_arrival_result = frappe.db.sql(late_query, filters)
+	
 	
 	return late_arrival_result
 
@@ -146,10 +151,10 @@ def get_early_leavers_columns():
 		_("Designation") + ":Data:120",
 		_("Department") + ":Data:120",
 		_("Branch") + ":Data:120",
-		_("Shift Check In") + ":Data:120",
-		_("Check In") + ":Data:120",
-		_("Total hours assigned") + ":Data:120",
-		_("Check In Status") + ":Data:120",
+		_("Shift Check Out") + ":Data:150",
+		_("Check Out") + ":Data:120",
+		_("Early Left Time") + ":Data:150",
+		_("Check Out Status") + ":Data:150",
 		_("Status") + ":Data:120",
 		_("Attendance Date") + ":Date:120",
 
@@ -158,23 +163,27 @@ def get_early_leavers_columns():
 def get_early_leavers(filters, user):
 	
 	conditions = ""
+	if filters.get("company"):
+		conditions += " and att.company = %(company)s"
+	if filters.get("employee"):
+		conditions += " AND att.employee = %(employee)s"
+	if filters.get("branch"):
+		conditions += " AND att.custom_branch = %(branch)s"
 	if filters.get("department"):
-		conditions += " and att.department = %(department)s"
-	if filters.get("region"):
-		conditions += " and att.custom_region = %(region)s"
-	if filters.get("date"):
-		conditions += " and att.attendance_date = %(date)s"
+		conditions += " AND att.department = %(department)s"
+	if filters.get("from_date") and filters.get("to_date"):
+		conditions += " and att.attendance_date BETWEEN %(from_date)s AND %(to_date)s"
 	
 	if "HR Manager" in frappe.get_roles(user):
-		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
-				cast(att.in_time as time) as check_in_time, att.custom_total_working_hours, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status, att.attendance_date     
+		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_end_time as time) as from_time,  
+				cast(att.out_time as time) as check_out_time, TIMEDIFF(cast(att.custom_end_time as time), cast(att.out_time as time)) AS early_left_time, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status, att.attendance_date     
 				FROM `tabAttendance` att
 				WHERE  early_exit = 1 and att.status = "Present" {condition} order by  att.early_exit desc  """.format(condition = conditions)
 		# Database
 		late_arrival_result = frappe.db.sql(late_query, filters)
 	else:
-		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
-				cast(att.in_time as time) as check_in_time, att.custom_total_working_hours, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status, att.attendance_date      
+		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_end_time as time) as from_time,  
+				cast(att.out_time as time) as check_out_time, TIMEDIFF(cast(att.custom_end_time as time), cast(att.out_time as time)) AS early_left_time, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status, att.attendance_date      
 				FROM `tabAttendance` att INNER JOIN `tabUser Permission` per ON (att.employee=per.for_value)
 				WHERE  early_exit = 1 and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
 				group by att.employee
@@ -203,12 +212,16 @@ def get_check_in_out_columns():
 def get_check_in_out(filters, user):
 
 	conditions = ""
+	if filters.get("company"):
+		conditions += " and att.company = %(company)s"
+	if filters.get("employee"):
+		conditions += " AND att.employee = %(employee)s"
+	if filters.get("branch"):
+		conditions += " AND att.custom_branch = %(branch)s"
 	if filters.get("department"):
-		conditions += " and department = %(department)s"
-	if filters.get("region"):
-		conditions += " and custom_region = %(region)s"
-	if filters.get("date"):
-		conditions += " and attendance_date = %(date)s"
+		conditions += " AND att.department = %(department)s"
+	if filters.get("from_date") and filters.get("to_date"):
+		conditions += " and att.attendance_date BETWEEN %(from_date)s AND %(to_date)s"
         
 	if "HR Manager" in frappe.get_roles(user):
 		query=""" SELECT  employee, employee_name, custom_designation, department, custom_region, attendance_date,
@@ -261,15 +274,16 @@ def get_pending_attendance_requests_columns():
 def get_pending_attendance_requests(filters, user):
     
 	conditions = ""
-
-    # if filters.get("company"):
-    #     conditions1 += " and company = %(company)s"
+	if filters.get("company"):
+		conditions += " and att.company = %(company)s"
+	if filters.get("employee"):
+		conditions += " AND att.employee = %(employee)s"
+	if filters.get("branch"):
+		conditions += " AND att.custom_branch = %(branch)s"
 	if filters.get("department"):
-		conditions += " and department = %(department)s"
-	if filters.get("region"):
-		conditions += " and custom_region = %(region)s"
-	if filters.get("date"):
-		conditions += " and %(date)s between from_date  and to_date"
+		conditions += " AND att.department = %(department)s"
+	if filters.get("from_date") and filters.get("to_date"):
+		conditions += " and att.attendance_date BETWEEN %(from_date)s AND %(to_date)s"
 
 	if "HR Manager" in frappe.get_roles(user):
 		query =""" 
@@ -371,32 +385,36 @@ def get_approved_leaves(filters, user):
 ###########################################
 # Filter data condtions
 def get_attendance_condition(filters):
-
-    conditions1 = ""
-
-    # if filters.get("company"):
-    #     conditions1 += " and company = %(company)s"
+    conditions = ""
+    if filters.get("company"):
+        conditions += " and att.company = %(company)s"
+    if filters.get("employee"):
+        conditions += " AND att.employee = %(employee)s"
+    if filters.get("branch"):
+        conditions += " AND att.custom_branch = %(branch)s"
     if filters.get("department"):
-        conditions1 += " and department = %(department)s"
-    if filters.get("region"):
-        conditions1 += " and custom_region = %(region)s"
-    if filters.get("date"):
-        conditions1 += " and attendance_date = %(date)s"
-    return conditions1
+        conditions += " AND att.department = %(department)s"
+    if filters.get("from_date") and filters.get("to_date"):
+        conditions += " and att.attendance_date BETWEEN %(from_date)s AND %(to_date)s"
+    
+    return conditions  
 
-# Filter data condtions
+# Filter data conditions
 def get_leave_condition(filters):
-
-    conditions2 = ""
-    # if filters.get("company"):
-    #     conditions2 += " and company = %(company)s"
+    conditions = ""
+    if filters.get("company"):
+        conditions += " and att.company = %(company)s"
+    if filters.get("employee"):
+        conditions += " AND att.employee = %(employee)s"
+    if filters.get("branch"):
+        conditions += " AND att.custom_branch = %(branch)s"
     if filters.get("department"):
-        conditions2 += " and department = %(department)s"
-    if filters.get("region"):
-        conditions2 += " and custom_region = %(region)s"
-    if filters.get("date"):
-        conditions2 += " and posting_date =%(date)s "
-    return conditions2
+        conditions += " AND att.department = %(department)s"
+    if filters.get("from_date") and filters.get("to_date"):
+        conditions += " and att.attendance_date BETWEEN %(from_date)s AND %(to_date)s"
+    
+    return conditions  
+
 
 
 
