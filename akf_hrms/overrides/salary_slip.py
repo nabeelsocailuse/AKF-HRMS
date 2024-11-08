@@ -63,7 +63,7 @@ TAX_COMPONENTS_BY_COMPANY = "tax_components_by_company"
 from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
 
 from akf_hrms.utils.hr_policy import (validate_other_info, get_eobi_pf_social_security_details, get_deduction_ledger, make_leave_ledger_entry, 
-    cancel_leave_ledger_entry, get_no_attendance)
+    cancel_leave_ledger_entry, get_no_attendance, get_leave_without_pay_count)
 
 class SalarySlip(TransactionBase):
 	def __init__(self, *args, **kwargs):
@@ -470,13 +470,15 @@ class SalarySlip(TransactionBase):
 
 		if not lwp:
 			lwp = actual_lwp
-		elif lwp != actual_lwp:
-			frappe.msgprint(
-				_("Leave Without Pay does not match with approved {} records").format(
-					payroll_settings.payroll_based_on
-				)
-			)
-
+		elif (lwp != actual_lwp):
+			pass
+			# frappe.msgprint(
+			# 	_("Leave Without Pay does not match with approved {} records").format(
+			# 		payroll_settings.payroll_based_on
+			# 	)
+			# )
+		self.leave_without_pay = 0.0
+		lwp = (actual_lwp + self.custom_leaves_without_pay) if(self.custom_apply_deductions) else actual_lwp # Nabeel Saleem
 		self.leave_without_pay = lwp
 		self.total_working_days = working_days
 

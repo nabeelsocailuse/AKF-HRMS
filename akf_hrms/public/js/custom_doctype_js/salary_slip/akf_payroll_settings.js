@@ -3,7 +3,30 @@ frappe.ui.form.on("Salary Slip", {
 	onload: function(frm){
 		// Ignore cancellation of doctype on cancel all.
 		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry", "Leave Application", "Attendance"];
-	}
+	},
+	custom_leaves_without_pay: function(frm) {
+		console.log('working')
+		if (frm.doc.employee && frm.doc.start_date && frm.doc.end_date) {
+			return frappe.call({
+				method: 'process_salary_based_on_working_days',
+				doc: frm.doc,
+				callback: function() {
+					frm.refresh();
+				}
+			});
+		}
+	},
+	custom_apply_deductions: function(frm) {
+		if (frm.doc.employee && frm.doc.start_date && frm.doc.end_date) {
+			return frappe.call({
+				method: 'process_salary_based_on_working_days',
+				doc: frm.doc,
+				callback: function() {
+					frm.refresh();
+				}
+			});
+		}
+	},
    /*  employee: function (frm){
         frm.events.get_eobi_pf_social_security_details(frm);
 		frm.events.set_deduction_ledger(frm);

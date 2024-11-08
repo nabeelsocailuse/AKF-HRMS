@@ -23,7 +23,7 @@
 6. Any employee can adjust his late sittings in office/ In-station duties against upcoming late arrivals within a week. Late sitting should be
 """
 import frappe, math
-from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
+from frappe.utils import (flt, month_diff, add_months, getdate, get_datetime, add_to_date)
 from datetime import datetime, timedelta
 from dateutil import relativedelta
 
@@ -229,7 +229,7 @@ def get_balance(args):
     if('Casual Leave' in leave_allocation):
         leave_type = 'Casual Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
-    if('Medical Leave' in leave_allocation):
+    elif('Medical Leave' in leave_allocation):
         leave_type = 'Medical Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
     elif('Earned Leave' in leave_allocation):
@@ -280,6 +280,11 @@ def get_deduction_ledger(self=None):
     from akf_hrms.overrides.leave_application import get_leave_details
     leave_allocation = get_leave_details(self.employee, self.start_date)
     
+    pre_start_date = add_to_date(self.start_date, days=-30)
+    pre_start_date = getdate(get_datetime(pre_start_date).replace(day=21))
+    pre_end_date = add_to_date(self.end_date, days=-30)
+    pre_end_date = getdate(get_datetime(pre_end_date).replace(day=20))
+    
     result = frappe.db.sql(f""" 
         Select  ifnull(sum(total_deduction),0) as total,
                 leave_type
@@ -288,7 +293,7 @@ def get_deduction_ledger(self=None):
         Where
             ifnull(leave_type, "")!=""
             and employee='{self.employee}'
-            and (posting_date between '{self.start_date}' and '{self.end_date}')
+            and (posting_date between '{pre_start_date}' and '{pre_end_date}')
         Group By
             leave_type
     """, as_dict=1)
@@ -384,7 +389,9 @@ def get_deduction_ledger(self=None):
                 
         elif(d.leave_type=="Leave Without Pay"):
             slwp += actual_balance
-            
+    
+    self.custom_deduction_start_date = pre_start_date
+    self.custom_deduction_end_date = pre_end_date
     self.custom_casual_leaves =  scl
     self.custom_medical_leaves = sml
     self.custom_earned_leaves = sel
@@ -503,52 +510,52 @@ args = dict(
 create_leave_ledger_entry(self, args, submit)
 """             
 def make_leave_ledger_entry(self=None):
-    def create_leave_application(leave_type, leaves, reason):
-        from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
-        from akf_hrms.overrides.leave_application import get_leave_approver
+    # def create_leave_application(leave_type, leaves, reason):
+    #     from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+    #     from akf_hrms.overrides.leave_application import get_leave_approver
         
-        # dates logic
-        days = math.ceil(leaves)
-        from_date = add_to_date(self.start_date)
-        to_date = add_to_date(self.start_date, days=(days-1))
-        # frappe.throw(f" {leave_type}:  {days} {from_date} {to_date}")
-        if(leave_type == "Leave Without Pay"):
-            from_date = add_months(self.start_date, months=1)
-            to_date = add_to_date(from_date, days=(days-1))
+    #     # dates logic
+    #     days = math.ceil(leaves)
+    #     from_date = add_to_date(self.start_date)
+    #     to_date = add_to_date(self.start_date, days=(days-1))
+    #     # frappe.throw(f" {leave_type}:  {days} {from_date} {to_date}")
+    #     if(leave_type == "Leave Without Pay"):
+    #         from_date = add_months(self.start_date, months=1)
+    #         to_date = add_to_date(from_date, days=(days-1))
         
-        # setup half day logic
-        fractional_part, integer_part = math.modf(leaves)
+    #     # setup half day logic
+    #     fractional_part, integer_part = math.modf(leaves)
         
-        half_day = 0
-        half_day_date = None
-        if(fractional_part>0.0 and integer_part>0.0):
-            half_day = 1
-            half_day_date = to_date
+    #     half_day = 0
+    #     half_day_date = None
+    #     if(fractional_part>0.0 and integer_part>0.0):
+    #         half_day = 1
+    #         half_day_date = to_date
             
-        elif(fractional_part>0.0 and integer_part==0.0):
-            half_day = 1
+    #     elif(fractional_part>0.0 and integer_part==0.0):
+    #         half_day = 1
             
-        args = frappe._dict({
-            'doctype': 'Leave Application',
-            'employee': self.employee,
-            'leave_type': leave_type,
-            'company': self.company,
-            'from_date': from_date,
-            'to_date': to_date,
-            'half_day': half_day,
-            'half_day_date': half_day_date,
-            'total_leave_days':  leaves,
-            'leave_approver': get_leave_approver(self.employee),
-            'follow_via_email': 0,
-            'salary_slip': self.name,
-            'reason': reason,
-            'status': 'Approved'
-        })
-        doc = frappe.get_doc(args)
-        doc.flags.ignore_permissions=1
-        doc.flags.ignore_validate=1
-        doc.submit()
-        
+    #     args = frappe._dict({
+    #         'doctype': 'Leave Application',
+    #         'employee': self.employee,
+    #         'leave_type': leave_type,
+    #         'company': self.company,
+    #         'from_date': from_date,
+    #         'to_date': to_date,
+    #         'half_day': half_day,
+    #         'half_day_date': half_day_date,
+    #         'total_leave_days':  leaves,
+    #         'leave_approver': get_leave_approver(self.employee),
+    #         'follow_via_email': 0,
+    #         'salary_slip': self.name,
+    #         'reason': reason,
+    #         'status': 'Approved'
+    #     })
+    #     doc = frappe.get_doc(args)
+    #     doc.flags.ignore_permissions=1
+    #     doc.flags.ignore_validate=1
+    #     doc.submit()
+    if(not self.custom_apply_deductions): return 
     def _create_(leave_type, leaves):
         from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
         from akf_hrms.overrides.leave_application import get_leave_approver
@@ -579,36 +586,35 @@ def make_leave_ledger_entry(self=None):
     leave_type = None
     if(self.custom_casual_leaves>0.0):
         leave_type = 'Casual Leave'
-        create_leave_application
-        create_leave_application(leave_type, self.custom_casual_leaves, f'{leave_type}: {self.custom_casual_leaves}, deducted through Salary Slip.')
-        # _create_(leave_type, self.custom_casual_leaves)
+        # create_leave_application(leave_type, self.custom_casual_leaves, f'{leave_type}: {self.custom_casual_leaves}, deducted through Salary Slip.')
+        _create_(leave_type, self.custom_casual_leaves)
         # create_dlle('Casual Leave', self.custom_casual_leaves)
     # medical leave
     if(self.custom_medical_leaves>0.0):
         leave_type = 'Medical Leave'
-        create_leave_application(leave_type, self.custom_medical_leaves, f'{leave_type}: {self.custom_medical_leaves}, deducted through Salary Slip.')
-        # _create_(leave_type, self.custom_medical_leaves)
+        # create_leave_application(leave_type, self.custom_medical_leaves, f'{leave_type}: {self.custom_medical_leaves}, deducted through Salary Slip.')
+        _create_(leave_type, self.custom_medical_leaves)
         # create_dlle('Medical Leave', self.custom_medical_leaves)
     # earned leave
     if(self.custom_earned_leaves>0.0):
         leave_type = 'Earned Leave'
-        create_leave_application(leave_type, self.custom_earned_leaves, f'{leave_type}: {self.custom_earned_leaves}, deducted through Salary Slip.')
-        # _create_(leave_type, self.custom_earned_leaves)
+        # create_leave_application(leave_type, self.custom_earned_leaves, f'{leave_type}: {self.custom_earned_leaves}, deducted through Salary Slip.')
+        _create_(leave_type, self.custom_earned_leaves)
         # create_dlle('Earned Leave', self.custom_earned_leaves)
     # lwp
     if(self.custom_leaves_without_pay>0.0): 
         leave_type = 'Leave Without Pay'
-        create_leave_application(leave_type, self.custom_leaves_without_pay, f'{leave_type}: {self.custom_leaves_without_pay}, deducted through Salary Slip.')
+        # create_leave_application(leave_type, self.custom_leaves_without_pay, f'{leave_type}: {self.custom_leaves_without_pay}, deducted through Salary Slip.')
         # _create_(leave_type, self.custom_leaves_without_pay)
         # create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
 
 def cancel_leave_ledger_entry(self=None):
-    cancel_leave_application(self)
-    # if(frappe.db.exists('Leave Ledger Entry', {'transaction_name': self.name})):
-        # frappe.db.sql(f""" 
-        #     delete from `tabLeave Ledger Entry`
-        #     where  transaction_name = '{self.name}'  
-        # """)
+    # cancel_leave_application(self)
+    if(frappe.db.exists('Leave Ledger Entry', {'transaction_name': self.name})):
+        frappe.db.sql(f""" 
+            delete from `tabLeave Ledger Entry`
+            where  transaction_name = '{self.name}'  
+        """)
        
 def cancel_leave_application(self=None):
     for d in frappe.db.get_list('Leave Application', 
@@ -630,3 +636,17 @@ def get_no_attendance(self=None):
     if (frappe.db.exists('Employee', {'status': 'Active', 'name': self.employee, 'custom_no_attendance': 1})):
         return True
     return False
+
+def get_leave_without_pay_count(self=None):
+    lwp = frappe.db.sql(f""" select ifnull(sum(leaves), 0) lwp 
+                            from `tabLeave Ledger Entry`
+                            where docstatus=1
+                            and leave_type = 'Leave Without Pay'
+                            and transaction_type = 'Salary Slip'
+                            and employee = '{self.employee}'
+                            and  from_date>='{self.start_date}' and to_date<='{self.end_date}' """)
+    # and to_date<='{self.end_date}'
+    # frappe.throw(f"{lwp}")
+    if(lwp): 
+        return (-1 * lwp[0][0])
+    return 0
