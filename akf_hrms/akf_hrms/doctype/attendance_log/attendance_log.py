@@ -75,6 +75,7 @@ class AttendanceLog(Document):
 
 	def set_attendance_id(self, attendance_id):
 		frappe.db.set_value('Attendance Log', self.name, 'attendance_id', attendance_id)
+		self.reload()
   
 	def late_entry(self):
 		if (not self.shift or not self.log): 
