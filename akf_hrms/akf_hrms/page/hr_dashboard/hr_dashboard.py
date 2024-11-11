@@ -114,7 +114,9 @@ def total_absent_count(filters):
     query += " AND att.company = %(company)s" if filters.get("company") else ""
     query += " AND att.custom_branch = %(branch)s" if filters.get("branch") else ""
     query += " AND att.attendance_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
+    frappe.msgprint(f"absent query: {query}")
     r = frappe.db.sql(query, filters)
+    frappe.msgprint(f"absent result: {r}")
     return r[0][0] if(r) else 0
 
 def get_late_comings_count(filters):

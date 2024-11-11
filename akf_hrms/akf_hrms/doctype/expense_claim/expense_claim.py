@@ -45,6 +45,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		self.validate_compensatory_leave_request()
 		self.validate_travel_expenses()
 
+		# self.validate_expenses_table()
+
+		self.get_travel_attendance()
+
 
 		validate_active_employee(self.employee)
 		set_employee_name(self)
@@ -128,6 +132,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 		self.update_task_and_project()
 		self.make_gl_entries()
+		self.validate_travel_expenses()
+
 
 		update_reimbursed_amount(self)
 
@@ -442,10 +448,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 
 	def validate_ta_da_expense(self):
-		from akf_hrms.patches.skip_validations import skip
-		if(skip()):
-			# frappe.msgprint("Validation is skipped") 
-			return
+		# from akf_hrms.patches.skip_validations import skip
+		# if(skip()):
+		# 	# frappe.msgprint("Validation is skipped") 
+		# 	return
 		if not self.custom_grade:
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
 
@@ -516,6 +522,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			if(row.expense_type=="Daily Allowance"):
 				if (not departure_date<= getdate(row.expense_date) <= arrival_date):
 					frappe.throw(_("Expense Date should be between Departure Date and Arrival Date"))
+				
 					
 	def validate_compensatory_leave_request(self):
 		compensatory_leave_request = frappe.db.sql(
@@ -534,7 +541,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		)
 		
 		if compensatory_leave_request:
-			frappe.throw(f"You can't apply for Expense Claim against travel request: {self.travel_request}")
+			frappe.throw(f"You can't apply for Expense Claim against travel request: {self.travel_request}, as Compensatory Leave {compensatory_leave_request} already taken")
 
 	def validate_overlap_expense_claim(self):
 		expense_claim = frappe.db.sql(
@@ -577,10 +584,57 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				if expense.expense_type in expense_mapping:
 					amount = int(setting.get(expense_mapping[expense.expense_type]))
 					# frappe.throw(f"{amount}")
+					if(expense.expense_type == "Daily Allowance"):
+						duty_hours = self.get_travel_attendance()
+
+						if(duty_hours > 10):
+							pass
+						elif (duty_hours < 10 and duty_hours >= 6):
+							amount = int(amount)*0.5
+						elif (duty_hours < 6 and duty_hours >= 1):
+							amount = int(amount)*0.25
+
 					if int(expense.amount) > int(amount):
 						frappe.throw(f"{expense.expense_type} amount for Grade '{self.custom_grade}' can't exceed {amount}")
 
 
+	def get_travel_attendance(self):
+		duration = 0
+		for expense in self.expenses:
+			if(expense.expense_type == "Daily Allowance"):
+				query_result= frappe.db.sql(f"""SELECT	
+												att.custom_hours_worked
+											FROM 
+												`tabAttendance` att
+											LEFT JOIN 
+												`tabAttendance Request` ar ON ar.name = att.attendance_request
+											WHERE 
+												att.attendance_date = '{expense.expense_date}' 
+												AND ar.travel_request = '{self.travel_request}' """ ,as_dict = 1)
+				dur = query_result[0].get('custom_hours_worked')
+
+				time_obj = datetime.strptime(dur, "%H:%M:%S")
+
+				# Extract hours, minutes, and seconds
+				hours = time_obj.hour
+				minutes = time_obj.minute
+				seconds = time_obj.second
+
+				# Convert the entire time into hours as a float
+				time_in_hours = hours + minutes / 60 + seconds / 3600
+
+				duration = duration + time_in_hours
+
+		# frappe.throw(f"duration: {time_in_hours}")
+		
+		return duration
+	
+	def validate_expenses_table(self):
+		expense_date = []
+		for expense in self.expenses:
+			expense_date = expense_date.insert(expense.expense_date)
+		
+		frappe.throw(expense_date)
 # ================================================================================================================================================== #
 # ================================================================================================================================================== #
 
@@ -804,36 +858,6 @@ def make_expense_claim_for_delivery_trip(source_name, target_doc=None):
 	return doc
 
 
-
-@frappe.whitelist()
-def get_travel_expense_amount(expense_type=None, custom_grade=None):
-	
-	if(not custom_grade):
-		frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
-	
-
-	travel_settings = frappe.get_all(
-		"Travel Expense Setting Table",
-		filters={"band": ["like", f"%{custom_grade}%"]},
-		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
-	)
-
-	expense_mapping = {
-		"Daily Allowance": "daily_allowance",
-		"Breakfast": "breakfast",
-		"Lunch": "lunch",
-		"Dinner": "dinner",
-		"Refrehment": "refrehment",
-		"Dinner (Late Sitting)": "dinner_late_sitting",
-		"Lunch (Off Day)": "lunch_off_day"
-	}
-
-	for setting in travel_settings:
-		if expense_type in expense_mapping:
-			return {"amount": setting.get(expense_mapping[expense_type])}
-	
-	return {"amount": 0}
-
 @frappe.whitelist()
 def get_employee_details():
 	user_id = frappe.session.user
@@ -889,70 +913,6 @@ def get_employee_date():
         }
 
 
-# @frappe.whitelist()
-# def get_attendance_logs_when_no_attendance():             # Mubashir Bashir
-#     user_id = frappe.session.user
-#     employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'holiday_list'])
-    
-#     if employee:
-#         employee_name = employee[0].name
-#         holiday_list = employee[0].holiday_list
-#         today = datetime.now()
-#         start_date = today - timedelta(days=30)
-
-#         attendance_logs = frappe.db.get_all(
-#             "Attendance",
-#             filters={'employee': employee_name, 'attendance_date': ['between', [start_date, today]]},
-#             fields=['attendance_date']
-#         )
-#         attended_dates = {log.attendance_date for log in attendance_logs}
-#         all_dates = [
-#             (start_date + timedelta(days=i)).date() for i in range((today - start_date).days + 1)
-#         ]
-        
-#         holiday_dates = []
-#         if holiday_list:
-#             holiday_dates = frappe.db.get_all(
-#                 "Holiday",
-#                 filters={
-#                     'parent': holiday_list,
-#                     'holiday_date': ['between', [start_date, today]]
-#                 },
-#                 fields=['holiday_date']
-#             )
-        
-#         holiday_dates_set = {holiday.holiday_date for holiday in holiday_dates}
-
-#         request_statuses_to_exclude = [
-# 			'Pending', 
-# 			'Approved by the Line Manager', 
-# 			'Approved by the Head of Department'
-# 		]
-
-#         pending_request_dates = frappe.db.get_all(
-#             "Attendance Request",
-#             filters={
-#                 'employee': employee_name,
-#                 'custom_approval_status': ['in', request_statuses_to_exclude],
-#                 'from_date': ['between', [start_date, today]]
-#             },
-#             fields=['from_date']
-#         )
-#         pending_dates_set = {request.from_date for request in pending_request_dates}
-        
-#         missing_attendance_dates = [
-#             date for date in all_dates
-#             if date not in attended_dates and date not in holiday_dates_set and date not in pending_dates_set
-#         ]
-#         limited_missing_dates = missing_attendance_dates[-5:]
-#         formatted_dates = [date for date in limited_missing_dates]
-
-#         if not formatted_dates:
-#             return {"message": "All attendance marked for the last 30 days."}
-#         else:
-#             return {"missing_attendance_dates": formatted_dates}
-#     else:
-#         return {"message": "Employee not found."}
 
 @frappe.whitelist()
 def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
@@ -1023,148 +983,6 @@ def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
             return {"missing_attendance_dates": formatted_dates}
     else:
         return {"message": "Employee not found."}
-
-@frappe.whitelist()
-def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
-    user_id = frappe.session.user
-    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
-
-    if employee:
-        employee_name = employee[0].name
-        today = datetime.now()
-        
-        # Calculate the start_date (from_date)
-        day = today.day
-        if day > 20:
-            start_date = datetime(today.year, today.month, 21)
-        else:
-            if today.month == 1:  # Handle January edge case
-                start_date = datetime(today.year - 1, 12, 21)
-            else:
-                start_date = datetime(today.year, today.month - 1, 21)
-				
-
-        start_date = start_date.date()  
-
-        attendance_logs = frappe.db.sql(
-            """
-            SELECT attendance_date 
-            FROM `tabAttendance`
-            WHERE employee = %s 
-            AND attendance_date BETWEEN %s AND %s 
-            AND docstatus = 1 
-            AND status IN ('Present', 'Half Day', 'Work From Home') 
-            AND ((in_time IS NULL AND out_time IS NOT NULL) OR (out_time IS NULL AND in_time IS NOT NULL))
-            """,
-            (employee_name, start_date, today),
-            as_dict=True
-        )
-        
-        attended_dates = {log.attendance_date for log in attendance_logs}
-        
-        request_statuses_to_exclude = [
-            'Pending', 
-            'Approved by the Line Manager', 
-            'Approved by the Head of Department'
-        ]
-
-        pending_request_dates = frappe.db.get_all(
-            "Attendance Request",
-            filters={
-                'employee': employee_name,
-                'custom_approval_status': ['in', request_statuses_to_exclude],
-                'from_date': ['between', [start_date, today]]
-            },
-            fields=['from_date']
-        )
-        pending_dates_set = {request.from_date for request in pending_request_dates}
-        
-        missing_attendance_dates = [
-            date for date in attended_dates
-            if date not in pending_dates_set
-        ]
-        
-        # limited_missing_dates = missing_attendance_dates[-5:]  
-        formatted_dates = [date for date in missing_attendance_dates]
-
-        if not formatted_dates:
-            return {"message": "All attendance marked for the last 30 days."}
-        else:
-            return {"missing_attendance_dates": formatted_dates}
-    else:
-        return {"message": "Employee not found."}
-
-
-@frappe.whitelist()
-def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
-    user_id = frappe.session.user
-    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
-
-    if employee:
-        employee_name = employee[0].name
-        today = datetime.now()
-        
-        # Calculate the start_date (from_date)
-        day = today.day
-        if day > 20:
-            start_date = datetime(today.year, today.month, 21)
-        else:
-            if today.month == 1:  # Handle January edge case
-                start_date = datetime(today.year - 1, 12, 21)
-            else:
-                start_date = datetime(today.year, today.month - 1, 21)
-				
-
-        start_date = start_date.date()  
-
-        attendance_logs = frappe.db.sql(
-            """
-            SELECT attendance_date 
-            FROM `tabAttendance`
-            WHERE employee = %s 
-            AND attendance_date BETWEEN %s AND %s 
-            AND docstatus = 1 
-            AND status IN ('Present', 'Half Day', 'Work From Home') 
-            AND ((in_time IS NULL AND out_time IS NOT NULL) OR (out_time IS NULL AND in_time IS NOT NULL))
-            """,
-            (employee_name, start_date, today),
-            as_dict=True
-        )
-        
-        attended_dates = {log.attendance_date for log in attendance_logs}
-        
-        request_statuses_to_exclude = [
-            'Pending', 
-            'Approved by the Line Manager', 
-            'Approved by the Head of Department'
-        ]
-
-        pending_request_dates = frappe.db.get_all(
-            "Attendance Request",
-            filters={
-                'employee': employee_name,
-                'custom_approval_status': ['in', request_statuses_to_exclude],
-                'from_date': ['between', [start_date, today]]
-            },
-            fields=['from_date']
-        )
-        pending_dates_set = {request.from_date for request in pending_request_dates}
-        
-        missing_attendance_dates = [
-            date for date in attended_dates
-            if date not in pending_dates_set
-        ]
-        
-        # limited_missing_dates = missing_attendance_dates[-5:]  
-        formatted_dates = [date for date in missing_attendance_dates]
-
-        if not formatted_dates:
-            return {"message": "All attendance marked for the last 30 days."}
-        else:
-            return {"missing_attendance_dates": formatted_dates}
-    else:
-        return {"message": "Employee not found."}
-
 
 
 @frappe.whitelist()

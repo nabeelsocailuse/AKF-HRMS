@@ -37,10 +37,13 @@ def apply_policy(doc, method=None):
         'transition_name': doc.attendance_id,
         
     })
-    two_hours_three_late_comings_times_in_a_month(args)
-    above_two_and_less_four_hours_in_months(args)
-    late_entry_above_four_hours_in_months(args)
-    four_hours_or_less_early_exists_in_a_month(args)
+    out_time = frappe.db.get_value('Attendance', doc.attendance_id, 'out_time') if(doc.attendance_id) else None
+    if(not out_time):
+        two_hours_three_late_comings_times_in_a_month(args)
+        above_two_and_less_four_hours_in_months(args)
+        late_entry_above_four_hours_in_months(args)
+    elif(out_time):
+        four_hours_or_less_early_exists_in_a_month(args)
     
 # 1
 @frappe.whitelist()
