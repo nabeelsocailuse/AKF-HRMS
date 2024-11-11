@@ -67,6 +67,9 @@ doctype_js = {
     "Leave Application": [
         "public/js/custom_doctype_js/leave_application.js"
     ],
+    "Additional Salary": [
+        "public/js/custom_doctype_js/additional_salary.js"
+    ],
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
