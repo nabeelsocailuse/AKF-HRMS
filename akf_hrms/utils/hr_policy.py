@@ -64,7 +64,7 @@ def two_hours_three_late_comings_times_in_a_month(args):
             and month(attendance_date)=month(%(posting_date)s)
             and ((TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)>0 and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)<=2)
         having
-            hours>0
+            hours>0two_hours_three_late_comings_times_in_a_month
     """, args)
     if(result):
         hours = result[0][0]
@@ -275,8 +275,8 @@ def make_attendance_deduction_ledger_entry(args):
     filters.pop("total_deduction")
     filters.pop("reason")
     
-    # if(not frappe.db.exists(filters)): 
-    frappe.get_doc(args).insert(ignore_permissions=True)
+    if(not frappe.db.exists(filters)): 
+        frappe.get_doc(args).insert(ignore_permissions=True)
 
 @frappe.whitelist()
 def get_deduction_ledger(self=None):
