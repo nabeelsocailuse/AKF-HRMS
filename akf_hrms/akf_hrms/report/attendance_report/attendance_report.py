@@ -123,14 +123,14 @@ def get_late_arrival(filters, user):
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
 				cast(att.in_time as time) as check_in_time, TIMEDIFF(cast(att.in_time as time), cast(att.custom_start_time as time)) AS late_entry_time, CASE WHEN att.late_entry = 1 THEN 'Late' WHEN att.late_entry = 0 THEN 'on Time' END AS late_status, att.status, att.attendance_date    
 				FROM `tabAttendance` att
-				WHERE  docstatus = 1 and late_entry = 1 and att.status = "Present" {condition} order by  att.late_entry desc  """.format(condition = conditions)
+				WHERE  att.docstatus = 1 and late_entry = 1 and att.status = "Present" {condition} order by  att.late_entry desc  """.format(condition = conditions)
 		# Database
 		late_arrival_result = frappe.db.sql(late_query, filters)
 	else:
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
 				cast(att.in_time as time) as check_in_time, TIMEDIFF(cast(att.in_time as time), cast(att.custom_start_time as time)) AS late_entry_time, CASE WHEN att.late_entry = 1 THEN 'Late' WHEN att.late_entry = 0 THEN 'on Time' END AS late_status, att.status, att.attendance_date      
 				FROM `tabAttendance` att INNER JOIN `tabUser Permission` per ON (att.employee=per.for_value)
-				WHERE  docstatus = 1 and late_entry = 1 and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
+				WHERE  att.docstatus = 1 and late_entry = 1 and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
 				group by att.employee
 				order by  att.late_entry desc  """.format(id=user,condition = conditions)
         # Database
@@ -178,14 +178,14 @@ def get_early_leavers(filters, user):
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_end_time as time) as from_time,  
 				cast(att.out_time as time) as check_out_time, TIMEDIFF(cast(att.custom_end_time as time), cast(att.out_time as time)) AS early_left_time, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status, att.attendance_date     
 				FROM `tabAttendance` att
-				WHERE  docstatus = 1 and early_exit = 1 and att.status = "Present" {condition} order by  att.early_exit desc  """.format(condition = conditions)
+				WHERE  att.docstatus = 1 and early_exit = 1 and att.status = "Present" {condition} order by  att.early_exit desc  """.format(condition = conditions)
 		# Database
 		late_arrival_result = frappe.db.sql(late_query, filters)
 	else:
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_end_time as time) as from_time,  
 				cast(att.out_time as time) as check_out_time, TIMEDIFF(cast(att.custom_end_time as time), cast(att.out_time as time)) AS early_left_time, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status, att.attendance_date      
 				FROM `tabAttendance` att INNER JOIN `tabUser Permission` per ON (att.employee=per.for_value)
-				WHERE  docstatus = 1 and early_exit = 1 and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
+				WHERE  att.docstatus = 1 and early_exit = 1 and att.status = "Present" and per.user='{id}' and per.allow='Employee'   {condition} 
 				group by att.employee
 				order by  att.early_exit desc  """.format(id=user,condition = conditions)
         # Database
