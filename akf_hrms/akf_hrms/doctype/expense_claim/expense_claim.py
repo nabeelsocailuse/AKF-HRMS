@@ -40,12 +40,13 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
     #Override
 	def validate(self):
 		self.validate_overlap_expense_claim()
-		self.validate_travel_dates()
+		if(self.travel_request):
+			self.validate_travel_dates()
 		self.validate_ta_da_expense()
 		self.validate_compensatory_leave_request()
 		self.validate_travel_expenses()
 
-		# self.validate_expenses_table()
+		self.validate_expenses_table()
 
 		self.get_travel_attendance()
 
@@ -515,9 +516,11 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 						WHERE parent = '{self.travel_request}'
 					"""
 		result = frappe.db.sql(query, as_dict=1)
-		departure_date=getdate(result[0].departure_date)
-		arrival_date=getdate(result[0].arrival_date)
-
+		if(result):
+			departure_date=getdate(result[0].departure_date)
+			arrival_date=getdate(result[0].arrival_date)
+		else:
+			frappe.throw(f"No date found for travel request: {self.travel_request}")
 		for row in self.expenses:
 			if(row.expense_type=="Daily Allowance"):
 				if (not departure_date<= getdate(row.expense_date) <= arrival_date):
@@ -609,9 +612,14 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 											LEFT JOIN 
 												`tabAttendance Request` ar ON ar.name = att.attendance_request
 											WHERE 
-												att.attendance_date = '{expense.expense_date}' 
+												att.employee = '{self.employee}'
+												AND att.attendance_date = '{expense.expense_date}' 
 												AND ar.travel_request = '{self.travel_request}' """ ,as_dict = 1)
-				dur = query_result[0].get('custom_hours_worked')
+
+				if(query_result):
+					dur = query_result[0].get('custom_hours_worked')
+				else:
+					frappe.throw(f"No attendance Record found against travel request '{self.travel_request}' for date '{expense.expense_date}'")
 
 				time_obj = datetime.strptime(dur, "%H:%M:%S")
 
@@ -630,11 +638,61 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		return duration
 	
 	def validate_expenses_table(self):
-		expense_date = []
+		expense_types = frappe.db.get_all("Expense Claim Type")
+		expense_types_list = []
+		for type in expense_types:
+			expense_types_list.append(expense_types['name'])
+		frappe.throw(f"{expense_types}")
+		expense_table = {}
 		for expense in self.expenses:
-			expense_date = expense_date.insert(expense.expense_date)
-		
-		frappe.throw(expense_date)
+			expense_table = {f'expense_date: {expense.expense_date}', f'expense_type: {expense.expense_type}'}
+			frappe.msgprint(f"{expense_table}")
+			
+	
+	@frappe.whitelist()
+	def get_travel_expense_amount(self, expense_type):
+		if(not self.custom_grade):
+			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
+
+		travel_settings = frappe.get_all(
+			"Travel Expense Setting Table",
+			filters={"band": ["like", f"%{self.custom_grade}%"]},
+			fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
+		)
+
+		if(travel_settings):
+			expense_mapping = {
+				"Daily Allowance": "daily_allowance",
+				"Breakfast": "breakfast",
+				"Lunch": "lunch",
+				"Dinner": "dinner",
+				"Refrehment": "refrehment",
+				"Dinner (Late Sitting)": "dinner_late_sitting",
+				"Lunch (Off Day)": "lunch_off_day"
+			}
+			
+			for setting in travel_settings:
+				if expense_type in expense_mapping:
+					amount = setting.get(expense_mapping[expense_type])
+					if(amount):
+						if(expense_type == 'Daily Allowance'):
+							duty_hours = self.get_travel_attendance()
+							if(duty_hours > 10):
+								pass
+							elif (duty_hours < 10 and duty_hours >= 6):
+								amount = int(amount)*0.5
+								return {"amount": amount}
+							
+							elif (duty_hours < 6 and duty_hours >= 1):
+								amount = int(amount)*0.25
+								return {"amount": amount}
+
+						return {"amount": int(amount)}
+					else:
+						frappe.throw(f"Amount is not defined for '{expense_type}' in Travel Expense Setting!")
+		else:
+			frappe.throw(f"Amount is not defined in Travel Expense Setting for Grade: {self.custom_grade}!")	
+
 # ================================================================================================================================================== #
 # ================================================================================================================================================== #
 
