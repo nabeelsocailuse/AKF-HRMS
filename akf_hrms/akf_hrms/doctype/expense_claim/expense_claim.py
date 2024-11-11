@@ -46,7 +46,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		self.validate_compensatory_leave_request()
 		self.validate_travel_expenses()
 
-		self.validate_expenses_table()
+		# self.validate_expenses_table()
 
 		self.get_travel_attendance()
 
