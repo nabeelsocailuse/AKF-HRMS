@@ -64,13 +64,19 @@ def two_hours_three_late_comings_times_in_a_month(args):
             and month(attendance_date)=month(%(posting_date)s)
             and ((TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)>0 and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)<=2)
         having
-            hours>0two_hours_three_late_comings_times_in_a_month
+            hours>0
     """, args)
     if(result):
         hours = result[0][0]
         if(hours%3==0):
-            args.update({"reason": "Consective two hours late 3 times in a month."})
-            verify_case_no(args, 1)
+            total_iterations = (hours/3)
+            args.update({
+                'case_no': 1,
+                "reason": "Consective two hours late 3 times in a month.",
+            })
+            returnVal = validate_case_no_in_DLE(args)
+            if(total_iterations>returnVal):
+                verify_case_no(args)
 
 # 2
 @frappe.whitelist()
@@ -95,10 +101,17 @@ def above_two_and_less_four_hours_in_months(args):
         having 
             hours>0
     """, args)
-
+    
     if(result): 
-        args.update({"reason": "Above two and less than 4 hours late in a month."})
-        verify_case_no(args, 2)
+        
+        args.update({
+            'case_no': 2,
+            "reason": "Above two and less than 4 hours late in a month.",
+            })
+        actualVal = result[0][0]
+        returnVal = validate_case_no_in_DLE(args)
+        if(actualVal>returnVal):
+            verify_case_no(args)
 
 # 3
 @frappe.whitelist()
@@ -123,8 +136,14 @@ def late_entry_above_four_hours_in_months(args):
     """, args)
     print(f'---------------late_entry_above_four_hours_in_months: {result}')
     if(result): 
-        args.update({"reason": "Above or equal to 4 hours late in a month."})
-        verify_case_no(args, 3)
+        args.update({
+            'case_no': 3,
+            "reason": "Above or equal to 4 hours late in a month.",
+            })
+        actualVal = result[0][0]
+        returnVal = validate_case_no_in_DLE(args)
+        if(actualVal>returnVal):
+            verify_case_no(args)
 
 # 4
 def four_hours_or_less_early_exists_in_a_month(args):
@@ -149,26 +168,48 @@ def four_hours_or_less_early_exists_in_a_month(args):
             hours>0
     """, args)
     
-    if(result): 
-        args.update({"reason": "Early exit four hours or less late in a month."})
-        verify_case_no(args, 4)
+    if(result):
+        args.update({
+            'case_no': 4,
+            "reason": "Early exit four hours or less late in a month.",
+            })
+        actualVal = result[0][0]
+        returnVal = validate_case_no_in_DLE(args)
+        if(actualVal>returnVal):
+            verify_case_no(args)
 
 # 5
 def absent_if_in_or_out_missed_or_both():
     pass
 
-""" 
+def validate_case_no_in_DLE(args):
+    
+    conditions =  """ and month(posting_date)=month(%(posting_date)s)""" if(args.case_no==1) else ""
+    conditions +=  """ and posting_date=%(posting_date)s""" if(args.case_no==2) else ""
+    conditions +=  """ and posting_date=%(posting_date)s""" if(args.case_no==3) else ""
+    conditions +=  """ and posting_date=%(posting_date)s""" if(args.case_no==4) else ""
+    res =  frappe.db.sql("""select count(name) from `tabDeduction Ledger Entry` 
+                where 
+                company=%(company)s
+                and employee=%(employee)s
+                and case_no = %(case_no)s 
+                {0}
+                """.format(conditions), args)
+    
+    if(res):
+        return res[0][0]
+    return 0     
 
-Deduction Leave Applicaion.
-        Or
+""" Deduction Leave Applicaion.
+    Or
 Additinal Salary in case of no leaves left.
-
 """
 
 @frappe.whitelist()
-def verify_case_no(args, case_no=0):
+def verify_case_no(args):
     args = get_balance(args)
-
+    
+    case_no  = args.case_no
     if(case_no == 1):
         if(args.deduction_type == "Salary"):
             args.update({
@@ -180,7 +221,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 1,
                 'reason': f"CaseNo#{case_no}, {args.reason} '{args.leave_type}' deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 2):
         if(args.deduction_type == "Salary"):
             args.update({
@@ -192,7 +232,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 0.5,
                 'reason': f"CaseNo#{case_no}, {args.reason}. Half '{args.leave_type}' deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 3):
         if(args.deduction_type == "Salary"):
             args.update({
@@ -204,7 +243,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 1,
                 'reason': f"CaseNo#{case_no}, {args.reason}. '{args.leave_type}' deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 4):
         args.update({
                 'deduction_type': 'Salary',
@@ -212,7 +250,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 0.5,
                 'reason': f"CaseNo#{case_no}, {args.reason} Half day salary deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 5):
         pass
 
@@ -266,17 +303,16 @@ def get_wage(args):
 
 def make_attendance_deduction_ledger_entry(args):
     args.update({"doctype": 'Deduction Ledger Entry'})
-    filters = args.copy()
-    
-    filters.pop("transition_type")
-    filters.pop("transition_name")
-    filters.pop("deduction_type")
-    filters.pop("leave_type")
-    filters.pop("total_deduction")
-    filters.pop("reason")
-    
-    if(not frappe.db.exists(filters)): 
-        frappe.get_doc(args).insert(ignore_permissions=True)
+    # filters = args.copy()
+    # filters.pop("transition_type")
+    # filters.pop("transition_name")
+    # filters.pop("deduction_type")
+    # filters.pop("leave_type")
+    # filters.pop("total_deduction")
+    # filters.pop("reason")
+    # frappe.throw(f"{filters}")
+    # if(not frappe.db.exists(filters)): 
+    frappe.get_doc(args).insert(ignore_permissions=True)
 
 @frappe.whitelist()
 def get_deduction_ledger(self=None):
