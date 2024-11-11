@@ -146,7 +146,7 @@ def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
         if not formatted_dates:
             return {"message": "All attendance marked for the last 30 days."}
         else:
-            return {"missing_attendance_dates": formatted_dates}
+            return {"missing_attendance_dates": sorted(formatted_dates)}
     else:
         return {"message": "Employee not found."}
 
@@ -187,7 +187,7 @@ def get_late_entry_dates(): 	# Mubashir Bashir
             return {"missing_attendance_dates": []}
 
         formatted_dates = list(attended_dates)
-        return {"missing_attendance_dates": formatted_dates}
+        return {"missing_attendance_dates": sorted(formatted_dates)}
 
     else:
         return {"message": "Employee not found."}
@@ -229,7 +229,7 @@ def get_early_exit_dates():  # Mubashir Bashir
             return {"missing_attendance_dates": []}
 
         formatted_dates = list(attended_dates)
-        return {"missing_attendance_dates": formatted_dates}
+        return {"missing_attendance_dates": sorted(formatted_dates)}
 
     else:
         return {"message": "Employee not found."}
@@ -237,8 +237,6 @@ def get_early_exit_dates():  # Mubashir Bashir
 
 @frappe.whitelist()
 def get_absent_days_dates():        #Mubashir Bashir
-    import frappe
-    from datetime import datetime, timedelta
 
     user_id = frappe.session.user
     employee = frappe.db.get_all('Employee', filters={'user_id': user_id, 'custom_no_attendance': 0}, fields=['name', 'holiday_list'])
@@ -320,7 +318,8 @@ def get_absent_days_dates():        #Mubashir Bashir
         if not absent_dates:
             return {"message": "All attendance marked for the last 30 days."}
         else:
-            formatted_absent_dates = [date.strftime('%Y-%m-%d') for date in absent_dates]
+            sorted_absent_dates = sorted(absent_dates)
+            formatted_absent_dates = [date.strftime('%Y-%m-%d') for date in sorted_absent_dates]
             return {"absent_dates": formatted_absent_dates}
     else:
         return {"message": "Employee not found."}
