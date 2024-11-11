@@ -828,10 +828,10 @@ def get_travel_expense_amount(expense_date=None, travel_request=None, expense_ty
 		# from akf_hrms.doctype.expense_claim.expense_claim import get_travel_attendance
 		if expense_type in expense_mapping:
 			amount = int(setting.get(expense_mapping[expense_type]))
+			# frappe.throw(f"{amount}")
 			if(expense_type == "Daily Allowance"):
 				# frappe.throw(f"{amount}")
 				duty_hours = get_travel_attendance(expense_date, travel_request)
-				# duty_hours = 7
 
 				if(duty_hours > 10):
 					pass
