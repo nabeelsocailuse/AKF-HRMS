@@ -11,9 +11,9 @@ class XAdditionalSalary(AdditionalSalary):
     def validate(self):
         super().validate()
         
-        if(self.salary_component == "Marraige Allowance"):
+        if(self.salary_component == "Marriage Allowance"):
             if frappe.db.exists("Additional Salary", {
-                "salary_component": "Marraige Allowance", 
+                "salary_component": "Marriage Allowance", 
                 "employee": self.employee,
                 "docstatus": 1
             }):
@@ -36,7 +36,7 @@ class XAdditionalSalary(AdditionalSalary):
                         pass
                 else:
                     frappe.throw("No salary structure found for this employee. Please ensure the employee has a valid salary structure.")
-            elif(self.salary_component == "Marraige Allowance"):
+            elif(self.salary_component == "Marriage Allowance"):
                 frappe.throw("You are not eligible to apply for the Marriage Allowance as you are not a permanent employee.")
                 
         else:
