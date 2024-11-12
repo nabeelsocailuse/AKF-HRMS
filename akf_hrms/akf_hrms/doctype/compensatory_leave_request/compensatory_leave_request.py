@@ -236,6 +236,24 @@ class CompensatoryLeaveRequest(Document):
 			},
 			as_dict=1,
 		)
+
 		
 		if expense_claim_request:
-			frappe.throw(f"You can't apply for Leave against Travel Request: {self.travel_request}, as an Expense Claim ({expense_claim_request}) already exist!")
+			# frappe.throw(f"cd: {expense_claim_request[0].name}")
+			expense_type = frappe.db.sql(
+			"""
+			select ecd.expense_type
+			From `tabExpense Claim` ec
+			INNER JOIN `tabExpense Claim Detail` ecd ON ecd.parent = ec.name
+			where ec.name = %(name)s
+		""",
+			{
+				"name": expense_claim_request[0].name
+			},
+			as_dict=1,)
+
+			if(expense_type):
+				for expense in expense_type:
+				# frappe.msgprint(f"expense_type: {expense.expense_type}")
+					if(expense.expense_type == "Daily Allowance"):
+						frappe.throw(f"You can't apply for Leave against Travel Request: {self.travel_request}, as Daily Allowance availed in Expense Claim: '{expense_claim_request[0].name}'!")

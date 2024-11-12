@@ -39,12 +39,14 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
     #Override
 	def validate(self):
-		self.validate_overlap_expense_claim()
 		if(self.travel_request):
 			self.validate_travel_dates()
+		self.validate_overlap_expense_claim()
 		self.validate_ta_da_expense()
-		self.validate_compensatory_leave_request()
+		
 		self.validate_travel_expenses()
+
+		self.validate_da()
 
 		# self.validate_expenses_table()
 
@@ -127,6 +129,9 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
     #Override
 	def on_submit(self):
 		self.validate_compensatory_leave_request()
+		if(self.travel_request):
+			self.validate_travel_dates()
+
 		
 		if self.approval_status == "Draft":
 			frappe.throw(_("""Approval Status must be 'Approved' or 'Rejected'"""))
@@ -522,9 +527,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		else:
 			frappe.throw(f"No date found for travel request: {self.travel_request}")
 		for row in self.expenses:
-			if(row.expense_type=="Daily Allowance"):
-				if (not departure_date<= getdate(row.expense_date) <= arrival_date):
-					frappe.throw(_("Expense Date should be between Departure Date and Arrival Date"))
+			if (not departure_date<= getdate(row.expense_date) <= arrival_date):
+				frappe.throw(_("Expense Date should be between Departure Date and Arrival Date"))
 				
 					
 	def validate_compensatory_leave_request(self):
@@ -542,9 +546,36 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			},
 			as_dict=1,
 		)
+		# frappe.msgprint(f"comp off: {compensatory_leave_request}, emp: {self.employee}")
 		
-		if compensatory_leave_request:
-			frappe.throw(f"You can't apply for Expense Claim against travel request: {self.travel_request}, as Compensatory Leave {compensatory_leave_request} already taken")
+		expense_type = self.validate_da()
+		if(expense_type):
+			for expense in expense_type:
+				# frappe.msgprint(f"expense_type: {expense.expense_type}")
+				if(expense.expense_type == "Daily Allowance"):
+					if compensatory_leave_request:
+						frappe.throw(f"You can't avail <b>Daily Alloowance</b> against travel request: {self.travel_request}, as Compensatory Leave '{compensatory_leave_request[0].name}' already taken!")
+
+		
+
+	def validate_da(self):
+		expense_claim = frappe.db.sql(
+			"""
+			select ecd.expense_type
+			From `tabExpense Claim` ec
+			INNER JOIN `tabExpense Claim Detail` ecd ON ecd.parent = ec.name
+			where ec.name = %(name)s
+		""",
+			{
+				"name": self.name
+			},
+			as_dict=1,
+		)
+
+		if(expense_claim):
+			return expense_claim
+		else:
+			return False
 
 	def validate_overlap_expense_claim(self):
 		expense_claim = frappe.db.sql(
