@@ -478,7 +478,7 @@ class SalarySlip(TransactionBase):
 			# 	)
 			# )
 		self.leave_without_pay = 0.0
-		lwp = (actual_lwp + self.custom_leaves_without_pay) if(self.custom_apply_deductions) else actual_lwp # Nabeel Saleem
+		lwp = (actual_lwp + self.custom_leaves_without_pay) if(self.custom_apply_deductions and self.custom_leaves_without_pay) else actual_lwp # Nabeel Saleem
 		self.leave_without_pay = lwp
 		self.total_working_days = working_days
 
