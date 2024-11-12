@@ -568,7 +568,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	def validate_travel_expenses(self): #by mubarrim
 		travel_settings = frappe.get_all(
 		"Travel Expense Setting Table",
-		filters={"band": ["like", f"%{self.custom_grade}%"]},
+		filters={"band": ["like", f"{self.custom_grade}"]},
 		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 	)
 
@@ -657,7 +657,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
-			filters={"band": ["like", f"{self.custom_grade}%"]},
+			filters={"band": ["like", f"{self.custom_grade}"]},
 			fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 		)
 
