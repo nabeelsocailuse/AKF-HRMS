@@ -200,7 +200,7 @@ class SalarySlip(TransactionBase):
 					self.email_salary_slip()
 
 		self.update_payment_status_for_gratuity()
-		get_deduction_ledger(self)
+		# get_deduction_ledger(self)
 		make_leave_ledger_entry(self)
 
 	def update_payment_status_for_gratuity(self):

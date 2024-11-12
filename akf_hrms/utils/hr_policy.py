@@ -608,9 +608,9 @@ def make_leave_ledger_entry(self=None):
         days = math.ceil(leaves)
         from_date = add_to_date(self.start_date)
         to_date = add_to_date(self.start_date, days=(days-1))
-        if(leave_type == "Leave Without Pay"):
+        """ if(leave_type == "Leave Without Pay"):
             from_date = add_months(self.start_date, months=1)
-            to_date = add_to_date(from_date, days=(days-1))
+            to_date = add_to_date(from_date, days=(days-1)) """
             
         doc = frappe.get_doc({
             'doctype': 'Leave Ledger Entry',
@@ -624,7 +624,7 @@ def make_leave_ledger_entry(self=None):
             'to_date': to_date,
             "holiday_list": get_holiday_list_for_employee(self.employee, raise_exception=False)
         })
-        
+        # frappe.throw(frappe.as_json(doc))
         doc.flags.ignore_permissions=1
         doc.submit()
         

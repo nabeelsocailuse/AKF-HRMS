@@ -58,7 +58,6 @@ def get_data(filters, leave_types):
 	for employee in active_employees:
 		row = [employee.name, employee.employee_name, employee.department]
 		available_leave = get_leave_details(employee.name, filters.date)
-		frappe.throw(f"{available_leave}")
 		for leave_type in leave_types:
 			remaining = 0
 			leaves_taken = 0

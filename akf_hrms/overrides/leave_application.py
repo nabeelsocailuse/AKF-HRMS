@@ -1183,6 +1183,7 @@ def get_leaves_for_period(
 			leave_days += leave_entry.leaves
 		# nabeel updated
 		elif leave_entry.transaction_type in ["Leave Application", "Salary Slip"]:
+			
 			if leave_entry.from_date < getdate(from_date):
 				leave_entry.from_date = from_date
 			if leave_entry.to_date > getdate(to_date):
@@ -1195,8 +1196,8 @@ def get_leaves_for_period(
 				half_day = 1
 				half_day_date = frappe.db.get_value(
 					"Leave Application", leave_entry.transaction_name, "half_day_date"
-				)
-
+				) if(leave_entry.transaction_type == "Leave Application") else leave_entry.from_date
+				
 			leave_days += (
 				get_number_of_leave_days(
 					employee,
