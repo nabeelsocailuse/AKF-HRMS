@@ -68,7 +68,7 @@
   {
    "fieldname": "worked_on",
    "fieldtype": "Section Break",
-   "label": "Worked On Holiday"
+   "label": "Details"
   },
   {
    "fieldname": "work_from_date",
@@ -130,7 +130,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-06 18:26:12.124701",
+ "modified": "2024-11-12 12:50:04.902746",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Compensatory Leave Request",
