@@ -144,39 +144,54 @@ frappe.ui.form.on("Attendance Request", {
 
     from_date: function (frm) {
         frm.set_value("to_date", frm.doc.from_date);
+        
+        // Check if there's any attendance record for the selected date
+        if (frm.doc.employee && frm.doc.from_date) {
+            frappe.call({
+                method: "frappe.client.get_list",
+                args: {
+                    doctype: "Attendance",
+                    fields: ["in_time", "out_time"],
+                    filters: {
+                        employee: frm.doc.employee,
+                        attendance_date: frm.doc.from_date,
+                        docstatus: 1  // Only consider submitted attendance records
+                    },
+                    limit: 1
+                },
+                callback: function(response) {
+                    if (response && response.message && response.message.length > 0) {
+                        // Attendance exists for this date
+                        const attendance = response.message[0];
+                        
+                        if (attendance.in_time) {
+                            // Explicitly extract the time part using substring
+                            const inTime = attendance.in_time.substring(11, 19); // "11:53:54"
+                            frm.set_value("custom_from", inTime);
+                        }
+                        
+                        if (attendance.out_time) {
+                            // Explicitly extract the time part using substring
+                            const outTime = attendance.out_time.substring(11, 19); // "17:30:00"
+                            frm.set_value("custom_to", outTime);
+                        }
+                    } else {
+                        // No attendance record found for this date
+                        console.log("No attendance record found for the selected date.");
+                    }
+                }
+            });
+        }
     },
 
     employee: function (frm) {
         if (frm.doc.employee) {
             frm.trigger("set_leave_approver");
+            frm.trigger("check_shift_assignment");      //Mubashir Bashir
         }
     },
 
     onload: function (frm) {
-        if (frappe.user.has_role("Employee")) {
-            frappe.call({
-                method: "frappe.client.get_value",
-                args: {
-                    doctype: "Employee",
-                    fieldname: "name",  
-                    filters: { user_id: frappe.session.user } 
-                },
-                callback: function(response) {
-                    if (response && response.message) {
-                        const employee_id = response.message.name;
-                        frm.set_value("employee", employee_id);
-                        console.log("Employee field populated with ID:", employee_id);
-                        
-                        // After setting employee, check for shift assignment
-                        frm.trigger("check_shift_assignment");
-                    } else {
-                        console.log("No employee found for the current user.");
-                    }
-                }
-            });
-        }
-
-        // Set query for employee field based on department
         frm.set_query("employee", function () {
             return {
                 filters: {
