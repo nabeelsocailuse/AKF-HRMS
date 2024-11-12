@@ -142,10 +142,9 @@ frappe.ui.form.on("Attendance Request", {
         }
     },
 
-    from_date: function (frm) {
+    from_date: function (frm) {         // Mubashir Bashir
         frm.set_value("to_date", frm.doc.from_date);
         
-        // Check if there's any attendance record for the selected date
         if (frm.doc.employee && frm.doc.from_date) {
             frappe.call({
                 method: "frappe.client.get_list",
@@ -155,28 +154,24 @@ frappe.ui.form.on("Attendance Request", {
                     filters: {
                         employee: frm.doc.employee,
                         attendance_date: frm.doc.from_date,
-                        docstatus: 1  // Only consider submitted attendance records
+                        docstatus: 1 
                     },
                     limit: 1
                 },
                 callback: function(response) {
                     if (response && response.message && response.message.length > 0) {
-                        // Attendance exists for this date
                         const attendance = response.message[0];
                         
                         if (attendance.in_time) {
-                            // Explicitly extract the time part using substring
-                            const inTime = attendance.in_time.substring(11, 19); // "11:53:54"
+                            const inTime = attendance.in_time.substring(11, 19);
                             frm.set_value("custom_from", inTime);
                         }
                         
                         if (attendance.out_time) {
-                            // Explicitly extract the time part using substring
-                            const outTime = attendance.out_time.substring(11, 19); // "17:30:00"
+                            const outTime = attendance.out_time.substring(11, 19); 
                             frm.set_value("custom_to", outTime);
                         }
                     } else {
-                        // No attendance record found for this date
                         console.log("No attendance record found for the selected date.");
                     }
                 }
@@ -213,7 +208,6 @@ frappe.ui.form.on("Attendance Request", {
 
     check_shift_assignment: function (frm) {
         if (frm.doc.employee) {
-            // Log the employee ID to ensure it's correct
             console.log("Checking shift assignment for employee:", frm.doc.employee);
             
             frappe.call({
