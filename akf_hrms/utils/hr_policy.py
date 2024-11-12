@@ -266,16 +266,23 @@ def get_balance(args):
     leave_type = None
     deduction_type = None
 
+    isBal = False
     if('Casual Leave' in leave_allocation):
         leave_type = 'Casual Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
-    elif('Medical Leave' in leave_allocation):
+        if(remaining_leaves>0.0): isBal = True
+        
+    if('Medical Leave' in leave_allocation) and (not isBal):
         leave_type = 'Medical Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
-    elif('Earned Leave' in leave_allocation):
+        if(remaining_leaves>0.0): isBal = True
+    
+    if('Earned Leave' in leave_allocation) and (not isBal):
         leave_type = 'Earned Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
-    else:
+        if(remaining_leaves>0.0): isBal = True
+    
+    if((not isBal)):
         leave_type = "Leave Without Pay"
         
     deduction_type = 'Leave' if(remaining_leaves>0.0) else 'Salary'
