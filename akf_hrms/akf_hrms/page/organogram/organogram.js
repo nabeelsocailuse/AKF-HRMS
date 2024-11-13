@@ -54,7 +54,28 @@ filters = {
         }
       },
     });
-
+    let department = page.add_field({
+      fieldname: "department",
+      label: __("Department"),
+      fieldtype: "Link",
+      options: "Department",
+      default: "",
+      reqd: 0,
+      get_query: function(){
+        return{
+          filters:{
+            company: company.get_value()
+          }
+        }
+      }
+      /* change: (e) => {
+        if (e.target.value) {
+          // fetchDashboardData(page);
+        } else {
+          frappe.msgprint(__("Please select a branch"));
+        }
+      }, */
+    });
     let filters_btn = page.add_field({
       fieldname: "filters_btn",
       label: __("Filters"),
@@ -66,6 +87,7 @@ filters = {
         params = {
           "company": company.get_value(),
           "branch": branch.get_value(),
+          "department": department.get_value(),
         }
         if (company.get_value() != "" && branch.get_value() != "") {
           $("#page-organogram .page-body")
@@ -161,18 +183,17 @@ function loadOrgChart(data) {
       return `
         <div style="font-family: 'Inter', sans-serif;background-color:${color}; position:absolute;margin-top:-1px; margin-left:-1px;width:${d.width}px;height:${d.height}px;border-radius:10px;border: 1px solid #E4E2E9">
          <div style="background-color:${color};position:absolute;margin-top:-25px;margin-left:${15}px;border-radius:100px;width:50px;height:50px;" ></div>
-         <img src="${d.data.img
-        }" style="object-fit:cover;position:absolute;margin-top:-20px;margin-left:${20}px;border-radius:100px;width:40px;height:40px;" crossorigin="anonymous" />
+         <img src="${d.data.img==undefined?"/assets/akf_hrms/images/blank-img.png": d.data.img}" style="object-fit:cover;position:absolute;margin-top:-20px;margin-left:${20}px;border-radius:100px;width:40px;height:40px;" crossorigin="anonymous" />
          
         <div style="color:#08011E;position:absolute;right:20px;top:17px;font-size:10px;">${d.data.id
         }</div>
         <div style="font-size:14px;color:#08011E;margin-left:20px;margin-top:32px"> ${d.data.name
         } </div>
-        <div style="color:#716E7B;margin-left:20px;margin-top:3px;font-size:10px;font-weight:600;"> ${d.data.title
+        <div style="color:#716E7B;margin-left:20px;margin-top:3px;font-size:10px;font-weight:600;"> ${d.data.designation
         } </div>
-          <div style="color:#716E7B;margin-left:20px;font-size:10px"> ${d.data.branch
+          <div style="color:#716E7B;margin-left:20px;font-size:10px"> ${d.data.department
         }</div>
-          <div style="color:#716E7B;margin-left:20px;font-size:10px"> ${d.data.cluster
+          <div style="color:#716E7B;margin-left:20px;font-size:10px"> ${d.data.branch
         }</div>
 
        </div>
