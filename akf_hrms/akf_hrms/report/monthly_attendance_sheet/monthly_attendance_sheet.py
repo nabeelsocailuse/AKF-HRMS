@@ -96,7 +96,7 @@ def get_columns(filters: Filters) -> list[dict]:
 				"width": 135,
 			},
 			{"label": _("Employee Name"), "fieldname": "employee_name", "fieldtype": "Data", "width": 120},
-			{"label": _("Banch"), "fieldname": "branch", "fieldtype": "Data", "width": 120},
+			{"label": _("Branch"), "fieldname": "branch", "fieldtype": "Data", "width": 120},
 			{"label": _("Department"), "fieldname": "department", "fieldtype": "Data", "width": 120},
 			{"label": _("Designation"), "fieldname": "designation", "fieldtype": "Data", "width": 120},
 		]
