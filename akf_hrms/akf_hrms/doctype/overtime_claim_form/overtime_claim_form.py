@@ -113,6 +113,7 @@ class OvertimeClaimForm(Document):
 				and ifnull(attendance_adjustment,"")=""
 				and ifnull(custom_hours_worked, "")!=""
 				and ifnull(custom_overtime_hours, "")!=""
+				and (TIME_TO_SEC(custom_overtime_hours)/3600)>=2
 				and year(attendance_date) = '{self.year}'
 				and monthname(attendance_date) = '{self.month}'
 				and employee = '{self.employee}'
