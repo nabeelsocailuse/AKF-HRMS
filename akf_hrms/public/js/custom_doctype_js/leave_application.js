@@ -190,11 +190,11 @@ frappe.ui.form.on("Leave Application", {
 					} else {
 						frm.set_value("leave_balance", "0");
 					}
-					// if(frm.doc.leave_type=="Half Leave" || frm.doc.leave_type=="Half Day Leave" || frm.doc.leave_type=="Short Leave"){
-					// 	frm.set_value("half_day", 1);
-					// }else{
-					// 	frm.set_value("half_day", 0);
-					// }
+					if(frm.doc.leave_type=="Half Leave" || frm.doc.leave_type=="Half Day Leave" || frm.doc.leave_type=="Short Leave"){
+						frm.set_value("half_day", 1);
+					}else{
+						frm.set_value("half_day", 0);
+					}
 				}
 			});
 		}
