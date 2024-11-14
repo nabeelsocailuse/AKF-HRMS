@@ -2,6 +2,7 @@ import frappe, re
 from frappe.model.document import Document
 from erpnext.setup.doctype.employee.employee import Employee
 
+
 class XEmployee(Employee):
 	def validate(self):
 		super().validate()

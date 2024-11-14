@@ -1605,13 +1605,15 @@ class ZK(object):
         return attendances
 
     def get_attendance_json(self, dates_list=None, userIds=None, year=None, month=None):
+        
         """
         return attendance record
 
         :return: List of Attendance object
         """
         self.read_sizes()
-        
+        print('----------------')
+        # print(dates_list, userIds, year, month)
         if self.records == 0:
             return []
         # users = self.get_users()
@@ -1643,6 +1645,7 @@ class ZK(object):
             attendance = Attendance(user_id, timestamp, status, punch, uid)
             # print('attendance {user_id, status} :', attendance.user_id, attendance.status)
             year_month = ""
+            # print('user_id: ',attendance.user_id, ' machine_date: ',machine_date)
             if(attendance.user_id in userIds):
                 # print('timestamp: ', timestamp)
                 if(year and month):

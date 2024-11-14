@@ -1,26 +1,37 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:AA-{employee}-{#####}",
  "creation": "2024-04-02 12:21:19.835706",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "employee",
   "employee_name",
+  "column_break_esix",
+  "posting_date",
+  "department",
+  "designation",
+  "last_seven_days_stats_section",
+  "seven_days_stats",
   "section_break_dvup",
-  "compenstion_date",
-  "amended_from"
+  "adjustment_date",
+  "adjustment_for",
+  "status",
+  "amended_from",
+  "column_break_usdx",
+  "compensation_date",
+  "compensation_type",
+  "compensation_for",
+  "compensation_on_stats",
+  "section_break_ytsx",
+  "reasonnotes"
  ],
  "fields": [
   {
    "fieldname": "section_break_dvup",
    "fieldtype": "Section Break",
    "label": "Adjustment of Attendance"
-  },
-  {
-   "fieldname": "compenstion_date",
-   "fieldtype": "Date",
-   "label": "Compenstion Date"
   },
   {
    "fieldname": "amended_from",
@@ -35,8 +46,10 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Employee",
-   "options": "Employee"
+   "options": "Employee",
+   "reqd": 1
   },
   {
    "fetch_from": "employee.employee_name",
@@ -44,15 +57,115 @@
    "fieldtype": "Data",
    "label": "Employee Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_esix",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_usdx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the CEO\nRejected by the CEO",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reasonnotes",
+   "fieldtype": "Small Text",
+   "label": "Reason(Notes)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_seven_days_stats_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "seven_days_stats",
+   "fieldtype": "HTML",
+   "label": "Seven Days Stats"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "adjustment_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Adjustment Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "compensation_on_stats",
+   "fieldtype": "HTML",
+   "label": "Compensation On Stats"
+  },
+  {
+   "fieldname": "compensation_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Compensation Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "adjustment_for",
+   "fieldtype": "Link",
+   "label": "Adjustment For",
+   "options": "Attendance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "compensation_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Compensation Type",
+   "options": "\nLate Entry\nEarly Exit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "compensation_for",
+   "fieldtype": "Link",
+   "label": "Compensation For",
+   "options": "Attendance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ytsx",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-03 15:27:55.224832",
+ "modified": "2024-10-18 17:23:30.855495",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Adjustment",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -71,5 +184,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee"
 }

@@ -4,7 +4,7 @@
 import frappe
 from frappe.model.document import Document
 import socket
-from akf_hrms.zk_device.zk_detail.base import ZK
+from akf_hrms.zk_device.zk_detail.base import ZK, ZK_helper
 from frappe.utils import date_diff, add_to_date, getdate
 
 employeeDetail=[]
@@ -55,11 +55,16 @@ class ZKTool(Document):
 
 	@frappe.whitelist()
 	def fetch_attendance(self):
+		
 		self.validate_filters()
 		if (self.device_ip and self.device_port):
 			addr_ip = socket.gethostbyname(self.device_ip)
-			zk = ZK(str(addr_ip), port=int(self.device_port), timeout=4000000, password=0, force_udp=False, ommit_ping=False)
 			
+   			# verify destination host availability.
+			helper = ZK_helper(addr_ip, int(self.device_port))
+			if(not helper.test_ping()): return {"msg": "Destination Host Unreachable!", "logs": [], "fetched": 0}
+		
+			zk = ZK(str(addr_ip), port=int(self.device_port), timeout=4000000, password=0, force_udp=False, ommit_ping=False)
 			CONN = None
 			device_ids = None
 			attendance_records = None
@@ -68,13 +73,18 @@ class ZKTool(Document):
 				if (CONN): 
 					device_ids = {d.get("attendance_device_id"): {} for d in self.employee_list}
 					date_split = (self.from_date).split("-")
+					print('working-zk')
 					attendance_records = CONN.get_attendance_json(userIds=device_ids, year=date_split[0], month=date_split[1])
+					# attendance_records = CONN.get_attendance()
 			except Exception as e:
 				return {"msg": str(e), "logs": attendance_records, "fetched": 0}
 			finally:
+				print(CONN)
 				if CONN:
 					CONN.disconnect()
 					return {"msg": "Attendance Fetched.", "logs": attendance_records, "fetched": 1}
+				else:
+					return {"msg": "Attendance not found.", "logs": attendance_records, "fetched": 0}
 		else:
 			return {"msg": "Please select right company and log type to 'Get Attendance'", "fetched": 0, "logs": attendance_records}
 

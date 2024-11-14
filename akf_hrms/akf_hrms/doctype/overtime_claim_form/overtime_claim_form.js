@@ -2,19 +2,20 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Overtime Claim Form", {
+	
 	refresh(frm) {
 		acf.set_queries(frm);
 		acf.employee_info(frm);
 	},
 	year: function (frm) {
-		acf.load_details_of_overtime(frm);
+		acf.load_details_of_overtime(frm, {reset: true});
 	},
 	month: function (frm) {
-		acf.load_details_of_overtime(frm);
+		acf.load_details_of_overtime(frm, {reset: true});
 	},
 	employee: function (frm) {
 		acf.employee_info(frm);
-		acf.load_details_of_overtime(frm);
+		acf.load_details_of_overtime(frm, {reset: true});
 	}
 });
 
@@ -56,9 +57,9 @@ acf = {
 			});
 		}
 	},
-	load_details_of_overtime: function (frm) {
+	load_details_of_overtime: function (frm, filters) {
 		if (frm.doc.year != "" && frm.doc.month != "" && frm.doc.employee != undefined) {
-			frm.call("get_details_of_overtime").then(r => {
+			frm.call("get_details_of_overtime", filters).then(r => {
 				// console.log(r.message);
 				frm.set_intro('');
 				frm.set_intro(r.message == undefined ? "Device detail not found." : "", 'red');
@@ -77,6 +78,9 @@ frappe.ui.form.on("Details of OT", {
 	out_time: function(frm, cdt, cdn){
 		// details.calculate_detail_of_overtime(frm, cdt, cdn);
 	},
+	detail_of_overtime_remove: function(frm, cdt, cdn){
+		acf.load_details_of_overtime(frm, {reset: false});
+	}
 });
 
 details = {

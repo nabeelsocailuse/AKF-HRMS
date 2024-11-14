@@ -44,7 +44,9 @@ class OvertimeClaimForm(Document):
 		for row in self.detail_of_overtime:
 			if(row.attendance):
 				custom_overtime_claim = 0 if(cancelled) else 1 
+				ocfName = None if(cancelled) else self.name 
 				frappe.db.set_value("Attendance", row.attendance, "custom_overtime_claim", custom_overtime_claim)
+				frappe.db.set_value("Attendance", row.attendance, "custom_overtime_claim_form", ocfName)
 
 	def on_cancel(self):
 		self.delete_additional_salary()
@@ -53,7 +55,7 @@ class OvertimeClaimForm(Document):
 		
 	def update_fields(self):
 		frappe.db.sql(f""" update `tab{self.doctype}` 
-			set approval_by = "Cancelled", additional_salary=""
+			set approval_status = "Cancelled", additional_salary=""
 				where name = '{self.name}' """)
 		self.reload()
 	
@@ -61,10 +63,10 @@ class OvertimeClaimForm(Document):
 		frappe.db.sql(f""" delete from `tabAdditional Salary` where name = '{self.additional_salary}' """)
 	
 	@frappe.whitelist()
-	def get_details_of_overtime(self):
+	def get_details_of_overtime(self, reset=False):
 		self.already_applied_for_overtime()
 		self.set_salary_structure_assignment()
-		self.set("detail_of_overtime", self.get_attendance())
+		if(reset): self.set("detail_of_overtime", self.get_attendance())
 		self.set_total_hours_worked()
 		self.set_total_overtime_hours()
 		self.set_amount_in_figures()
@@ -108,9 +110,10 @@ class OvertimeClaimForm(Document):
 			Where
 				docstatus=1
 				and custom_overtime_claim = 0
-				and custom_attendance_adjustment = 0
+				and ifnull(attendance_adjustment,"")=""
 				and ifnull(custom_hours_worked, "")!=""
 				and ifnull(custom_overtime_hours, "")!=""
+				and (TIME_TO_SEC(custom_overtime_hours)/3600)>=2
 				and year(attendance_date) = '{self.year}'
 				and monthname(attendance_date) = '{self.month}'
 				and employee = '{self.employee}'
@@ -150,20 +153,23 @@ class OvertimeClaimForm(Document):
 def get_total_hours_worked(hours_worked_time_list):
 	total_h_worked= '0'	
 	hours_worked_ = 0
+	
 	for tm in hours_worked_time_list:
-		timeParts = [int(s) for s in str(tm.hours_worked).split(':')]
-		hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
-	hours_worked_, sec = divmod(hours_worked_, 60)
-	hr, min_ = divmod(hours_worked_, 60)
-	total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))
-	return total_h_worked
+		if(tm.hours_worked):
+			timeParts = [int(s) for s in str(tm.hours_worked).split(':')]
+			hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
+	# hours_worked_, sec = divmod(hours_worked_, 60)
+	# hr, min_ = divmod(hours_worked_, 60)
+	# total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))
+	# return total_h_worked
 
 def get_total_overtime_hours(hours_worked_time_list):
 	total_h_worked= '0'	
 	hours_worked_ = 0
 	for tm in hours_worked_time_list:
-		timeParts = [int(s) for s in str(tm.overtime_hours).split(':')]
-		hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
+		if(tm.overtime_hours):
+			timeParts = [int(s) for s in str(tm.overtime_hours).split(':')]
+			hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
 	hours_worked_, sec = divmod(hours_worked_, 60)
 	hr, min_ = divmod(hours_worked_, 60)
 	total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))

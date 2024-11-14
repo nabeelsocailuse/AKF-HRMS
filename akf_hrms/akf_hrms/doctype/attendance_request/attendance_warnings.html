@@ -1,0 +1,27 @@
+<div class="form-message yellow">
+    <div>{{__("Attendance for the following dates will be skipped/overwritten on submission")}}</div>
+</div>
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th style="width: 15%">{{ __("Date") }}</th>
+            <th style="width: 15%">{{ __("Action on Submission") }}</th>
+            <th style="width: 15%">{{ __("Reason") }}</th>
+            <th style="width: 15%">{{ __("Existing Record") }}</th>
+            <th style="width: 15%">{{ __("Check In Time") }}</th>
+            <th style="width: 15%">{{ __("Check Out Time") }}</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for(var i=0; i < warnings.length; i++) { %} <tr>
+            <td class="small">{{ frappe.datetime.str_to_user(warnings[i].date) }}</td>
+            <td class="small"> {{ __(warnings[i].action) }} </td>
+            <td class="small"> {{ __(warnings[i].reason) }} </td>
+            <td class="small"> {{ warnings[i].record }} </td>
+            <td class="small"> {{ warnings[i].in_time }} </td>
+            <td class="small"> {{ warnings[i].out_time }} </td>
+            </tr>
+            {% } %}
+    </tbody>
+</table>

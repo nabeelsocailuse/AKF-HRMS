@@ -120,12 +120,13 @@ class OAttendanceRequest(Document):
 		status = self.get_attendance_status(date)
 		hours_worked = time_diff(self.custom_to,self.custom_from)
 
+		_date_ = str(self.from_date).split(" ")[0]
 		if attendance_name:
 			# update existing attendance, change the status
 			doc = frappe.get_doc("Attendance", attendance_name)
 			old_date=str(doc.in_time)+ " - "+str(doc.out_time)
-			f_date =str(self.from_date)+ " " +str(self.custom_from)
-			t_date=str(self.from_date)+ " " +str(self.custom_to)
+			f_date =f"{_date_} {self.custom_from}"
+			t_date=f"{_date_} {self.custom_to}"
 			new_date=str(f_date)+ " - "+str(t_date)
 			doc.db_set({"in_time":f_date, "out_time":t_date, "custom_hours_worked":hours_worked})
 			frappe.msgprint(
@@ -165,8 +166,8 @@ class OAttendanceRequest(Document):
 			doc.company = self.company
 			doc.attendance_request = self.name
 			doc.custom_hours_worked = hours_worked
-			doc.in_time = str(self.from_date)+ " " + str(self.custom_from)
-			doc.out_time = str(self.from_date)+ " " + str(self.custom_to)
+			doc.in_time = f"{_date_} {self.custom_from}"
+			doc.out_time = f"{_date_} {self.custom_to}"
 			doc.status = status
 			doc.insert(ignore_permissions=True)
 			doc.submit()

@@ -1,6 +1,5 @@
 import frappe, json
-from frappe.utils import formatdate, fmt_money
-
+from frappe.utils import formatdate, fmt_money, getdate, date_diff, time_diff_in_seconds, format_duration
 @frappe.whitelist()
 def get_information(filters):
     filters = json.loads(filters)
@@ -43,10 +42,21 @@ def get_employee_details(filters):
     if(result):
         result[0]["date_of_joining"] = formatdate(result[0]["date_of_joining"])
         result[0]["current_salary"] = fmt_money(result[0]["current_salary"], precision=0, currency="PKR")
+        result[0]["total_duration"] = calculate_work_experience(result[0]["date_of_joining"])
         return result[0]
     else:
         return {}
 
+def calculate_work_experience(date_of_joining):
+    delta = date_diff(getdate(), date_of_joining)
+    # Convert the difference to years, months, and days
+    years = delta // 365
+    remaining_days = delta % 365
+    months = remaining_days // 30
+    days = remaining_days % 30
+    return f"{years} year(s) {months} month(s) {days} day(s)"
+
+    
 def get_employee_history(filters):
     result = frappe.db.sql("""
         SELECT

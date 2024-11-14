@@ -1,0 +1,100 @@
+<head>
+  <style>
+    #tree {
+      width: 100%;
+      height: 100%;
+    }
+
+    .svg-chart-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn {
+      margin: 3px;
+      color: inherit;
+      text-transform: uppercase;
+      word-wrap: break-word;
+      white-space: normal;
+      cursor: pointer;
+      border: 0;
+      border-radius: 0.125rem;
+      padding: 0.84rem 2.14rem;
+      font-size: 0.81rem;
+      display: inline-block;
+      font-weight: 400;
+      color: #212529;
+      text-align: center;
+      vertical-align: middle;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      border: 1px solid transparent;
+      padding: 0.375rem 0.75rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      border-radius: 0.25rem;
+    }
+
+    .btn-action-button {
+      text-transform: lowercase;
+      font-size: 11px !important;
+      border-radius: 7px !important;
+      color: white !important;
+      padding: 4px 5px !important;
+      background-color: #1d2643 !important;
+    }
+
+    svg:not(:root) {
+      overflow: auto !important;
+    }
+
+    .action-buttons {
+      position: absolute;
+      bottom: 100px;
+      right: 35px;
+    }
+
+    .svg-chart-container:before {
+      position: absolute;
+      left: 100;
+      right: 0;
+      top: 5;
+      bottom: 0;
+    }
+
+    .chart-container .svg-chart-container .chart {
+      transform: translate(680, 43) !important;
+      -webkit-transform: translate(680, 43) !important;
+    }
+    .node.exported {
+      box-shadow: none;
+    }
+    .svg-chart-container {
+      height: auto !important;
+      width: auto !important;
+    }
+  </style>
+</head>
+
+<div id="hierarchy-chart-wrapper">
+  <div id="hierarchy-chart">
+    <div class="chart-container"></div>
+  </div>
+</div>
+<!-- <div class="action-buttons">
+	<button onclick="export_chart()" id="saveButton" class="btn btn-action-button waves-effect waves-light">
+		<i class="fa fa-file-pdf"></i> export pdf
+	</button>
+</div> -->
+
+<div id="previewicon"> <i class="fa fa-refresh fa-spin" style="font-size:24px"></i> </div>
+<!-- 
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-org-chart@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.5/jspdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+  integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->

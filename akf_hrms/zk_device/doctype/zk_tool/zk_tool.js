@@ -50,7 +50,7 @@ frappe.ui.form.on("ZK Tool", {
 						<small class="" style="margin-right: 20px;
 						font-style: italic;
 						font-family: monospace;
-						font-weight: bold;">Attendance Fetched</small>
+						font-weight: bold;">${data.msg}</small>
 						<i class="fa fa-smile-o" style="font-size:30px; color: green;"></i>
 						<br>
 						<p>${total_time}</p>

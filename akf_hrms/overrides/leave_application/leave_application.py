@@ -1,6 +1,10 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+""" custom functions 
+1- validate_only_three_leaves_in_current_month
+
+"""
 import datetime
 from typing import Dict, Optional, Tuple, Union
 
@@ -64,7 +68,7 @@ class LeaveAcrossAllocationsError(frappe.ValidationError):
 from frappe.model.document import Document
 
 
-class OLeaveApplication(Document, PWANotificationsMixin):
+class LeaveApplication(Document, PWANotificationsMixin):
 	def get_feed(self):
 		return _("{0}: From {0} of type {1}").format(self.employee_name, self.leave_type)
 
@@ -86,6 +90,8 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_value("Leave Type", self.leave_type, "is_optional_leave"):
 			self.validate_optional_leave()
 		self.validate_applicable_after()
+		self.validate_only_three_leaves_in_current_month()
+		self.validate_half_day_leave()
 
 	def on_update(self):
 		if self.status == "Open" and self.docstatus < 1:
@@ -133,6 +139,9 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 		hrms.refetch_resource("hrms:my_leaves", employee_user)
 
 	def validate_applicable_after(self):
+		from akf_hrms.patches.skip_validations import skip
+		if(skip()): 
+			return
 		if self.leave_type:
 			leave_type = frappe.get_doc("Leave Type", self.leave_type)
 			if leave_type.applicable_after > 0:
@@ -247,6 +256,68 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 				).format(formatdate(future_allocation[0].from_date), future_allocation[0].name)
 			)
 
+	""" HR Leave Policy """
+	""" Casual Leave allowed 3 three in a month... """
+	def validate_only_three_leaves_in_current_month(self):
+		from akf_hrms.patches.skip_validations import skip
+		if(skip()): 
+			return
+		if(self.leave_type!="Casual Leave"): return
+		# start validation
+		from frappe.utils import get_first_day, get_last_day, getdate
+		import datetime
+		# Parse the from_date string into a datetime object
+		from_month = getdate(self.from_date)
+		# Get the month name
+		from_month_name = from_month.strftime("%B")
+		# Parse the to_date string into a datetime object
+		to_month = getdate(self.to_date)
+		# Get the month name
+		to_month_name = to_month.strftime("%B")
+
+
+		def verifyLeaves(conditions, month_name):
+			result = frappe.db.sql(f""" 
+				select 
+					ifnull(sum(total_leave_days),0) total_leaves
+				from 
+					`tabLeave Application` 
+				{conditions}
+				""")
+			if(result): 
+				total_leaves = result[0][0] + self.total_leave_days
+				if(total_leaves>3):
+					frappe.throw(f"3 <b>{self.leave_type}</b> allowed in a month <b>{month_name}</b>.", title="Exception")
+
+		conditions = f""" 
+		where 
+			docstatus=1
+			and employee = '{self.employee}'
+			and company = '{self.company}'
+			and leave_type = '{self.leave_type}'
+		"""
+		if(from_month_name == to_month_name):
+			start_date =  get_first_day(self.from_date)
+			end_date =  get_last_day(self.to_date)
+			conditions += f" and (from_date>='{start_date}' and to_date<='{end_date}') "
+			verifyLeaves(conditions, from_month_name)
+			
+		else:
+			# validate with from date
+			start_date =  get_first_day(self.from_date)
+			end_date =  get_last_day(self.from_date)
+			conditions += " and (from_date>='{start_date}' and to_date<='{end_date}') "
+			verifyLeaves(conditions, from_month_name)
+			# validate with to date
+			start_date =  get_first_day(self.to_date)
+			end_date =  get_last_day(self.to_date)
+			verifyLeaves(conditions, to_month_name)
+	
+	@frappe.whitelist()
+	def validate_half_day_leave(self):  	
+		from akf_hrms.utils.leave_policy import verify_half_day_leave
+		verify_half_day_leave(self)
+  
 	def update_attendance(self):
 		if self.status != "Approved":
 			return
@@ -282,23 +353,23 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 			else "On Leave"
 		)
 
-		# if attendance_name:
-		# 	# update existing attendance, change absent to on leave
-		# 	doc = frappe.get_doc("Attendance", attendance_name)
-		# 	doc.db_set({"status": status, "leave_type": self.leave_type, "leave_application": self.name})
-		# else:
+		if attendance_name:
+			# update existing attendance, change absent to on leave
+			doc = frappe.get_doc("Attendance", attendance_name)
+			doc.db_set({"status": status, "leave_type": self.leave_type, "leave_application": self.name})
+		else:
 			# make new attendance and submit it
-		doc = frappe.new_doc("Attendance")
-		doc.employee = self.employee
-		doc.employee_name = self.employee_name
-		doc.attendance_date = date
-		doc.company = self.company
-		doc.leave_type = self.leave_type
-		doc.leave_application = self.name
-		doc.status = status
-		doc.flags.ignore_validate = True
-		doc.insert(ignore_permissions=True)
-		doc.submit()
+			doc = frappe.new_doc("Attendance")
+			doc.employee = self.employee
+			doc.employee_name = self.employee_name
+			doc.attendance_date = date
+			doc.company = self.company
+			doc.leave_type = self.leave_type
+			doc.leave_application = self.name
+			doc.status = status
+			doc.flags.ignore_validate = True
+			doc.insert(ignore_permissions=True)
+			doc.submit()
 
 	def cancel_attendance(self):
 		if self.docstatus == 2:
@@ -796,7 +867,7 @@ class OLeaveApplication(Document, PWANotificationsMixin):
 				args.update(dict(from_date=start_date, to_date=self.to_date, leaves=leaves * -1))
 				create_leave_ledger_entry(self, args, submit)
 
-
+	
 def get_allocation_expiry_for_cf_leaves(
 	employee: str, leave_type: str, to_date: datetime.date, from_date: datetime.date
 ) -> str:
@@ -875,7 +946,7 @@ def get_leave_details(employee, date):
 			"leaves_pending_approval": flt(leaves_pending, precision),
 			"remaining_leaves": flt(remaining_leaves, precision),
 		}
-
+	
 	# is used in set query
 	lwp = frappe.get_list("Leave Type", filters={"is_lwp": 1}, pluck="name")
 
@@ -903,12 +974,11 @@ def get_leave_balance_on(
 	:param to_date: future date to check for allocation expiry
 	:param consider_all_leaves_in_the_allocation_period: consider all leaves taken till the allocation end date
 	:param for_consumption: flag to check if leave balance is required for consumption or display
-	        eg: employee has leave balance = 10 but allocation is expiring in 1 day so employee can only consume 1 leave
-	        in this case leave_balance = 10 but leave_balance_for_consumption = 1
-	        if True, returns a dict eg: {'leave_balance': 10, 'leave_balance_for_consumption': 1}
-	        else, returns leave_balance (in this case 10)
+			eg: employee has leave balance = 10 but allocation is expiring in 1 day so employee can only consume 1 leave
+			in this case leave_balance = 10 but leave_balance_for_consumption = 1
+			if True, returns a dict eg: {'leave_balance': 10, 'leave_balance_for_consumption': 1}
+			else, returns leave_balance (in this case 10)
 	"""
-
 	if not to_date:
 		to_date = nowdate()
 
@@ -925,9 +995,12 @@ def get_leave_balance_on(
 	remaining_leaves = get_remaining_leaves(allocation, leaves_taken, date, cf_expiry)
 
 	if for_consumption:
+     
 		return remaining_leaves
 	else:
 		return remaining_leaves.get("leave_balance")
+
+  
 
 
 def get_leave_allocation_records(employee, date, leave_type=None):
@@ -985,7 +1058,7 @@ def get_leave_allocation_records(employee, date, leave_type=None):
 	query = query.groupby(Ledger.employee, Ledger.leave_type)
 
 	allocation_details = query.run(as_dict=True)
-
+	
 	allocated_leaves = frappe._dict()
 	for d in allocation_details:
 		allocated_leaves.setdefault(
@@ -1002,9 +1075,10 @@ def get_leave_allocation_records(employee, date, leave_type=None):
 				}
 			),
 		)
+	
 	return allocated_leaves
 
-
+# nabeel code updated.
 def get_leaves_pending_approval_for_period(
 	employee: str, leave_type: str, from_date: datetime.date, to_date: datetime.date
 ) -> float:
@@ -1016,7 +1090,7 @@ def get_leaves_pending_approval_for_period(
 			"from_date": ["between", (from_date, to_date)],
 			"to_date": ["between", (from_date, to_date)],
 		},
-		fields=["SUM(total_leave_days) as leaves"],
+		fields=["SUM(case when leave_type in ('Half Day Leave', 'Short Leave') then 1 else total_leave_days end) as leaves"],
 	)[0]
 	return leaves["leaves"] if leaves["leaves"] else 0.0
 
@@ -1091,15 +1165,15 @@ def get_leaves_for_period(
 ) -> float:
 	leave_entries = get_leave_entries(employee, leave_type, from_date, to_date)
 	leave_days = 0
-
+	
 	for leave_entry in leave_entries:
 		inclusive_period = leave_entry.from_date >= getdate(
 			from_date
 		) and leave_entry.to_date <= getdate(to_date)
-
+		
 		if inclusive_period and leave_entry.transaction_type == "Leave Encashment":
 			leave_days += leave_entry.leaves
-
+		
 		elif (
 			inclusive_period
 			and leave_entry.transaction_type == "Leave Allocation"
@@ -1107,8 +1181,8 @@ def get_leaves_for_period(
 			and not skip_expired_leaves
 		):
 			leave_days += leave_entry.leaves
-
-		elif leave_entry.transaction_type == "Leave Application":
+		# nabeel updated
+		elif leave_entry.transaction_type in ["Leave Application", "Salary Slip"]:
 			if leave_entry.from_date < getdate(from_date):
 				leave_entry.from_date = from_date
 			if leave_entry.to_date > getdate(to_date):
@@ -1135,16 +1209,18 @@ def get_leaves_for_period(
 				)
 				* -1
 			)
-
+			# frappe.msgprint(f'{leave_type} {leave_days}')
+	
 	return leave_days
 
-
+# nabeel code updated.
 def get_leave_entries(employee, leave_type, from_date, to_date):
 	"""Returns leave entries between from_date and to_date."""
+	_leaves = " (case when leave_type= '{0}' then 1 else 0 end) as leaves,".format(leave_type) if(leave_type in ["Half Leave", "Half Day Leave", "Short Leave"]) else "leaves,"
 	return frappe.db.sql(
 		"""
 		SELECT
-			employee, leave_type, from_date, to_date, leaves, transaction_name, transaction_type, holiday_list,
+			employee, leave_type, from_date, to_date, {0} transaction_name, transaction_type, holiday_list,
 			is_carry_forward, is_expired
 		FROM `tabLeave Ledger Entry`
 		WHERE employee=%(employee)s AND leave_type=%(leave_type)s
@@ -1154,7 +1230,7 @@ def get_leave_entries(employee, leave_type, from_date, to_date):
 			AND (from_date between %(from_date)s AND %(to_date)s
 				OR to_date between %(from_date)s AND %(to_date)s
 				OR (from_date < %(from_date)s AND to_date > %(to_date)s))
-	""",
+	""".format(_leaves),
 		{"from_date": from_date, "to_date": to_date, "employee": employee, "leave_type": leave_type},
 		as_dict=1,
 	)
@@ -1398,3 +1474,4 @@ def get_leave_approver(employee):
 
 def on_doctype_update():
 	frappe.db.add_index("Leave Application", ["employee", "from_date", "to_date"])
+

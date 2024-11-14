@@ -41,9 +41,10 @@ class AttendanceLog(Document):
 					"employee": self.employee,
 					"attendance_date": self.attendance_date,
 					
-				}, ["name", "in_time"], as_dict=1)
+				}, ["name", "in_time", "status"], as_dict=1)
 
 	def update_attendance(self, attendance):
+		
 		if(attendance.status!="Present"): return
 		frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
 		hours_worked = self.cal_hours_worked(attendance.in_time)

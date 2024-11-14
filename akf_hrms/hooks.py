@@ -20,6 +20,10 @@ app_include_js = [
     "/assets/akf_hrms/js/highcharts_apis/exporting.js",
     "/assets/akf_hrms/js/highcharts_apis/accessibility.js",
     "/assets/akf_hrms/js/highcharts_apis/variable-pie.js",
+    "/assets/akf_hrms/js/d3.v7.min.js",
+    "/assets/akf_hrms/js/d3-org-chart.js",
+    "/assets/akf_hrms/js/d3-flextree.js",
+    "/assets/akf_hrms/js/html2canvas.js",
 ]
 
 # include js, css files in header of web template
@@ -53,7 +57,16 @@ doctype_js = {
     "Salary Slip": [
         "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
         ],
-    "Attendance Request": "public/js/attendance_request.js",
+    # "Attendance Request": "public/js/attendance_request.js",
+    # "Expense Claim": [
+    #     "public/js/custom_doctype_js/expense_claim/expense_claim.js"
+    # ],
+    "Leave Application": [
+        "public/js/custom_doctype_js/leave_application.js"
+    ],
+    "Additional Salary": [
+        "public/js/custom_doctype_js/additional_salary.js"
+    ],
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -154,13 +167,17 @@ override_doctype_class = {
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
     "Payroll Entry": "akf_hrms.overrides.payroll_entry.OverridePayrollEntry",
-    "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
+    # "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
+    "Salary Slip": "akf_hrms.overrides.salary_slip.SalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
     "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
     "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
-    "Leave Application": "akf_hrms.extends.leave_application_wf.leave_application_wf.XLeaveApplication",
+    # "Leave Application": "akf_hrms.extends.leave_application_wf.leave_application_wf.XLeaveApplication",
+    "Leave Application": "akf_hrms.overrides.leave_application.leave_application.LeaveApplication",
     "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
-    "Attendance Request": "akf_hrms.overrides.attendance_request.OAttendanceRequest",
+    # "Attendance Request": "akf_hrms.overrides.attendance_request.OAttendanceRequest",
+    # "Expense Claim": "akf_hrms.overrides.expense_claim.ExpenseClaim",
+    "Additional Salary": "akf_hrms.overrides.additional_salary.XAdditionalSalary",
 }
 
 # Document Events
@@ -179,9 +196,9 @@ doc_events = {
     "Employee Separation": {
         "before_submit": "akf_hrms.doc_events.submit_on_completed.submit_on_complete"
     },
-    "Expense Claim": {
-        "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
-    },
+    # "Expense Claim": {
+    #     "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
+    # },
 }
 
 # Scheduled Tasks
