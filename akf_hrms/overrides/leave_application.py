@@ -358,7 +358,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			doc = frappe.get_doc("Attendance", attendance_name)
 			doc.db_set({"status": status, "leave_type": self.leave_type, "leave_application": self.name})
 		else:
-			make new attendance and submit it
+			# make new attendance and submit it
 			doc = frappe.new_doc("Attendance")
 			doc.employee = self.employee
 			doc.employee_name = self.employee_name
