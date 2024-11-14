@@ -95,6 +95,7 @@
    "default": "0",
    "fieldname": "half_day",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Half Day"
   },
   {
@@ -114,7 +115,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Reason",
-   "options": "\nWork From Home\nCheck In/Out Miss\nOut for Meeting\nOut for Official work\nOn Duty\nAdjustment\nCompensatory Off\nIn-Station\nOut-Station",
+   "options": "\nWork From Home\nCheck In/Out Miss\nIn-Station\nOut-Station",
    "reqd": 1
   },
   {
@@ -124,7 +125,8 @@
   {
    "fieldname": "explanation",
    "fieldtype": "Small Text",
-   "label": "Explanation"
+   "label": "Explanation",
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -146,6 +148,7 @@
    "default": "0",
    "fieldname": "include_holidays",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Include Holidays"
   },
   {
@@ -230,7 +233,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-07 17:26:18.706270",
+ "modified": "2024-11-14 13:32:26.750342",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Request",

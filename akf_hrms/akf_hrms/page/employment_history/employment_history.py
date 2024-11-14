@@ -1,5 +1,5 @@
 import frappe, json
-
+from frappe.utils import formatdate, fmt_money, getdate, date_diff, time_diff_in_seconds, format_duration
 @frappe.whitelist()
 def get_information(filters):
     filters = json.loads(filters)
@@ -22,7 +22,7 @@ def get_employee_details(filters):
             CONCAT_WS(' ', emp.first_name, emp.middle_name, emp.last_name) as full_name,
             emp.designation as designation,
             emp.date_of_joining as date_of_joining,
-            emp.ctc as current_salary,
+            (select ifnull((base+ custom_mobile_allowance + custom_vehicle_allowance + custom_accomodation_allowance + custom_fuel_allowance + variable),0) from `tabSalary Structure Assignment` where docstatus=1 and employee=emp.name order by from_date desc limit 1) as current_salary,
             emp.custom_father_name as father_name,
             emp.department as department,
             emp.employment_type as employment_type,
@@ -39,13 +39,28 @@ def get_employee_details(filters):
         GROUP BY
             emp.name
     """, {"employee": filters.get('employee')}, as_dict=1)
+    if(result):
+        result[0]["date_of_joining"] = formatdate(result[0]["date_of_joining"])
+        result[0]["current_salary"] = fmt_money(result[0]["current_salary"], precision=0, currency="PKR")
+        result[0]["total_duration"] = calculate_work_experience(result[0]["date_of_joining"])
+        return result[0]
+    else:
+        return {}
 
-    return result[0] if result else {}
+def calculate_work_experience(date_of_joining):
+    delta = date_diff(getdate(), date_of_joining)
+    # Convert the difference to years, months, and days
+    years = delta // 365
+    remaining_days = delta % 365
+    months = remaining_days // 30
+    days = remaining_days % 30
+    return f"{years} year(s) {months} month(s) {days} day(s)"
 
+    
 def get_employee_history(filters):
     result = frappe.db.sql("""
         SELECT
-            ROW_NUMBER() OVER () AS serial_number,
+            idx as serial_number,
             COALESCE(NULLIF(history.custom_description, ''), '-') as description,
             COALESCE(NULLIF(history.from_date, ''), '-') as effective_date,
             COALESCE(NULLIF(history.designation, ''), '-') as designation,
@@ -62,8 +77,16 @@ def get_employee_history(filters):
             `tabEmployee Internal Work History` history
         WHERE
             history.parent = %(employee)s
+        Order By
+            serial_number
     """, {"employee": filters.get('employee')}, as_dict=1)
-
+    i = 0
+    for d in result:
+        result[i]['effective_date'] = formatdate(result[i]['effective_date'])
+        result[i]['promotion'] = fmt_money(result[i]['promotion'], precision=0, currency="PKR")
+        result[i]['special'] = fmt_money(result[i]['special'], precision=0, currency="PKR")
+        result[i]['salary'] = fmt_money(result[i]['salary'], precision=0, currency="PKR")
+        i = i + 1
     return result
 
 @frappe.whitelist()

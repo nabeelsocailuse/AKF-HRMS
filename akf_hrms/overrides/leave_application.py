@@ -353,23 +353,23 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			else "On Leave"
 		)
 
-		# if attendance_name:
-		# 	# update existing attendance, change absent to on leave
-		# 	doc = frappe.get_doc("Attendance", attendance_name)
-		# 	doc.db_set({"status": status, "leave_type": self.leave_type, "leave_application": self.name})
-		# else:
-			# make new attendance and submit it
-		doc = frappe.new_doc("Attendance")
-		doc.employee = self.employee
-		doc.employee_name = self.employee_name
-		doc.attendance_date = date
-		doc.company = self.company
-		doc.leave_type = self.leave_type
-		doc.leave_application = self.name
-		doc.status = status
-		doc.flags.ignore_validate = True
-		doc.insert(ignore_permissions=True)
-		doc.submit()
+		if attendance_name:
+			# update existing attendance, change absent to on leave
+			doc = frappe.get_doc("Attendance", attendance_name)
+			doc.db_set({"status": status, "leave_type": self.leave_type, "leave_application": self.name})
+		else:
+			make new attendance and submit it
+			doc = frappe.new_doc("Attendance")
+			doc.employee = self.employee
+			doc.employee_name = self.employee_name
+			doc.attendance_date = date
+			doc.company = self.company
+			doc.leave_type = self.leave_type
+			doc.leave_application = self.name
+			doc.status = status
+			doc.flags.ignore_validate = True
+			doc.insert(ignore_permissions=True)
+			doc.submit()
 
 	def cancel_attendance(self):
 		if self.docstatus == 2:
