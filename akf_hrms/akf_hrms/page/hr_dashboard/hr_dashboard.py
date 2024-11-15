@@ -123,7 +123,7 @@ def get_in_station_leaves(filters):
         SELECT count(name)
         FROM `tabLeave Application`
         WHERE leave_type = 'Official Duty (In-Station)'
-        AND custom_approval_status = 'Approved'
+        AND status = 'Approved'
         AND docstatus = 1
     """
 
@@ -144,7 +144,7 @@ def get_out_station_leaves(filters):
         SELECT count(name)
         FROM `tabLeave Application`
         WHERE leave_type = 'Official Duty (Out-Station)'
-        and custom_approval_status = 'Approved'
+        and status = 'Approved'
     """
     
     if filters.get("company"):
