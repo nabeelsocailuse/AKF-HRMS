@@ -5,7 +5,7 @@ frappe.ui.form.on("Leave Application", {
 	setup: function(frm) {
 		frm.set_query("leave_approver", function() {
 			return {
-				query: "akf_hrms.overrides.department_approver.get_approvers",
+				query: "hrms.hr.doctype.department_approver.department_approver.get_approvers",
 				filters: {
 					employee: frm.doc.employee,
 					doctype: frm.doc.doctype
