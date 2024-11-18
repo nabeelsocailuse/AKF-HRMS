@@ -7,7 +7,7 @@ frappe.ui.form.on('Attendance Adjustment', {
         }
     },
     onload: function (frm) {     // onload added by Mubashir Bashir
-        if (frappe.user.has_role("Employee")) {
+        if (frappe.user.has_role("Employee")&& frm.doc.employee==undefined) {
             frappe.call({
                 method: "frappe.client.get_value",
                 args: {
@@ -57,6 +57,7 @@ frappe.ui.form.on('Attendance Adjustment', {
         
         if(frm.doc.compensation_date!=undefined && frm.doc.compensation_type!=""){
             frm.call('get_compensation_for').then(r=>{
+                console.log(r.message);
                 frm.set_value('compensation_for', r.message==undefined?null:r.message);
                 loadCompensateOnStats(frm);
             });
@@ -140,7 +141,7 @@ function loadSevenDaysStats(frm) {
 function loadCompensateOnStats(frm) {
     if(frm.doc.compensation_date==undefined) return;
     frm.call('get_compensation_date_stats').then(r => {
-        
+        console.log((r.message));
         let data = r.message==undefined?[]: r.message;
         let rows = ``;
         data.forEach(row => {
