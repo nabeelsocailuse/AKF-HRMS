@@ -89,7 +89,10 @@ frappe.ui.form.on('Expense Claim Detail', {
                 frm.refresh_field('expenses');
             }
         });
-
+        
+        frm.call('validate_expenses_table').then(r=>{
+        });
+        
         return frappe.call({
             method: "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center",
             args: {
@@ -102,6 +105,12 @@ frappe.ui.form.on('Expense Claim Detail', {
                     d.cost_center = r.message.cost_center;
                 }
             }
+        });
+        
+        
+    },
+    expense_date: function(frm, cdt, cdn){
+        frm.call('validate_expenses_table').then(r=>{
         });
     }
 });

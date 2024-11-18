@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.model.mapper import get_mapped_doc
 from frappe.query_builder.functions import Sum
-from frappe.utils import cstr, flt, get_link_to_form, getdate
+from frappe.utils import cstr, flt, get_link_to_form, getdate, formatdate
 
 import erpnext
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_account
@@ -48,7 +48,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 		self.validate_da()
 
-		# self.validate_expenses_table()
+		self.validate_expenses_table()
 
 		self.get_travel_attendance()
 
@@ -669,17 +669,15 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		
 		return duration
 	
+	@frappe.whitelist()
 	def validate_expenses_table(self):
-		expense_types = frappe.db.get_all("Expense Claim Type")
-		expense_types_list = []
-		for type in expense_types:
-			expense_types_list.append(expense_types['name'])
-		frappe.throw(f"{expense_types}")
-		expense_table = {}
-		for expense in self.expenses:
-			expense_table = {f'expense_date: {expense.expense_date}', f'expense_type: {expense.expense_type}'}
-			frappe.msgprint(f"{expense_table}")
-			
+		types = {d.expense_type:[] for d in self.expenses}
+		for d in self.expenses:
+			if(d.expense_type in types):
+				if(d.expense_date in types[d.expense_type]):
+					frappe.throw(f"You are not allowed to take <b>{d.expense_type}</b> on '{formatdate(d.expense_date)}' twice!")
+				else:
+					types[d.expense_type].append(d.expense_date)
 	
 	@frappe.whitelist()
 	def get_travel_expense_amount(self, expense_type):
