@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import cint, flt, rounded
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from lending.loan_management.doctype.loan.loan import (
 	get_sanctioned_amount_limit,
@@ -301,7 +301,13 @@ class LoanApplication(Document):
 			if not applicant_date_of_joining:
 				frappe.throw("Applicant does not have a valid date of joining.")
 
+			# Convert applicant_date_of_joining to datetime.datetime if it's a datetime.date object
+			if isinstance(applicant_date_of_joining, date):
+				applicant_date_of_joining = datetime.combine(applicant_date_of_joining, datetime.min.time())
+
 			applicant_experience_days = (today - applicant_date_of_joining).days
+
+			# applicant_experience_days = (today - applicant_date_of_joining).days
 			if applicant_experience_days < required_experience_days:
 				experience_years = required_experience_days // 365
 				frappe.throw(f"Applicant should have at least {experience_years} years of experience for this loan.")
@@ -315,7 +321,8 @@ class LoanApplication(Document):
 
 			for loan_limit_row in loan_product_doc.custom_loan_limit:
 				fiscal_year_doc = frappe.get_doc("Fiscal Year", loan_limit_row.fiscal_year)
-				to_date = datetime.strptime(fiscal_year_doc.to_date, '%Y-%m-%d')
+				# to_date = datetime.strptime(fiscal_year_doc.year_end_date, '%Y-%m-%d')
+				to_date = datetime.combine(fiscal_year_doc.year_end_date, datetime.min.time())
 
 				if not latest_fiscal_year or to_date > latest_fiscal_year:
 					latest_fiscal_year = to_date
@@ -324,14 +331,14 @@ class LoanApplication(Document):
 			if not latest_overall_loan_limit:
 				frappe.throw("No total loan limit set for the latest fiscal year.")
 
-			total_loan_amount = frappe.db.sum("Loan Application", 
-											filters={
-												"loan_product": self.loan_product,
-												"docstatus": 1  
-											}, 
-											fieldname="loan_amount") or 0
+			total_loan_amount = frappe.db.sql("""
+									SELECT SUM(loan_amount) 
+									FROM `tabLoan Application` 
+									WHERE docstatus = 1
+								""", as_dict=True)[0].get('SUM(loan_amount)', 0)
 
-			total_loan_amount += flt(self.loan_amount)
+			total_loan_amount = flt(self.loan_amount)
+			total_loan_amount += flt(self.loan_amount) if self.loan_amount else 0.0
 
 			if total_loan_amount > latest_overall_loan_limit:
 				frappe.throw(f"The loan amount for {self.loan_product} applications exceeds the total limit of {latest_overall_loan_limit}.")
