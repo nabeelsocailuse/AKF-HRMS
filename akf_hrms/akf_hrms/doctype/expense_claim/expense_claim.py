@@ -555,7 +555,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				if(expense.expense_type == "Daily Allowance"):
 					if compensatory_leave_request:
 						if(expense.expense_date >= compensatory_leave_request[0].work_from_date and expense.expense_date <= compensatory_leave_request[0].work_end_date):
-							frappe.throw(f"You can't avail <b>Daily Alloowance</b> against travel request: {self.travel_request}, as Compensatory Leave '{compensatory_leave_request[0].name}' already taken against '{expense.expense_date}'!")
+							frappe.throw(f"You can't avail <b>Daily Allowance</b> against travel request: {self.travel_request}, as Compensatory Leave '{compensatory_leave_request[0].name}' already taken against '{expense.expense_date}'!")
 
 		
 
