@@ -58,7 +58,10 @@ class JobApplicant(Document):
 
 	def calculate_age(self): 	# Mubashir Bashir
 		if self.custom_date_of_birth:
-			birth_date = datetime.strptime(self.custom_date_of_birth, "%Y-%m-%d").date()
+			birth_date = self.custom_date_of_birth
+			if isinstance(self.custom_date_of_birth, str):
+				birth_date = datetime.strptime(self.custom_date_of_birth, "%Y-%m-%d").date()
+				
 			today = date.today()
 			self.custom_age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
 
