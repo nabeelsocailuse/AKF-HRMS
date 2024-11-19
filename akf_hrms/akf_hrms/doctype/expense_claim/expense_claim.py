@@ -548,12 +548,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			},
 			as_dict=1,
 		)
-		frappe.msgprint(f"comp off: {compensatory_leave_request}, emp: {self.employee}")
 		
 		expense_type = self.validate_da()
 		if(expense_type):
 			for expense in expense_type:
-				# frappe.msgprint(f"expense_type: {expense.expense_type}")
 				if(expense.expense_type == "Daily Allowance"):
 					if compensatory_leave_request:
 						if(expense.expense_date >= compensatory_leave_request[0].work_from_date and expense.expense_date <= compensatory_leave_request[0].work_end_date):
