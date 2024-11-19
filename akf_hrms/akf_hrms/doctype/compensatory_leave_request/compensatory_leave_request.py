@@ -43,10 +43,10 @@ class CompensatoryLeaveRequest(Document):
 			arrival_date=getdate(result[0].arrival_date)
 
 			if (not departure_date<= getdate(self.work_from_date) <= arrival_date):
-				frappe.throw(_(f"Departure Date: {departure_date} should be in between Work From Date and Work End Date"))
+				frappe.throw(_(f"Work From Date and Work End Date should be in between: {departure_date} - {arrival_date}"))
 
-			if (not departure_date<= getdate(self.work_end_date) <= arrival_date):
-				frappe.throw(_(f"Arrival Date: {arrival_date} should be in between Work From Date and Work End Date"))
+			# if (not departure_date<= getdate(self.work_end_date) <= arrival_date):
+			# 	frappe.throw(_(f"Arrival Date:  should be in between Work From Date and Work End Date"))
 
 		elif(self.against == "Work on Holiday"):
 			self.validate_holidays()
