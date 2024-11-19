@@ -242,18 +242,23 @@ class CompensatoryLeaveRequest(Document):
 			# frappe.throw(f"cd: {expense_claim_request[0].name}")
 			expense_type = frappe.db.sql(
 			"""
-			select ecd.expense_type
+			select ecd.expense_type, ecd.expense_date
 			From `tabExpense Claim` ec
 			INNER JOIN `tabExpense Claim Detail` ecd ON ecd.parent = ec.name
 			where ec.name = %(name)s
+			AND ecd.expense_date BETWEEN %(start_date)s and %(end_date)s
 		""",
 			{
-				"name": expense_claim_request[0].name
+				"name": expense_claim_request[0].name,
+				"start_date": self.work_from_date,
+				"end_date": self.work_end_date
 			},
 			as_dict=1,)
+
+			# frappe.throw(f"{expense_type}")
 
 			if(expense_type):
 				for expense in expense_type:
 				# frappe.msgprint(f"expense_type: {expense.expense_type}")
 					if(expense.expense_type == "Daily Allowance"):
-						frappe.throw(f"You can't apply for Leave against Travel Request: {self.travel_request}, as Daily Allowance availed in Expense Claim: '{expense_claim_request[0].name}'!")
+						frappe.throw(f"You can't apply for Leave against Travel Request: {self.travel_request}, as Daily Allowance availed in Expense Claim: '{expense_claim_request[0].name}' against '{expense.expense_date}'!")

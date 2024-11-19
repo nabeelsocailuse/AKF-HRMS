@@ -41,6 +41,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	def validate(self):
 		if(self.travel_request):
 			self.validate_travel_dates()
+			# self.validate_compensatory_leave_request()
+
 		self.validate_overlap_expense_claim()
 		self.validate_ta_da_expense()
 		
@@ -128,9 +130,9 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
     #Override
 	def on_submit(self):
-		self.validate_compensatory_leave_request()
 		if(self.travel_request):
 			self.validate_travel_dates()
+			self.validate_compensatory_leave_request()
 
 		
 		if self.approval_status == "Draft":
@@ -463,7 +465,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
-			filters={},
+			filters={"band": ["=", f"{self.custom_grade}"]},
 			fields=["band", "daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 		)
 
@@ -534,7 +536,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	def validate_compensatory_leave_request(self):
 		compensatory_leave_request = frappe.db.sql(
 			"""
-			select name
+			select name, work_from_date, work_end_date
 			from `tabCompensatory Leave Request`
 			where employee=%(employee)s and against = 'Travel'
 				and docstatus=1
@@ -546,22 +548,22 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			},
 			as_dict=1,
 		)
-		# frappe.msgprint(f"comp off: {compensatory_leave_request}, emp: {self.employee}")
+		frappe.msgprint(f"comp off: {compensatory_leave_request}, emp: {self.employee}")
 		
 		expense_type = self.validate_da()
 		if(expense_type):
 			for expense in expense_type:
 				# frappe.msgprint(f"expense_type: {expense.expense_type}")
-				if(expense.expense_type == "Daily Allowance"):
+				if(expense.expense_type == "Daily Allowance" and expense.expense_date >= compensatory_leave_request[0].work_from_date and expense.expense_date <= compensatory_leave_request[0].work_end_date):
 					if compensatory_leave_request:
-						frappe.throw(f"You can't avail <b>Daily Alloowance</b> against travel request: {self.travel_request}, as Compensatory Leave '{compensatory_leave_request[0].name}' already taken!")
+						frappe.throw(f"You can't avail <b>Daily Alloowance</b> against travel request: {self.travel_request}, as Compensatory Leave '{compensatory_leave_request[0].name}' already taken against '{expense.expense_date}'!")
 
 		
 
 	def validate_da(self):
 		expense_claim = frappe.db.sql(
 			"""
-			select ecd.expense_type
+			select ecd.expense_type, ecd.expense_date
 			From `tabExpense Claim` ec
 			INNER JOIN `tabExpense Claim Detail` ecd ON ecd.parent = ec.name
 			where ec.name = %(name)s
@@ -599,7 +601,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	def validate_travel_expenses(self): #by mubarrim
 		travel_settings = frappe.get_all(
 		"Travel Expense Setting Table",
-		filters={"band": ["like", f"{self.custom_grade}"]},
+		filters={"band": ["=", f"{self.custom_grade}"]},
 		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 	)
 
@@ -686,7 +688,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
-			filters={"band": ["like", f"{self.custom_grade}"]},
+			filters={"band": ["=", f"{self.custom_grade}"]},
 			fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 		)
 
