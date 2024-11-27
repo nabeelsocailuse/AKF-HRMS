@@ -27,7 +27,7 @@ def get_employee_dependents():				#Mubashir Bashir
 @frappe.whitelist()
 def get_employee_details():
 	user_id = frappe.session.user
-	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'first_name', 'branch', 'designation', 'department' , 'image', 'date_of_birth', 'date_of_joining', 'custom_cnic', 'employment_type', 'gender', 'custom_reports_to_line_manager_name'])
+	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'first_name', 'branch', 'designation', 'department' , 'image', 'date_of_birth', 'date_of_joining', 'custom_cnic', 'employment_type', 'gender', 'custom_reports_to_line_manager_name', 'reports_to'])
 	
 	if employee:
 	
@@ -39,6 +39,11 @@ def get_employee_details():
 		latest_qualification = None
 		if education_records:
 			latest_qualification = education_records[0].qualification
+               
+        # Fetch reports_to designation
+		reports_to_designation = None
+		if emp_details.reports_to:
+			reports_to_designation = frappe.db.get_value('Employee', emp_details.reports_to,'designation')
 
 		return {
 			"first_name": emp_details.first_name,
@@ -53,6 +58,7 @@ def get_employee_details():
 			"gender":emp_details.gender,
 			"employment_type":emp_details.employment_type,
 			"custom_reports_to_line_manager_name": emp_details.custom_reports_to_line_manager_name,
+			"reports_to_designation": reports_to_designation if reports_to_designation else "-",
             "latest_education_level": latest_qualification if latest_qualification else "No education record"
         }
 	else:
