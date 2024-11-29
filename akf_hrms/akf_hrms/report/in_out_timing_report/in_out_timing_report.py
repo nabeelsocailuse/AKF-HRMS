@@ -112,6 +112,8 @@ def get_data(filters):
 				# check_in_time = str(status_data[1]).split(':')
 				# check_out_time = str(status_data[2]).split(':')
 				# hours_worked = str(status_data[3]).split(':')
+
+				# Mubashir Bashir Start 28-11-2024
 				check_in_time = str(status_data[1])
 				check_out_time = str(status_data[2])
 				hours_worked = str(status_data[3])
@@ -125,7 +127,9 @@ def get_data(filters):
 					check_in_time = f"<span style='background-color: red; color: white;'>{check_in_time}</span>"
 				if early_exit:
 					check_out_time = f"<span style='background-color: red; color: white;'>{check_out_time}</span>"
-					
+				
+				# Mubashir Bashir End 28-11-2024
+
 				# frappe.throw(frappe.as_json(hours_worked))
 				if status == "Present":
 					# inlist += [check_in_time[0] + ":" + check_in_time[1] if (check_in_time) else ""]
@@ -162,6 +166,7 @@ def get_data(filters):
 	
 	return data
 
+# Mubashir Bashir Start 28-11-2024
 def get_attendance_list(filters):
 	conditions =  get_conditions(filters)
 	# attendance_list = frappe.db.sql("""select employee, day(attendance_date) as day_of_month,
@@ -181,7 +186,7 @@ def get_attendance_list(filters):
 		
 		att_map[d.employee][str(d.day_of_month)] = [d.status, get_times_split(d.check_in_time), get_times_split(d.check_out_time), d.hours_worked, d.late_entry, d.early_exit, d.custom_total_working_hours]
 	return att_map
-
+# Mubashir Bashir End 28-11-2024
 def get_conditions(filters, is_employee=False):
 	conditions = ""
 	if (is_employee):

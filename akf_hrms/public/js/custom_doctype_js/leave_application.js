@@ -108,6 +108,7 @@ frappe.ui.form.on("Leave Application", {
 		}
 
 		frm.trigger("set_employee");
+		frm.trigger("showWorkFlowState"); // Nabeel Saleem, 29-11-2024
 	},
 
 	async set_employee(frm) {
@@ -245,7 +246,45 @@ frappe.ui.form.on("Leave Application", {
 				}
 			});
 		}
+	},
+	// Start, Nabeel Saleem, 29-11-2024
+	showWorkFlowState: function(frm){
+		if(frm.doc.custom_state_data==undefined) {
+			frm.set_df_property('custom_state_html', 'options', '<p></p>')
+		}else{
+			const stateObj = JSON.parse(frm.doc.custom_state_data) 
+			let rows = ``;
+			let idx = 1
+			for(key in stateObj){
+				const data = stateObj[key];
+				const dt = moment(data.modified_on).format("DD-MM-YYYY hh:mm:ss a");
+				rows += `
+				<tr>
+					<th scope="row">${idx}</th>	
+					<th scope="row">${key}</th>
+					<td class="">${data.user}</td>
+					<td class="">${dt}</td>
+				</tr>`;
+				idx += 1;
+			}
+			let _html_ = `
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+					<th scope="col">#</th>
+					<th class="" scope="col">State</th>
+					<th class="" scope="col">User</th>
+					<th scope="col">Date Time</th>
+					</tr>
+				</thead>
+				<tbody>
+					${rows}
+				</tbody>
+			</table>`;
+			frm.set_df_property('custom_state_html', 'options', _html_)
+		}
 	}
+	// End, Nabeel Saleem, 29-11-2024
 });
 
 frappe.tour["Leave Application"] = [

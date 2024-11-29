@@ -4,12 +4,20 @@
 import frappe
 from frappe.model.document import Document
 import socket
-from akf_hrms.zk_device.zk_detail.base import ZK
-from frappe.utils import date_diff, add_to_date, get_datetime
+from akf_hrms.zk_device.zk_detail.base import ZK, ZK_helper
+from frappe.utils import date_diff, add_to_date, getdate
 
 employeeDetail=[]
 
 class ZKTool(Document):
+	@frappe.whitelist()
+	def validate_filters(self):
+		if(not self.company):
+			frappe.msgprint("Please select company")
+		if(not self.employee_list):
+			frappe.msgprint("There's no employees in employee list!", title="Employee List")
+			return []
+		
 	@frappe.whitelist()
 	def get_company_details(self):
 		doctype = 'ZK IP Detail'
@@ -24,129 +32,101 @@ class ZKTool(Document):
 	
 	@frappe.whitelist()
 	def get_employees(self):
-		# sql for Attendance Device ID
-		employeeDetail = frappe.db.sql(""" select 
-			attendance_device_id, (name) as employee, 
-			ifnull(case when ifnull(default_shift,"")!="" then default_shift else (select shift_type from `tabShift Assignment` where docstatus=1 and status="Active" and employee=e.name order by start_date desc limit 1) end, "") as default_shift
-		from 
-			`tabEmployee` e
-		where
-			status = 'Active' 
-			and ifnull(attendance_device_id, '')!=''
-			and company = '%s' 
-		group by
-			attendance_device_id
-		"""%self.company, as_dict=1)
+		def get_conditions():
+			conditions = f" and branch='{self.branch}'" if(self.branch) else ""
+			conditions += f" and department='{self.department}'" if(self.department) else ""
+			conditions += f" and designation='{self.designation}'" if(self.designation) else ""
+			conditions += f" and employee='{self.employee}'" if(self.employee) else ""
+			return conditions
+
+		employees = frappe.db.sql(f""" select name, employee_name, attendance_device_id 
+						from `tabEmployee` 
+						where status in ("Active", "Left") 
+							and ifnull(attendance_device_id, "")!=""
+							and (ifnull(relieving_date, "")="" || relieving_date >= "{self.from_date}")
+							and company = '{self.company}' {get_conditions()}""", as_dict=1)
 		
-		self.employee_detail = str(employeeDetail)
-		self.save()
+		self.total_employees = len(employees)
+		self.set("employee_list", [])
 		
-		return "Employees fetched." if(employeeDetail) else "Employees not found."
+		for e in  employees:
+			self.append("employee_list", 
+				{'employee': e.name, 'employee_name': e.employee_name, 'attendance_device_id': e.attendance_device_id})
 		
+
 	@frappe.whitelist()
 	def fetch_attendance(self):
-		if (not self.employee_detail): frappe.throw("Please fetch employees first.")
-
-		device_ip = self.device_ip
-		device_port = self.device_port
-		if (device_ip and device_port):
-			conn = None
-			attendance_records = []
-			addr_ip = socket.gethostbyname(device_ip)
-			zk = ZK(str(addr_ip), port=int(device_port), timeout=3000000, password=0, force_udp=False, ommit_ping=False)
-			try:
-				conn = zk.connect()
-				if (conn):
-					
-					# Dictionary of Attendance Device ID
-					userIds = {d.get("attendance_device_id"): {} for d in eval(self.employee_detail) if(d.get("attendance_device_id"))}
-					# Fetch from machine
-					attendance_records = conn.get_attendance_json(userIds=userIds)
-					
-					
-			except Exception as e:
-				return e
-			finally:
-				if conn:
-					conn.disconnect()
-					self.logs_json = str(attendance_records)
-					self.save()
-					return "Attendance fetched." if(attendance_records) else "Attendance not found."		
-		else:
-			return "Please select right company and log type to 'Get Attendance' "
-
-	@frappe.whitelist()
-	def	mark_attendance(self):
-		if(not self.logs_json): 
-			frappe.msgprint('Please fetch attendance first!') 
-			return
-		no_of_days = date_diff(self.to_date, self.from_date) + 1
-		if(no_of_days > 10):
-			frappe.enqueue('akf_hrms.zk_device.doctype.zk_tool.zk_tool.marking_attendance', self=self, timeout=1000000, queue="long")
-			self.progress_message = 'Marking attendance in background.'
-			self.save()
-		else:
-			self.progress_message = 'Marking attendance...'
-			# self.save()
-			# self.reload()
-			return marking_attendance(self)
-
-	@frappe.whitelist()
-	def	get_employee_details(self):
-		employee_detail = self.employee_detail if(self.employee_detail) else "[]"
-		return eval(employee_detail)
-	
-	@frappe.whitelist()
-	def get_log_details(self):
-		logs = self.logs_json if(self.logs_json) else "[]"
-		return eval(logs)
-
-@frappe.whitelist()
-def marking_attendance(self):
-	MARKED = False
-	try:
-		employee_detail = eval(self.employee_detail)
-		logs = eval(self.logs_json)
-		dates_list = get_dates_list(self.from_date, self.to_date)
 		
-		for d in employee_detail:
-			multi_years= logs[d.get("attendance_device_id")] if(d.get("attendance_device_id") in logs) else None
-			if(multi_years): 
-				for date in dates_list:
-					year = str(date).split('-')[0]
-					signle_year = multi_years[year] if (year in multi_years) else []
-					signle_year = sorted(list(signle_year))
-					for log in signle_year:
-						if (date in log):
-							
-							attendance_date = str(log).split(" ")[0]
-							_log_ = get_datetime(log)
-							default_shift = d.get("default_shift")
-							# shift = default_shift if (default_shift or default_shift!="") else fetch_shift(self.company, d.get("employee"), log) 
-							
-							args = {
-								'doctype': 'Attendance Log',
-								'employee': d.get("employee"),
-								'device_id': d.get("attendance_device_id"),
-								'shift': default_shift,
-								'device_ip': self.device_ip,
-								'device_port': self.device_port,
-								'log_type': self.log_type,
-								'attendance_date': attendance_date,
-								'log': _log_,
-							}
-							
-							if(not frappe.db.exists(args)):
-								frappe.get_doc(args).save()
-								MARKED = True
-	except Exception as e:
-		return '%s'%e
-	finally:
-		doc = frappe.get_doc("ZK Tool")
-		doc.progress_message = "Attendance marked successfully." if(MARKED) else "Attendance is already marked."
-		doc.save()
-		doc.reload()
+		self.validate_filters()
+		if (self.device_ip and self.device_port):
+			addr_ip = socket.gethostbyname(self.device_ip)
+			
+   			# verify destination host availability.
+			helper = ZK_helper(addr_ip, int(self.device_port))
+			if(not helper.test_ping()): return {"msg": "Destination Host Unreachable!", "logs": [], "fetched": 0}
+		
+			zk = ZK(str(addr_ip), port=int(self.device_port), timeout=4000000, password=0, force_udp=False, ommit_ping=False)
+			CONN = None
+			device_ids = None
+			attendance_records = None
+			try:
+				CONN = zk.connect()
+				if (CONN): 
+					device_ids = {d.get("attendance_device_id"): {} for d in self.employee_list}
+					date_split = (self.from_date).split("-")
+					print('working-zk')
+					attendance_records = CONN.get_attendance_json(userIds=device_ids, year=date_split[0], month=date_split[1])
+					# attendance_records = CONN.get_attendance()
+			except Exception as e:
+				return {"msg": str(e), "logs": attendance_records, "fetched": 0}
+			finally:
+				print(CONN)
+				if CONN:
+					CONN.disconnect()
+					return {"msg": "Attendance Fetched.", "logs": attendance_records, "fetched": 1}
+				else:
+					return {"msg": "Attendance not found.", "logs": attendance_records, "fetched": 0}
+		else:
+			return {"msg": "Please select right company and log type to 'Get Attendance'", "fetched": 0, "logs": attendance_records}
 
+	@frappe.whitelist()
+	def	mark_attendance(self, employees, logs):
+		marked = False
+		split_date = (self.from_date).split("-")
+		year_month = f"{split_date[0]}-{split_date[1]}"
+		for row in employees:
+			row = frappe._dict(row)
+			employee_log = logs[row.attendance_device_id]
+			# logs.pop(row.attendance_device_id)
+			if(employee_log):
+				
+				if(year_month in employee_log):
+					mlogs = sorted(employee_log[year_month])
+					filtered_dates  = []
+					for date in get_dates_list(self.from_date, self.to_date):
+						filtered_dates += [log for log in mlogs if(date in log)]
+					for flog in sorted(filtered_dates):
+						args = frappe._dict({
+							"company": self.company,
+							"employee": row.employee,
+							"device_id": row.attendance_device_id,
+							"device_ip": self.device_ip,
+							"device_port": "4370",
+							"attendance_date": getdate(flog),
+							"log": flog,
+						})
+						if(frappe.db.exists("Attendance Log", args)):
+							pass
+						else:
+							args.update({
+           						"doctype": "Attendance Log",
+                 				"log_type": self.log_type,
+								"log_from": "ZK Tool",
+        					})
+							frappe.get_doc(args).insert(ignore_permissions=True)
+							marked = True
+		return {"marked": marked}
+	
 def get_dates_list(from_date, to_date):
 	days = date_diff(to_date, from_date) + 1
 	dates_list = []
@@ -155,28 +135,62 @@ def get_dates_list(from_date, to_date):
 		dates_list.append(new_date)
 	return dates_list
 
-def fetch_shift(company, employee, log):
-	
-	shift_assignment = frappe.db.sql(""" 
-			select shift_type
-			from `tabShift Assignment`
-			where docstatus=1
-				and status="Active"
-				and company='{0}'
-				and employee = '{1}'
-				-- and cast('{2}' as date) between start_date and end_date
-			order by
-				start_date desc
-			""".format(company, employee, log))
-	
-	return shift_assignment[0][0] if(shift_assignment) else None
 
 @frappe.whitelist()
-def get_sorted_list(unordered_list):
-	import ast
-	return sorted(ast.literal_eval(unordered_list))
+def activate_live_attendance_service():
+	try:
+		service_list = ["ksm_live_in.service", "ksm_live_out.service"]
+		for sn in service_list:
+			command = ["sudo", "systemctl", "status", sn]
+			import subprocess, os
+			"""
+			Run a shell command and capture the output.
 
-@frappe.whitelist()
-def remove_records():
-	frappe.db.sql("delete from `tabAttendance`  ")
-	frappe.db.sql("delete from `tabAttendance Log`")
+			:param command: Command to run as a list (e.g., ['sudo', 'systemctl', 'start', 'service_name'])
+			:return: output from the command
+			"""
+			# Step 1: Change to the directory
+			os.chdir('/lib/systemd/system/')
+			print("Changed directory to /lib/systemd/system/")
+			# Run the command
+			output = subprocess.run(command, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+			# Print the output
+			print("Command Output:", output.stdout)
+			return output.stdout
+
+	except subprocess.CalledProcessError as e:
+		# If there is an error, print the error message
+		print("Error:", e.stderr)
+		return e.stderr
+
+
+@frappe.whitelist(allow_guest=True)
+def activate_live_attendance_service():
+	import subprocess, os
+	try:
+		service_list = ["live_akfp.service"]
+		for sn in service_list:
+			command = ["echo", "Z0ng4G?2023"," | ", "sudo -S", "systemctl", "restart", sn]
+			
+			"""
+			Run a shell command and capture the output.
+
+			:param command: Command to run as a list (e.g., ['sudo', 'systemctl', 'restart', 'service_name'])
+			:return: output from the command
+			"""
+			# Step 1: Change to the directory
+			os.chdir('/lib/systemd/system/')
+			print("Changed directory to /lib/systemd/system/")
+			# Run the command
+			output = subprocess.run(command, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+			# Print the output
+			print("Command Output:", output.stdout)
+			frappe.msgprint(f"{output.stdout}")
+		# return output.stdout
+
+	except subprocess.CalledProcessError as e:
+		# If there is an error, print the error message
+		print("Error:", e.stderr)
+		return e.stderr

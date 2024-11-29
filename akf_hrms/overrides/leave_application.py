@@ -92,6 +92,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.validate_applicable_after()
 		self.validate_only_three_leaves_in_current_month()
 		self.validate_half_day_leave()
+		self.record_application_state() # Nabeel Saleem, 29-11-2024
 
 	def on_update(self):
 		if self.status == "Open" and self.docstatus < 1:
@@ -317,7 +318,17 @@ class LeaveApplication(Document, PWANotificationsMixin):
 	def validate_half_day_leave(self):  	
 		from akf_hrms.utils.leave_policy import verify_half_day_leave
 		verify_half_day_leave(self)
-  
+	
+ 	# Nabeel Saleem, 29-11-2024
+	def record_application_state(self):
+		if(hasattr(self, 'workflow_state')):
+			from frappe.utils import get_datetime
+			state_dict = eval(self.custom_state_data) if(self.custom_state_data) else {}
+			if(self.workflow_state not in state_dict):
+				state_dict.update({f"{self.workflow_state}": {"user": frappe.session.user, "modified_on": get_datetime()}})
+			self.custom_state_data =  frappe.as_json(state_dict)
+
+
 	def update_attendance(self):
 		if self.status != "Approved":
 			return
