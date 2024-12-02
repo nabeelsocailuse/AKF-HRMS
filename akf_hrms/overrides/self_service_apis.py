@@ -1,6 +1,6 @@
 import frappe
 
-from frappe.utils import today
+from frappe.utils import today, fmt_money
 from datetime import datetime, timedelta
 
 @frappe.whitelist()
@@ -27,7 +27,7 @@ def get_employee_dependents():				#Mubashir Bashir
 @frappe.whitelist()
 def get_employee_details():
 	user_id = frappe.session.user
-	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'first_name', 'branch', 'designation', 'department' , 'image', 'date_of_birth', 'date_of_joining', 'custom_cnic', 'employment_type', 'gender', 'custom_reports_to_line_manager_name', 'reports_to'])
+	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name', 'first_name', 'branch', 'designation', 'department' , 'image', 'date_of_birth', 'date_of_joining', 'custom_cnic', 'employment_type', 'gender', 'custom_reports_to_line_manager_name', 'reports_to', 'blood_group'])
 	
 	if employee:
 	
@@ -59,7 +59,8 @@ def get_employee_details():
 			"employment_type":emp_details.employment_type,
 			"custom_reports_to_line_manager_name": emp_details.custom_reports_to_line_manager_name,
 			"reports_to_designation": reports_to_designation if reports_to_designation else "-",
-            "latest_education_level": latest_qualification if latest_qualification else "No education record"
+            "latest_education_level": latest_qualification if latest_qualification else "No education record",
+            "blood_group": emp_details.blood_group if emp_details.blood_group else "-"
         }
 	else:
 		return {
@@ -350,7 +351,7 @@ def get_employee_salary():			#Mubashir Bashir
 	""", (employee_name,), as_dict=True)
 
 	if salary_structure:
-		return salary_structure[0].get('base')
+		return fmt_money(salary_structure[0].get('base'), 0)
 	else:
-		return 0
+		return fmt_money(0)
 	

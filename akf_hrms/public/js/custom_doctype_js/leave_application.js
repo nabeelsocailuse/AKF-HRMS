@@ -19,7 +19,7 @@ frappe.ui.form.on("Leave Application", {
 	onload: function(frm) {
 		// Ignore cancellation of doctype on cancel all.
 		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry"];
-
+		frm.trigger("populateEmployeeIdBasedOnSelfService");
 		if (!frm.doc.posting_date) {
 			frm.set_value("posting_date", frappe.datetime.get_today());
 		}
@@ -283,8 +283,34 @@ frappe.ui.form.on("Leave Application", {
 			</table>`;
 			frm.set_df_property('custom_state_html', 'options', _html_)
 		}
-	}
+	},
 	// End, Nabeel Saleem, 29-11-2024
+	// Start, Nabeel Saleem, 02-12-2024
+	populateEmployeeIdBasedOnSelfService: function(frm){
+		if (frappe.user.has_role("Employee") && frm.doc.employee == undefined) {
+			frappe.call({
+				method: "frappe.client.get_value",
+				args: {
+					doctype: "Employee",
+					fieldname: "name",
+					filters: { user_id: frappe.session.user }
+				},
+				callback: function (response) {
+					if (response && response.message) {
+						const employee_id = response.message.name;
+						frm.set_value("employee", employee_id);
+						console.log("Employee field populated with ID:", employee_id);
+
+						// After setting employee, check for shift assignment
+						// frm.trigger("check_shift_assignment");
+					} else {
+						console.log("No employee found for the current user.");
+					}
+				}
+			});
+		}
+	}
+	// End, Nabeel Saleem, 02-12-2024
 });
 
 frappe.tour["Leave Application"] = [
