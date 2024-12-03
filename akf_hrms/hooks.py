@@ -46,7 +46,7 @@ doctype_js = {
     # "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js",
     "Staffing Plan": "public/js/staffing_plan.js",
     "Loan": "public/js/loan.js",
-    "Loan Application": "public/js/loan_application.js",
+    # "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
     "Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
     "Employee" : [
@@ -165,7 +165,7 @@ doctype_js = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 override_doctype_class = {
-    "Employee": "akf_hrms.extends.employee.XEmployee",
+    "Employee": "akf_hrms.extends.employee.Employee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
