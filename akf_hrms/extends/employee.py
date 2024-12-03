@@ -45,7 +45,7 @@ class XEmployee(Employee):
 		if image_path:
 			image_path = f'{url}{image_path}' 
 		else:
-			image_path = f"{url}/files/male-avatar.png"
+			image_path = f"{url}/assets/akf_hrms/images/blank-img.png"
 
 		my_string = base64.b64encode(requests.get(image_path).content)
 		my_string = "data:image/png;base64,"+(my_string.decode("utf-8"))
