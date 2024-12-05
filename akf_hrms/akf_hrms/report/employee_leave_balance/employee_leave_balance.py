@@ -92,6 +92,7 @@ def get_data(filters: Filters) -> list:
 	row = None
 
 	data = []
+
 	for leave_type in leave_types:
 		if consolidate_leave_types:
 			data.append({"leave_type": leave_type})
@@ -110,7 +111,7 @@ def get_data(filters: Filters) -> list:
 			leaves_taken = (
 				get_leaves_for_period(employee.name, leave_type, filters.from_date, filters.to_date) * -1
 			)
-			
+
 			new_allocation, expired_leaves, carry_forwarded_leaves = get_allocated_and_expired_leaves(
 				filters.from_date, filters.to_date, employee.name, leave_type
 			)
@@ -119,17 +120,14 @@ def get_data(filters: Filters) -> list:
 			row.leaves_allocated = flt(new_allocation, precision)
 			row.leaves_expired = flt(expired_leaves, precision)
 			row.opening_balance = flt(opening, precision)
-			# nabeel saleem
-			_leaves_taken_ = flt(leaves_taken+leaves_taken, precision) if(leave_type in ['Half Leave', 'Half Day Leave', 'Short Leave']) else flt(leaves_taken, precision)
-			row.leaves_taken =  _leaves_taken_
+			row.leaves_taken = flt(leaves_taken, precision)
 
-			closing = new_allocation + opening - (row.leaves_expired + _leaves_taken_)
+			closing = new_allocation + opening - (row.leaves_expired + leaves_taken)
 			row.closing_balance = flt(closing, precision)
 			row.indent = 1
 			data.append(row)
 
 	return data
-
 
 def get_leave_types() -> list[str]:
 	LeaveType = frappe.qb.DocType("Leave Type")

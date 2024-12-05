@@ -45,7 +45,6 @@ def get_conditions(filters):
 
 
 def get_data(filters, leave_types):
-	user = frappe.session.user
 	conditions = get_conditions(filters)
 
 	active_employees = frappe.get_list(
@@ -60,14 +59,10 @@ def get_data(filters, leave_types):
 		available_leave = get_leave_details(employee.name, filters.date)
 		for leave_type in leave_types:
 			remaining = 0
-			leaves_taken = 0
 			if leave_type in available_leave["leave_allocation"]:
 				# opening balance
 				remaining = available_leave["leave_allocation"][leave_type]["remaining_leaves"]
-				leaves_taken = available_leave["leave_allocation"][leave_type]["leaves_taken"]
-				# nabeel
-				if(leave_type in ['Half Leave', 'Half Day Leave', 'Short Leave']):
-					remaining = (remaining - leaves_taken)
+
 			row += [remaining]
 
 		data.append(row)

@@ -358,12 +358,16 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			self.create_or_update_attendance(attendance_name, date)
 
 	def create_or_update_attendance(self, attendance_name, date):
-		status = (
+		""" status = (
 			"Half Day"
 			if self.half_day_date and getdate(date) == getdate(self.half_day_date)
 			else "On Leave"
+		) """
+		status = (
+			"Half Day"
+			if (self.half_day_date and getdate(date) == getdate(self.half_day_date)) or (self.leave_type in ["Short Leave", "Half Day Leave"])
+			else "On Leave"
 		)
-
 		if attendance_name:
 			# update existing attendance, change absent to on leave
 			doc = frappe.get_doc("Attendance", attendance_name)
@@ -1101,7 +1105,7 @@ def get_leaves_pending_approval_for_period(
 			"from_date": ["between", (from_date, to_date)],
 			"to_date": ["between", (from_date, to_date)],
 		},
-		fields=["SUM(case when leave_type in ('Half Day Leave', 'Short Leave') then 1 else total_leave_days end) as leaves"],
+		fields=["SUM(total_leave_days) as leaves"],
 	)[0]
 	return leaves["leaves"] if leaves["leaves"] else 0.0
 
@@ -1228,11 +1232,10 @@ def get_leaves_for_period(
 # nabeel code updated.
 def get_leave_entries(employee, leave_type, from_date, to_date):
 	"""Returns leave entries between from_date and to_date."""
-	_leaves = " (case when leave_type= '{0}' then 1 else 0 end) as leaves,".format(leave_type) if(leave_type in ["Half Leave", "Half Day Leave", "Short Leave"]) else "leaves,"
 	return frappe.db.sql(
 		"""
 		SELECT
-			employee, leave_type, from_date, to_date, {0} transaction_name, transaction_type, holiday_list,
+			employee, leave_type, from_date, to_date, leaves, transaction_name, transaction_type, holiday_list,
 			is_carry_forward, is_expired
 		FROM `tabLeave Ledger Entry`
 		WHERE employee=%(employee)s AND leave_type=%(leave_type)s
@@ -1242,7 +1245,7 @@ def get_leave_entries(employee, leave_type, from_date, to_date):
 			AND (from_date between %(from_date)s AND %(to_date)s
 				OR to_date between %(from_date)s AND %(to_date)s
 				OR (from_date < %(from_date)s AND to_date > %(to_date)s))
-	""".format(_leaves),
+	""",
 		{"from_date": from_date, "to_date": to_date, "employee": employee, "leave_type": leave_type},
 		as_dict=1,
 	)
