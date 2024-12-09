@@ -55,7 +55,7 @@ class Employee(NestedSet):
 		
 		# Start, Nabeel Saleem, 03-12-2024
 		verify_identity_card_no(self)
-		set_base64_image(self)
+		# set_base64_image(self)
 		# End, Nabeel Saleem, 03-12-2024
 	
 	def after_rename(self, old, new, merge):
