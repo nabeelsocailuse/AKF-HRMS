@@ -20,6 +20,7 @@ app_include_js = [
     "/assets/akf_hrms/js/highcharts_apis/export-data.js",
     "/assets/akf_hrms/js/highcharts_apis/exporting.js",
     "/assets/akf_hrms/js/highcharts_apis/accessibility.js",
+    "https://code.highcharts.com/highcharts-3d.js",
     "/assets/akf_hrms/js/highcharts_apis/variable-pie.js",
     "/assets/akf_hrms/js/d3.v7.min.js",
     "/assets/akf_hrms/js/d3-org-chart.js",
