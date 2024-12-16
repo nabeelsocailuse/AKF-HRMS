@@ -14,7 +14,8 @@ frappe.ui.form.on('Additional Salary', {
                     args:{
                         doctype: 'Salary Structure Assignment',
                         filters: {
-                            employee: employee_id
+                            employee: employee_id,
+                            docstatus: 1
                         },
                         fields: ['base', 'from_date'],
                         order_by: 'from_date desc',
