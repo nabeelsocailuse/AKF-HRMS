@@ -12,6 +12,10 @@ class XAdditionalSalary(AdditionalSalary):
         super().validate()
         
         if(self.salary_component == "Marriage Allowance"):
+            marital_status = frappe.db.get_value('Employee', self.employee, 'marital_status')
+            if(marital_status != 'Single'):
+                frappe.throw("Unmarried individuals are eligible to claim the Marriage Allowance!")
+
             if frappe.db.exists("Additional Salary", {
                 "salary_component": "Marriage Allowance", 
                 "employee": self.employee,
