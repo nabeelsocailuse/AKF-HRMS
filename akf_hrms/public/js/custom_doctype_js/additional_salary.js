@@ -26,11 +26,12 @@ frappe.ui.form.on('Additional Salary', {
                             let salary_assignment = response.message[0];
                             let gross_salary = salary_assignment.base;
                             console.log('gross salary: ', gross_salary);
+                            console.log('gross salary: ', salary_assignment.from_date);
                             
                             
                             frm.set_value('amount', gross_salary);
                         } else {
-                            frappe.msgprint("No Salary Structure Assignmen found for this employee.")
+                            frappe.msgprint("No Salary Structure Assignment found for this employee.")
                         }
                     }
                 });
