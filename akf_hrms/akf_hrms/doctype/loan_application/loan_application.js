@@ -234,6 +234,7 @@ frappe.ui.form.on('Loan Application', {
                 .then(latest_limit => {
                     if (latest_limit) {
                         frm.set_value("custom_maximum_allowed_loan", latest_limit);
+                        frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);
                     } else {
                         frappe.msgprint(
                             __("No loan limit found for the latest fiscal year.")
@@ -244,6 +245,10 @@ frappe.ui.form.on('Loan Application', {
                     frappe.msgprint(__("Error fetching loan limit: ") + error);
                 });
         }		// Mubashir Bashir End 14-11-2024
+        else {
+            frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
+            frm.set_df_property("repayment_method", "read_only", 0);
+        }
     },
 
     loan_amount: function (frm) {
@@ -314,6 +319,8 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {
             frm.set_value("repayment_periods", repayment_periods);
             frm.refresh_field("repayment_periods");
             frm.set_value("repayment_method", "Repay Over Number of Periods");
+            frm.set_df_property("repayment_method", "read_only", 1);
+
         });
 
     return new Promise((resolve, reject) => {
