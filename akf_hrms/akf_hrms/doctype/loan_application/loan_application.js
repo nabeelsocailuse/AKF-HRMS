@@ -248,6 +248,7 @@ frappe.ui.form.on('Loan Application', {
         else {
             frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
             frm.set_df_property("repayment_method", "read_only", 0);
+            frm.set_df_property("repayment_periods", "read_only", 0);
         }
     },
 
@@ -320,6 +321,7 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {
             frm.refresh_field("repayment_periods");
             frm.set_value("repayment_method", "Repay Over Number of Periods");
             frm.set_df_property("repayment_method", "read_only", 1);
+            frm.set_df_property("repayment_periods", "read_only", 1);
 
         });
 
