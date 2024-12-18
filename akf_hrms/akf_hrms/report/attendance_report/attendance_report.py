@@ -171,7 +171,7 @@ def get_late_arrival_columns():
 		_("Late Entry Time") + ":Data:150",
 		_("Check In Status") + ":Data:150",
 		_("Status") + ":Data:120",
-		_("Attendance Date") + ":Date:120",
+		_("Attendance Date") + ":HTML:120",
 
 	]
 # 
@@ -195,7 +195,7 @@ def get_late_arrival(filters, user):
 				FROM `tabAttendance` att
 				WHERE  att.docstatus = 1 and late_entry = 1 and att.status = "Present" {condition} order by  att.late_entry desc  """.format(condition = conditions)
 		# Database
-		late_arrival_result = frappe.db.sql(late_query, filters)
+		late_arrival_result = frappe.db.sql(late_query, filters, as_dict=True)
 	else:
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_start_time as time) as from_time,  
 				cast(att.in_time as time) as check_in_time, TIMEDIFF(cast(att.in_time as time), cast(att.custom_start_time as time)) AS late_entry_time, CASE WHEN att.late_entry = 1 THEN 'Late' WHEN att.late_entry = 0 THEN 'on Time' END AS late_status, att.status, att.attendance_date      
@@ -204,10 +204,16 @@ def get_late_arrival(filters, user):
 				group by att.employee
 				order by  att.late_entry desc  """.format(id=user,condition = conditions)
         # Database
-		late_arrival_result = frappe.db.sql(late_query, filters)
+		late_arrival_result = frappe.db.sql(late_query, filters, as_dict=True)
 	
+	# Process Results and Add Buttons
+	formatted_results = []
+	for row in late_arrival_result:
+		# Replace attendance_date with a button
+		row['attendance_date'] = create_button(row['attendance_date'])
+		formatted_results.append(row)
 	
-	return late_arrival_result
+	return formatted_results
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
  
@@ -226,7 +232,7 @@ def get_early_leavers_columns():
 		_("Early Left Time") + ":Data:150",
 		_("Check Out Status") + ":Data:150",
 		_("Status") + ":Data:120",
-		_("Attendance Date") + ":Date:120",
+		_("Attendance Date") + ":HTML:120",
 
 	]
 # 
@@ -250,7 +256,7 @@ def get_early_leavers(filters, user):
 				FROM `tabAttendance` att
 				WHERE  att.docstatus = 1 and early_exit = 1 and att.status = "Present" {condition} order by  att.early_exit desc  """.format(condition = conditions)
 		# Database
-		late_arrival_result = frappe.db.sql(late_query, filters)
+		late_arrival_result = frappe.db.sql(late_query, filters, as_dict=True)
 	else:
 		late_query = """ SELECT att.employee, att.employee_name, att.custom_designation, att.department, att.custom_branch, cast(att.custom_end_time as time) as from_time,  
 				cast(att.out_time as time) as check_out_time, TIMEDIFF(cast(att.custom_end_time as time), cast(att.out_time as time)) AS early_left_time, CASE WHEN att.early_exit = 1 THEN 'Early Exit' WHEN att.early_exit = 0 THEN 'on Time' END AS early_exit_status, att.status, att.attendance_date      
@@ -259,13 +265,40 @@ def get_early_leavers(filters, user):
 				group by att.employee
 				order by  att.early_exit desc  """.format(id=user,condition = conditions)
         # Database
-		late_arrival_result = frappe.db.sql(late_query, filters)
+		late_arrival_result = frappe.db.sql(late_query, filters, as_dict=True)
 	
-	return late_arrival_result
+	# Process Results and Add Buttons
+	formatted_results = []
+	for row in late_arrival_result:
+		# Replace attendance_date with a button
+		row['attendance_date'] = create_button(row['attendance_date'])
+		formatted_results.append(row)
+	
+	return formatted_results
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+def create_button(date):
+    date_str = date.strftime('%Y-%m-%d')
+    return f"""
+        <button 
+        onclick="redirect_to_leave_application('{date_str}')"
+        style="
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        "
+    >
+        {date.strftime('%d-%m-%Y')}
+    </button>
+    """
  
 # Early Leavers @@@
+
 
 def get_check_in_out_columns():
 	return [

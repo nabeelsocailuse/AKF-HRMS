@@ -52,7 +52,8 @@ def get_data(filters):
         if attendance_dates:
             first_row_added = False
             for attendance in attendance_dates:
-                attendance_date = attendance['attendance_date'].strftime('%d-%m-%Y')
+                # attendance_date = attendance['attendance_date'].strftime('%d-%m-%Y')
+                attendance_date = create_button(attendance['attendance_date'])
                 if attendance['in_time'] is None and attendance['out_time'] is not None:
                     missing_type = 'Check In Missing'
                 elif attendance['out_time'] is None and attendance['in_time'] is not None:
@@ -93,3 +94,21 @@ def get_conditions(filters):
         conditions += " AND department = %(department)s"
 
     return conditions, filters
+
+def create_button(date):
+    date_str = date.strftime('%Y-%m-%d')
+    return f"""
+        <button 
+        onclick="redirect_to_attendance_request('{date_str}')"
+        style="
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        "
+    >
+        {date.strftime('%d-%m-%Y')}
+    </button>
+    """

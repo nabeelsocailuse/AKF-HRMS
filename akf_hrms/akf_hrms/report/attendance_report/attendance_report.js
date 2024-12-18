@@ -131,3 +131,14 @@ function get_default_to_date() {
 	console.log("Calculated to_date:", to_date);
 	return to_date;
 }
+
+// Redirection Function
+function redirect_to_leave_application(absent_date) {
+    frappe.new_doc("Leave Application", {}, function(doc) {
+        // Set values explicitly
+        frappe.model.set_value(doc.doctype, doc.name, "from_date", absent_date);
+        frappe.model.set_value(doc.doctype, doc.name, "to_date", absent_date);
+        cur_frm.refresh_field("from_date");
+        cur_frm.refresh_field("to_date");
+    });
+}

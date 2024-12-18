@@ -21,7 +21,7 @@ def get_columns():
         _("Employment Type") + ":Link/Employment Type:150",
         _("Grade") + "::150",
         _("Region") + "::150",
-        _("Absent Days") + "::250"
+        _("Absent Days") + ":HTML:250"
     ]
 
 def get_data(filters):
@@ -82,16 +82,35 @@ def get_data(filters):
                 emp.get("employment_type"),
                 emp.get("grade"),
                 emp.get("custom_region"),
-                missing_dates[0].strftime('%d-%m-%Y') 
+                create_button(missing_dates[0]) 
             ]
             return_list.append(first_row)
 
             for missing_date in missing_dates[1:]:
-                return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', missing_date.strftime('%d-%m-%Y')])
-    # frappe.msgprint('return_list')
-    # frappe.msgprint(frappe.as_json(return_list))
+                return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', create_button(missing_date)])
 
     return return_list
+
+
+
+def create_button(date):
+    date_str = date.strftime('%Y-%m-%d')
+    return f"""
+        <button 
+        onclick="redirect_to_leave_application('{date_str}')"
+        style="
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        "
+    >
+        {date.strftime('%d-%m-%Y')}
+    </button>
+    """
+
 
 def get_conditions(filters):
     conditions = ""
