@@ -257,7 +257,7 @@ class LoanApplication(Document):
 				"applicant": self.applicant,
 				"docstatus": 1
 			}):
-				frappe.throw("You have already applied for a Vehicle Loan; cannot apply again.")
+				frappe.throw("You cannot avail a vehicle loan after availing any other loan")
 				return
 
 			if employment_type != "Permanent":
@@ -275,6 +275,9 @@ class LoanApplication(Document):
 			# Validate guarantors' experience and loan application statuses
 			guarantor_1 = self.custom_guarantor_of_loan_application
 			guarantor_2 = self.custom_guarantor_2_of_loan_application
+
+			if (self.applicant == guarantor_1 or self.applicant == guarantor_2):
+				frappe.throw(f"You cannot add yourself as Gurantor")
 			for guarantor in [guarantor_1, guarantor_2]:
 				if guarantor:
 					if frappe.db.exists("Loan Application", {"applicant": guarantor, "docstatus": 1}):
