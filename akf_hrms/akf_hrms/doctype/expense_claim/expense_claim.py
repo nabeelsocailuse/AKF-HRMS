@@ -68,6 +68,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		self.set_status()
 		if self.task and not self.project:
 			self.project = frappe.db.get_value("Task", self.task, "project")
+		# nabeel saleem, 19-12-2024	
+		self.validate_and_set_vehicle_expense()
 
 	def set_status(self, update=False):
 		status = {"0": "Draft", "1": "Submitted", "2": "Cancelled"}[cstr(self.docstatus or 0)]
@@ -460,12 +462,14 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		# if(skip()):
 		# 	# frappe.msgprint("Validation is skipped") 
 		# 	return
-		if not self.custom_grade:
+		if (not self.grade):
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
+		# nabeel saleem, 19-12-2024
+		if(self.ownership): return
 
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
-			filters={"band": ["=", f"{self.custom_grade}"]},
+			filters={"band": ["=", f"{self.grade}"]},
 			fields=["band", "daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 		)
 
@@ -483,13 +487,13 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		grade_defined = False
 		for setting in travel_settings:
 			band = setting.get("band")
-			if band and self.custom_grade in band:
+			if band and self.grade in band:
 				allowed_expenses = {expense_type: setting.get(field_name) for expense_type, field_name in expense_mapping.items()}
 				grade_defined = True
 				break
 
 		if not grade_defined:
-			frappe.throw(f"Please make settings for the grade '{self.custom_grade}' in the Travel Expense Setting Table.")
+			frappe.throw(f"Please make settings for the grade '{self.grade}' in the Travel Expense Setting Table.")
 
 		error_messages = []  # Collect all error messages here
 
@@ -600,7 +604,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	def validate_travel_expenses(self): #by mubarrim
 		travel_settings = frappe.get_all(
 		"Travel Expense Setting Table",
-		filters={"band": ["=", f"{self.custom_grade}"]},
+		filters={"band": ["=", f"{self.grade}"]},
 		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 	)
 
@@ -630,7 +634,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 							amount = int(amount)*0.25
 
 					if int(expense.amount) > int(amount):
-						frappe.throw(f"{expense.expense_type} amount for Grade '{self.custom_grade}' can't exceed {amount}")
+						frappe.throw(f"{expense.expense_type} amount for Grade '{self.grade}' can't exceed {amount}")
 
 
 	def get_travel_attendance(self):
@@ -682,12 +686,12 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	
 	@frappe.whitelist()
 	def get_travel_expense_amount(self, expense_type):
-		if(not self.custom_grade):
+		if(not self.grade):
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
-
+		
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
-			filters={"band": ["=", f"{self.custom_grade}"]},
+			filters={"band": ["=", f"{self.grade}"]},
 			fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 		)
 
@@ -722,8 +726,19 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					else:
 						frappe.throw(f"Amount is not defined for '{expense_type}' in Travel Expense Setting!")
 		else:
-			frappe.throw(f"Amount is not defined in Travel Expense Setting for Grade: {self.custom_grade}!")	
-
+			frappe.throw(f"Amount is not defined in Travel Expense Setting for Grade: {self.grade}!")	
+	
+	# nabeel saleem, 19-12-2024	
+	@frappe.whitelist()
+	def validate_and_set_vehicle_expense(self):
+		if(self.ownership):
+			if(self.expense_rate<=0): frappe.throw(f"In vehicle, expense rate must be greater than zero.", title="Ownership Details")
+			if(self.kilometers<=0): frappe.throw(f"Kilometers must be greater than zero.", title="Ownership Details")
+			for d in self.expenses:
+				if(d.expense_type):
+					if(d.expense_type!="Vehicle Expense"): frappe.throw(f"Expense Claim Type must be <b>Vehicle Expense</b>.", title="Expenses Table")
+					d.amount = (self.expense_rate * self.kilometers)
+					d.sanctioned_amount = d.amount
 # ================================================================================================================================================== #
 # ================================================================================================================================================== #
 

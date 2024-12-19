@@ -17,6 +17,16 @@
   "expense_approver",
   "approval_status",
   "travel_request",
+  "grade",
+  "section_break_oedb",
+  "ownership_detail_column",
+  "ownership",
+  "column_break_sdki",
+  "vehicle",
+  "column_break_vulh",
+  "expense_rate",
+  "column_break_egbc",
+  "kilometers",
   "expense_details",
   "expenses",
   "taxes_and_charges_sb",
@@ -385,13 +395,75 @@
    "label": "Travel Request",
    "options": "Travel Request",
    "read_only": 1
+  },
+  {
+   "depends_on": "employee",
+   "fieldname": "section_break_oedb",
+   "fieldtype": "Section Break",
+   "label": "Ownership Details"
+  },
+  {
+   "fieldname": "ownership_detail_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "ownership",
+   "fieldtype": "Check",
+   "label": "Ownership"
+  },
+  {
+   "fieldname": "column_break_sdki",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "ownership",
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "label": "Vehicle",
+   "mandatory_depends_on": "ownership",
+   "options": "Vehicle"
+  },
+  {
+   "fieldname": "column_break_egbc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0.0",
+   "depends_on": "ownership",
+   "fieldname": "kilometers",
+   "fieldtype": "Float",
+   "label": "Kilometers",
+   "mandatory_depends_on": "ownership"
+  },
+  {
+   "fetch_from": "employee.grade",
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "label": "Grade",
+   "options": "Employee Grade",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_vulh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "ownership",
+   "fetch_from": "vehicle.custom_expense_rate",
+   "fieldname": "expense_rate",
+   "fieldtype": "Currency",
+   "label": "Expense Rate",
+   "mandatory_depends_on": "ownership",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-money",
  "idx": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-06 18:20:56.380631",
+ "modified": "2024-12-19 19:44:28.366390",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Expense Claim",

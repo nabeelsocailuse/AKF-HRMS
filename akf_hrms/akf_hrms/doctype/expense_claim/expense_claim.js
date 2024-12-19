@@ -40,18 +40,39 @@ frappe.ui.form.on('Expense Claim', {
     },
     employee: function (frm) {
 
-        if (!frm.doc.custom_grade) {
+        if (!frm.doc.grade) {
             frappe.throw(__('Grade is not set. Please provide a valid grade to proceed with the validation.'));
             return;
         }
+    },
+    // nabeel saleem, 19-12-2024 > start
+    ownership: function(frm){
+        if(!frm.doc.ownership){
+            frm.set_value('vehicle', null);
+            frm.set_value('expense_rate', 0);
+            frm.set_value('kilometers', 0);
+        }
     }
+    // nabeel saleem, 19-12-2024 > end
 }
 );
 
+// nabeel saleem, 19-12-2024
+function set_query_vehicle_expense(frm) {
+    frm.fields_dict['expenses'].grid.get_field('expense_type').get_query = function (doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        let ffilters = frm.doc.ownership === 1
+            ? { name: "Vehicle Expense" }:{name: ["!=", "Vehicle Expense"]};
+
+        return {
+            filters: ffilters
+        };
+    };
+}
 
 frappe.ui.form.on('Expense Claim Detail', {
     expense_type: function (frm, cdt, cdn) {
-
+        // nabeel saleem, 19-12-2024
         if (!frm.doc.employee && !frm.doc.expense_approver) {
             frappe.throw(__('Please select Employee and Approver first'));
             return;
@@ -78,39 +99,43 @@ frappe.ui.form.on('Expense Claim Detail', {
             return;
         }
 
-        frm.call('get_travel_expense_amount', { "expense_type": d.expense_type }).then(r => {
-            console.log(r.message)
-            if (r.message.amount) {
-                d.amount = r.message.amount || 0;
-                d.sanctioned_amount = r.message.amount || 0;
-                frm.refresh_field('expenses');
-            } else {
-                frappe.msgprint(__("No amount defined for the selected expense type."));
-                frm.refresh_field('expenses');
-            }
-        });
-        
-        frm.call('validate_expenses_table').then(r=>{
-        });
-        
-        return frappe.call({
-            method: "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center",
-            args: {
-                "expense_claim_type": d.expense_type,
-                "company": frm.doc.company
-            },
-            callback: function (r) {
-                if (r.message) {
-                    d.default_account = r.message.account;
-                    d.cost_center = r.message.cost_center;
+        if(d.expense_type=="Vehicle Expense"){
+            frm.call('validate_and_set_vehicle_expense');
+        }else{
+            frm.call('get_travel_expense_amount', { "expense_type": d.expense_type }).then(r => {
+                console.log(r.message)
+                if (r.message.amount) {
+                    d.amount = r.message.amount || 0;
+                    d.sanctioned_amount = r.message.amount || 0;
+                    frm.refresh_field('expenses');
+                } else {
+                    frappe.msgprint(__("No amount defined for the selected expense type."));
+                    frm.refresh_field('expenses');
                 }
-            }
-        });
-        
-        
+            });
+
+            frm.call('validate_expenses_table').then(r => {
+            });
+
+            return frappe.call({
+                method: "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center",
+                args: {
+                    "expense_claim_type": d.expense_type,
+                    "company": frm.doc.company
+                },
+                callback: function (r) {
+                    if (r.message) {
+                        d.default_account = r.message.account;
+                        d.cost_center = r.message.cost_center;
+                    }
+                }
+            });
+        }
+
+
     },
-    expense_date: function(frm, cdt, cdn){
-        frm.call('validate_expenses_table').then(r=>{
+    expense_date: function (frm, cdt, cdn) {
+        frm.call('validate_expenses_table').then(r => {
         });
     }
 });
@@ -287,6 +312,8 @@ frappe.ui.form.on("Expense Claim", {
             frm.add_custom_button(__('Payment'),
                 function () { frm.events.make_payment_entry(frm); }, __('Create'));
         }
+        // nabeel saleem, 19-12-2024
+        set_query_vehicle_expense(frm);
     },
 
     calculate_grand_total: function (frm) {
