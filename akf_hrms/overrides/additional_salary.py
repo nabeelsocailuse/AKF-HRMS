@@ -12,17 +12,21 @@ class XAdditionalSalary(AdditionalSalary):
         super().validate()
         
         if(self.salary_component == "Marriage Allowance"):
+            # start, Mubarrim, [18-12-2024]
             marital_status = frappe.db.get_value('Employee', self.employee, 'marital_status')
             if(marital_status != 'Single'):
                 frappe.throw("You are not eligible to claim the Marriage Allowance")
-
+            # end, Mubarrim, [18-12-2024]
+            
+            # start, nabeel, [18-12-2024]
             if frappe.db.exists("Additional Salary", {
                 "salary_component": "Marriage Allowance", 
                 "employee": self.employee,
                 "docstatus": 1
             }):
                 frappe.throw("You have already applied for the Marriage Allowance and cannot apply again.")
-
+            # end, nabeel, [18-12-2024]
+            
         employee_type = frappe.db.get_value("Employee", {"name": self.employee, "status": "Active"}, "employment_type")
         
         if employee_type:

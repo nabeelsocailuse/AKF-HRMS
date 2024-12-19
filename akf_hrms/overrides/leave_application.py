@@ -92,6 +92,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.validate_applicable_after()
 		self.validate_only_three_leaves_in_current_month()
 		self.validate_half_day_leave()
+		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
 		self.record_application_state() # Nabeel Saleem, 29-11-2024
 
 	def on_update(self):
@@ -129,8 +130,8 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_single_value("HR Settings", "send_leave_notification"):
 			self.notify_employee()
 		self.cancel_attendance()
-
 		self.publish_update()
+		self.update_status()
 
 	def after_delete(self):
 		self.publish_update()
@@ -139,6 +140,11 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		employee_user = frappe.db.get_value("Employee", self.employee, "user_id", cache=True)
 		hrms.refetch_resource("hrms:my_leaves", employee_user)
 
+	def update_status(self):
+		if(not hasattr(self, "workflow_state")): return
+		frappe.db.set_value('Leave Application', self.name, 'status', 'Cancelled')
+		self.reload()
+			
 	def validate_applicable_after(self):
 		from akf_hrms.patches.skip_validations import skip
 		if(skip()): 
@@ -319,16 +325,77 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		from akf_hrms.utils.leave_policy import verify_half_day_leave
 		verify_half_day_leave(self)
 	
- 	# Nabeel Saleem, 29-11-2024
+	# Nabeel Saleem, 18-12-2024
+	@frappe.whitelist()
+	def set_next_workflow_approver(self):
+		if(not hasattr(self, 'workflow_state')): return		
+		if(self.status!='Open'): return
+		data = frappe.db.sql(f""" 
+			Select 
+				w.name, wt.state, wt.action, wt.next_state, wt.allowed, wt.allow_self_approval
+			From 
+				`tabWorkflow` w inner join `tabWorkflow Transition` wt on (w.name=wt.parent)
+			Where 
+				w.document_type='Leave Application'
+				and w.is_active = 1
+				and wt.action='Approve'
+				and wt.state='{self.workflow_state}'
+			Order by
+				wt.idx asc
+			limit 1
+		""", as_dict=1)
+		# => find approver
+		def set_approver_detail(user_id, next_state):
+			self.leave_approver = user_id
+			self.leave_approver_name = get_fullname(user_id)
+			self.custom_next_workflow_state = next_state
+
+		for d in data:
+			if(d.allowed == "Line Manager"):
+				reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
+				if(reports_to):
+					user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
+					if(frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Line Manager'})):
+						set_approver_detail(user_id, d.next_state)
+				else:
+					frappe.throw(f"Please set a `reports to` of this employee", title="Line Manager")
+						
+			elif(d.allowed == "Head of Department"):
+				user_id = frappe.db.get_value('Employee', {'department': self.department , 'custom_hod': 1}, 'user_id')
+				if(user_id):
+					set_approver_detail(user_id, d.next_state)
+				else:
+					frappe.throw(f"Please set a `head of department` of department {self.department}", title="Head of Department")
+			
+			elif(d.allowed == 'CEO'):
+				user_list = frappe.db.sql(""" 
+						Select 
+							u.name 
+						From 
+							`tabUser` u inner join `tabHas Role` h on (u.name=h.parent) 
+						Where 
+							h.role in ('CEO')
+						Group by
+							u.name 
+				""")
+				if(user_list):
+					set_approver_detail(user_list[0][0], d.next_state)
+				else:
+					frappe.throw(f"Please set a `CEO` of {self.company}", title="CEO")
+		
+	# Nabeel Saleem, 29-11-2024
 	def record_application_state(self):
 		if(hasattr(self, 'workflow_state')):
 			from frappe.utils import get_datetime
 			state_dict = eval(self.custom_state_data) if(self.custom_state_data) else {}
-			if(self.workflow_state not in state_dict):
-				state_dict.update({f"{self.workflow_state}": {"user": frappe.session.user, "modified_on": get_datetime()}})
+			# if(self.workflow_state not in state_dict):
+			state_dict.update({f"{self.workflow_state}": {
+				"current_user": f"{self.workflow_state} (<b>{get_fullname(frappe.session.user)}</b>)",
+				"next_state": f"{self.custom_next_workflow_state} (<b>{self.leave_approver_name}</b>)" if(self.status=='Open') else "",
+				"modified_on": get_datetime(),
+			}})
 			self.custom_state_data =  frappe.as_json(state_dict)
-
-
+	
 	def update_attendance(self):
 		if self.status != "Approved":
 			return
@@ -363,11 +430,13 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			if self.half_day_date and getdate(date) == getdate(self.half_day_date)
 			else "On Leave"
 		) """
+		# start, nabeel saleem, [19-12-2024]
 		status = (
 			"Half Day"
 			if (self.half_day_date and getdate(date) == getdate(self.half_day_date)) or (self.leave_type in ["Short Leave", "Half Day Leave"])
 			else "On Leave"
 		)
+		# end, nabeel saleem, [19-12-2024]
 		if attendance_name:
 			# update existing attendance, change absent to on leave
 			doc = frappe.get_doc("Attendance", attendance_name)
@@ -1093,7 +1162,7 @@ def get_leave_allocation_records(employee, date, leave_type=None):
 	
 	return allocated_leaves
 
-# nabeel code updated.
+# nabeel saleem, 19-12-2024
 def get_leaves_pending_approval_for_period(
 	employee: str, leave_type: str, from_date: datetime.date, to_date: datetime.date
 ) -> float:
@@ -1229,7 +1298,7 @@ def get_leaves_for_period(
 	
 	return leave_days
 
-# nabeel code updated.
+# nabeel saleem, [19-12-2024]
 def get_leave_entries(employee, leave_type, from_date, to_date):
 	"""Returns leave entries between from_date and to_date."""
 	return frappe.db.sql(
@@ -1476,7 +1545,7 @@ def get_leave_approver(employee):
 	leave_approver, department = frappe.db.get_value(
 		"Employee", employee, ["leave_approver", "department"]
 	)
-
+	
 	if not leave_approver and department:
 		leave_approver = frappe.db.get_value(
 			"Department Approver",

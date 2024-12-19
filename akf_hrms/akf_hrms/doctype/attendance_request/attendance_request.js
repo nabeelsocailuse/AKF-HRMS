@@ -6,6 +6,15 @@ frappe.ui.form.on("Attendance Request", {
     refresh(frm) {
         frm.trigger("show_attendance_warnings");
         frm.trigger("triggerOpenStreetMap");
+        if(!frm.doc.__islocal && frm.doc.from_time){
+			hide_field(frm, 'mark_check_in')
+		}
+		if(!frm.doc.__islocal && frm.doc.to_time && frm.doc.mark_check_condition ){
+			hide_field(frm, 'mark_check_out')
+			show_field(frm, 'to_time')
+		}else{
+			hide_field(frm, 'to_time')
+		}
     },
 
     show_attendance_warnings(frm) {
@@ -184,7 +193,18 @@ frappe.ui.form.on("Attendance Request", {
         if(cur_frm.doc.docstatus < 2){
             setupOpenStreetMap();
         }
-    }
+    },
+    mark_check_in: function(frm){
+		get_current_time(frm, 'from_time','mark_check_in')
+	},
+	mark_check_out: function(frm){
+		get_current_time(frm, 'to_time', 'mark_check_out')
+		show_field(frm, 'to_time');
+        setTimeout(() => {
+            frm.set_value('mark_check_condition', 1);
+        }, 100);
+		
+	},
 });
 
 
@@ -294,3 +314,17 @@ function setupOpenStreetMap() {
     }, 1000);
 }
 
+function get_current_time(frm, fieldname, btnname){
+	frm.call('get_current_time').then(r => {
+        frm.set_value(fieldname, r.message);
+        hide_field(frm, btnname)
+    });
+}
+
+function hide_field(frm, fieldname){
+	frm.set_df_property(fieldname, 'hidden', 1)
+}
+
+function show_field(frm, fieldname){
+	frm.set_df_property(fieldname, 'hidden', 0)
+}

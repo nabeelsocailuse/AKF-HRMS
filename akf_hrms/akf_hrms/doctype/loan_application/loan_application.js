@@ -28,12 +28,12 @@ frappe.ui.form.on('Loan Application', {
 		frm.trigger("toggle_required");
 	},
 	toggle_fields: function(frm) {
-		frm.toggle_enable("repayment_amount", frm.doc.repayment_method=="Repay Fixed Amount per Period")
-		frm.toggle_enable("repayment_periods", frm.doc.repayment_method=="Repay Over Number of Periods")
+		frm.toggle_enable("repayment_amount", frm.doc.repayment_method=="Repay Fixed Amount per Period");
+		frm.toggle_enable("repayment_periods", frm.doc.repayment_method=="Repay Over Number of Periods");
 	},
 	toggle_required: function(frm){
-		frm.toggle_reqd("repayment_amount", cint(frm.doc.repayment_method=='Repay Fixed Amount per Period'))
-		frm.toggle_reqd("repayment_periods", cint(frm.doc.repayment_method=='Repay Over Number of Periods'))
+		frm.toggle_reqd("repayment_amount", cint(frm.doc.repayment_method=='Repay Fixed Amount per Period'));
+		frm.toggle_reqd("repayment_periods", cint(frm.doc.repayment_method=='Repay Over Number of Periods'));
 	},
 	add_toolbar_buttons: function(frm) {
 		if (frm.doc.status == "Approved") {
@@ -206,6 +206,7 @@ frappe.ui.form.on('Loan Application', {
                     limit_page_length: 1,
                 },
                 callback: function (r) {
+                    console.log(r.message);
                     if (r.message[0]) {
                         frm.set_value("custom_maximum_allowed_loan", r.message[0].base / 2);
                         frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
@@ -232,6 +233,7 @@ frappe.ui.form.on('Loan Application', {
             
             get_latest_vehicle_loan_limit(frm, frm.doc.loan_product)
                 .then(latest_limit => {
+                    console.log(latest_limit);
                     if (latest_limit) {
                         frm.set_value("custom_maximum_allowed_loan", latest_limit);
                         frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);
@@ -246,7 +248,7 @@ frappe.ui.form.on('Loan Application', {
                 });
         }		// Mubashir Bashir End 14-11-2024
         else {
-            frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
+            // frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
             frm.set_df_property("repayment_method", "read_only", 0);
             frm.set_df_property("repayment_periods", "read_only", 0);
         }
@@ -316,7 +318,6 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {
         .then(r => {
             let grade = r.message.grade;
             let repayment_periods = getRepaymentPeriods(grade);
-
             frm.set_value("repayment_periods", repayment_periods);
             frm.refresh_field("repayment_periods");
             frm.set_value("repayment_method", "Repay Over Number of Periods");
@@ -328,6 +329,7 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {
     return new Promise((resolve, reject) => {
         frappe.db.get_doc('Loan Product', loan_product)
             .then(doc => {
+                console.log(doc);
                 if (doc.custom_loan_limit && doc.custom_loan_limit.length > 0) {
                     let latest_limit = null;
                     let latest_date = null;
@@ -336,7 +338,7 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {
                         return frappe.db.get_doc('Fiscal Year', row.fiscal_year)
                             .then(fiscal_year => {
                                 let to_date = new Date(fiscal_year.to_date);
-
+                                
                                 if (!latest_date || to_date > latest_date) {
                                     latest_date = to_date;
                                     latest_limit = row.per_vehicle_loan_limit;

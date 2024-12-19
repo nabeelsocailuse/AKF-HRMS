@@ -2,10 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Additional Salary', {
-	
 	salary_component: function(frm) {
-		console.log("Mubashir Testing");
-
         if(frm.doc.salary_component === 'Marriage Allowance'){
             let employee_id = frm.doc.employee
             if (employee_id) {
@@ -24,11 +21,7 @@ frappe.ui.form.on('Additional Salary', {
                     callback: function(response) {
                         if (response && response.message && response.message.length > 0){
                             let salary_assignment = response.message[0];
-                            let gross_salary = salary_assignment.base;
-                            console.log('gross salary: ', gross_salary);
-                            console.log('gross salary: ', salary_assignment.from_date);
-                            
-                            
+                            let gross_salary = salary_assignment.base; 
                             frm.set_value('amount', gross_salary);
                         } else {
                             frappe.msgprint("No Salary Structure Assignment found for this employee.")

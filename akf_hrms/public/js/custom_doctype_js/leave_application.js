@@ -4,13 +4,24 @@
 frappe.ui.form.on("Leave Application", {
 	setup: function(frm) {
 		frm.set_query("leave_approver", function() {
-			return {
-				query: "hrms.hr.doctype.department_approver.department_approver.get_approvers",
-				filters: {
-					employee: frm.doc.employee,
-					doctype: frm.doc.doctype
-				}
-			};
+			// nabeel saleem, 18-12-2024
+			if("workflow_state" in frm.doc){
+				return {
+					filters: {
+						
+						enabled: 1
+					}
+				};
+			}else{
+				return {
+					query: "hrms.hr.doctype.department_approver.department_approver.get_approvers",
+					filters: {
+						employee: frm.doc.employee,
+						doctype: frm.doc.doctype
+					}
+				};
+			}
+			
 		});
 
 		frm.set_query("employee", erpnext.queries.employee);
@@ -18,8 +29,11 @@ frappe.ui.form.on("Leave Application", {
 
 	onload: function(frm) {
 		// Ignore cancellation of doctype on cancel all.
-		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry"];
+		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry", "Attendance"];
+
+		// Start, Nabeel Saleem, 02-12-2024
 		frm.trigger("populateEmployeeIdBasedOnSelfService");
+		// End, Nabeel Saleem, 02-12-2024
 		if (!frm.doc.posting_date) {
 			frm.set_value("posting_date", frappe.datetime.get_today());
 		}
@@ -66,7 +80,7 @@ frappe.ui.form.on("Leave Application", {
 					if (!r.exc && r.message["leave_allocation"]) {
 						leave_details = r.message["leave_allocation"];
 					}
-					if (!r.exc && r.message["leave_approver"]) {
+					if (!r.exc && r.message["leave_approver"] && !("workflow_state" in frm.doc)) {
 						frm.set_value("leave_approver", r.message["leave_approver"]);
 					}
 					lwps = r.message["lwps"];
@@ -98,8 +112,15 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	refresh: function(frm) {
+		// start, nabeel saleem, 18-12-2024
+		if("workflow_state" in frm.doc){
+			frm.set_df_property('leave_approver', 'read_only', 1);
+		}
+		// end, nabeel saleem, 18-12-2024
 		if (frm.is_new()) {
 			frm.trigger("calculate_total_days");
+			// nabeel saleem, 18-12-2024
+			frm.set_value('custom_state_data', null);
 		}
 
 		frm.set_intro("");
@@ -123,7 +144,16 @@ frappe.ui.form.on("Leave Application", {
 	employee: function(frm) {
 		frm.trigger("make_dashboard");
 		frm.trigger("get_leave_balance");
-		frm.trigger("set_leave_approver");
+		//start, Nabeel Saleem, 29-11-2024
+		if("workflow_state" in frm.doc){
+			setTimeout(() => {
+				frm.call("set_next_workflow_approver");
+			}, 100);
+		//end, Nabeel Saleem, 29-11-2024
+		}else{
+			frm.trigger("set_leave_approver");
+		}
+		
 	},
 
 	leave_approver: function(frm) {
@@ -151,14 +181,14 @@ frappe.ui.form.on("Leave Application", {
 
 	from_date: function(frm) {
 		frm.trigger("make_dashboard");
-		frm.trigger("half_day_datepicker");
-		frm.trigger("calculate_total_days");
+		// frm.trigger("half_day_datepicker");
+		// frm.trigger("calculate_total_days");
 	},
 
 	to_date: function(frm) {
 		frm.trigger("make_dashboard");
-		frm.trigger("half_day_datepicker");
-		frm.trigger("calculate_total_days");
+		// frm.trigger("half_day_datepicker");
+		// frm.trigger("calculate_total_days");
 	},
 
 	half_day_date(frm) {
@@ -253,11 +283,12 @@ frappe.ui.form.on("Leave Application", {
 			for(key in stateObj){
 				const data = stateObj[key];
 				const dt = moment(data.modified_on).format("DD-MM-YYYY hh:mm:ss a");
+
 				rows += `
 				<tr>
 					<th scope="row">${idx}</th>	
-					<th scope="row">${key}</th>
-					<td class="">${data.user}</td>
+					<td scope="row">${data.current_user}</td>
+					<td class="">${data.next_state}</td>
 					<td class="">${dt}</td>
 				</tr>`;
 				idx += 1;
@@ -267,9 +298,9 @@ frappe.ui.form.on("Leave Application", {
 				<thead class="thead-dark">
 					<tr>
 					<th scope="col">#</th>
-					<th class="" scope="col">State</th>
-					<th class="" scope="col">User</th>
-					<th scope="col">Date Time</th>
+					<th class="text-left" scope="col">Current State (User)</th>
+					<th class="text-left" scope="col">Next State (User)</th>
+					<th scope="col">DateTime</th>
 					</tr>
 				</thead>
 				<tbody>

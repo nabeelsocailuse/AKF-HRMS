@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import cint, flt, rounded
+from frappe.utils import cint, flt, rounded, fmt_money
 from datetime import datetime, timedelta, date
 
 from lending.loan_management.doctype.loan.loan import (
@@ -37,6 +37,8 @@ class LoanApplication(Document):
 		self.get_repayment_details()
 		self.check_sanctioned_amount_limit()
 		self.validations()
+		self.validate_both_guarantor_cannot_be_same() # nabeel saleem, 19-12-2024
+		self.validate_loan_amount_not_exceed_to_max_loan_amount() # nabeel saleem, 19-12-2024
 		self.check_overall_loan_limit()		# Mubashir Bashir 13-11-2024
 		self.advance_salary()
 	
@@ -142,7 +144,7 @@ class LoanApplication(Document):
 				else:
 					frappe.throw("Posting date is required.")
 
-	# def validations(self):		# Mubashir Bashir Start 13-11-2024
+		# def validations(self):		# Mubashir Bashir Start 13-11-2024
 		if self.loan_product == "Vehicle Loan" or self.loan_product == "Bike Loan":
 
 			today = datetime.now()
@@ -230,7 +232,19 @@ class LoanApplication(Document):
 			else:
 				frappe.throw("Only Permanent Employees are Eligible")
 	
-	
+	# nabeel saleem, 19-12-2024
+	def validate_both_guarantor_cannot_be_same(self):
+		if(self.custom_guarantor_of_loan_application and self.custom_guarantor_2_of_loan_application):
+			if(self.custom_guarantor_of_loan_application == self.custom_guarantor_2_of_loan_application):
+				frappe.throw(f"Both guarantor cannot be same.", title="Guarantor")
+    
+	# nabeel saleem, 19-12-2024
+	def validate_loan_amount_not_exceed_to_max_loan_amount(self):
+		if(self.loan_product in ['Vehicle Loan', 'Bike Loan']):
+			if(self.custom_maximum_allowed_loan and self.loan_amount):
+				if(float(self.loan_amount) > float(self.custom_maximum_allowed_loan)):
+					frappe.throw(f"Loan amount: <b>{fmt_money(self.loan_amount)}</b> is exceeding the maximum allowed loan: <b>{fmt_money(self.custom_maximum_allowed_loan)}</b>.", title="Loan Conflict")
+            
 	def validations(self):	# Mubashir Bashir Start 13-11-2024
 		# List of eligible grades for loan applications
 		eligible_grades = [
