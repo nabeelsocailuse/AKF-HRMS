@@ -11,7 +11,8 @@ from frappe.utils import (
     format_date,
     nowdate,
     time_diff,
-    get_datetime
+    get_datetime,
+    get_time
 )
 from erpnext.setup.doctype.employee.employee import is_holiday
 
@@ -23,17 +24,24 @@ class OverlappingAttendanceRequestError(frappe.ValidationError):
 class AttendanceRequest(Document):
 	# Function overide and Changed
 	def validate(self):
+		self.validate_future_request_and_date_of_joining() # nabeel saleem, 20-12-2024
+		self.mark_check_in_on_save() # nabeel saleem, 20-12-2024
+		self.validate_from_time_and_to_time() # nabeel saleem, 20-12-2024
+		self.validate_half_day() # nabeel saleem, 20-12-2024
+		self.validate_work_from_home()
+
+	def validate_future_request_and_date_of_joining(self):
 		date_of_joining = frappe.db.get_value(
-			"Employee", self.employee, "date_of_joining"
-		)
+				"Employee", self.employee, "date_of_joining"
+			)
 		# Attendance can not be marked for future dates
 		if getdate(self.from_date) > getdate(nowdate()):
 			frappe.throw(
-				_("Attendance can not be requested for future dates: {0}").format(
+				_("Attendance cannot be requested for future dates: {0}").format(
 					frappe.bold(format_date(self.from_date)),
 				)
 			)
-		elif date_of_joining and getdate(self.from_date) < getdate(date_of_joining):
+		elif (date_of_joining and getdate(self.from_date) < getdate(date_of_joining)):
 			frappe.throw(
 				_(
 					"Attendance date {0} can not be less than employee {1}'s joining date: {2}"
@@ -44,23 +52,23 @@ class AttendanceRequest(Document):
 				)
 			)
 
-		if not self.from_time:
-			frappe.throw("Please Enter Valid From Time")
-		if not self.to_time:
-			frappe.throw("Please Enter Valid To Time")
-
-		f_hr, f_min, f_sec = str(self.from_time).split(":")
-		t_hr, t_min, t_sec = str(self.to_time).split(":")
-		self.from_time = (
-			str(f_hr).zfill(2) + ":" + str(f_min).zfill(2) + ":" + str(f_sec).zfill(2)
-		)
-		self.to_time = (
-			str(t_hr).zfill(2) + ":" + str(t_min).zfill(2) + ":" + str(t_sec).zfill(2)
-		)
-
-		if str(self.to_time) < str(self.from_time):
-			frappe.throw("To Time Cannot be less than From Time")
-		if self.half_day:
+	def mark_check_in_on_save(self):
+		if(self.reason not in ["", "Check In/Out Miss"]):
+			if (not self.from_time):
+				frappe.throw("Please mark check in", title="From Time")
+	
+	def mark_check_out_on_submit(self):
+		if(self.reason not in ["", "Check In/Out Miss"]):
+			if (not self.to_time):
+				frappe.throw("Please mark check out", title="To Time")
+	
+	def validate_from_time_and_to_time(self):
+		if(self.reason in ["Check In/Out Miss"]):
+			if get_time(self.to_time) < get_time(self.from_time):
+				frappe.throw("To-Time cannot be less than From-Time", title=f"{self.reason}")
+	
+	def validate_half_day(self):
+		if (self.half_day):
 			if (
 				not getdate(self.from_date)
 				<= getdate(self.half_day_date)
@@ -70,13 +78,14 @@ class AttendanceRequest(Document):
 					_("Half day date should be in between from date and to date")
 				)
 
+	def validate_work_from_home(self):
 		if self.reason == "Work From Home":
 			if not self.work_from_home_request:
 				frappe.throw(
 					_("Mandatory field required <b>Work From Home Request</b>")
 				)
 			self.check_wfh_days()
-
+		
 	def validate_request_overlap(self):
 		if not self.name:
 			self.name = "New Attendance Request"
@@ -144,10 +153,14 @@ class AttendanceRequest(Document):
 
 	# Function overide and changed
 	def on_submit(self):
+		self.mark_check_out_on_submit() # nabeel saleem, 20-12-2024
+		self.cannot_submit_own_attendance_request() # nabeel saleem, 20-12-2024
+		self.create_attendance_records()
+
+	def cannot_submit_own_attendance_request(self):
 		emp_user_id = frappe.get_value("Employee", self.employee, "user_id")
 		if emp_user_id == frappe.session.user:
 			frappe.throw("You can not Submit your own Attendance Request!")
-		self.create_attendance_records()
 
 	def create_attendance_records(self):
 		request_days = date_diff(self.to_date, self.from_date) + 1

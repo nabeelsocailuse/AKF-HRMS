@@ -190,6 +190,10 @@ frappe.ui.form.on('Loan Application', {
     //   },
 		
 	loan_product: function (frm) {
+        frm.set_value("loan_amount", 0);
+        frm.set_value("repayment_method", "");
+        frm.set_value("repayment_periods", "");
+        
         if (frm.doc.loan_product == "Advance Salary") {
             frm.set_value("repayment_method", "Repay Fixed Amount per Period");
             frappe.call({

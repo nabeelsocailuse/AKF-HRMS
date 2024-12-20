@@ -61,8 +61,8 @@ frappe.ui.form.on('Expense Claim', {
 function set_query_vehicle_expense(frm) {
     frm.fields_dict['expenses'].grid.get_field('expense_type').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
-        let ffilters = frm.doc.ownership === 1
-            ? { name: "Vehicle Expense" }:{name: ["!=", "Vehicle Expense"]};
+        let ffilters = frm.doc.ownership === 0
+            ? {name: ["!=", "Vehicle Expense"]}: {}
 
         return {
             filters: ffilters

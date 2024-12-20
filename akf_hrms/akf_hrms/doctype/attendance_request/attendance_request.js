@@ -3,18 +3,54 @@ var longitude = '';
 var map;
 
 frappe.ui.form.on("Attendance Request", {
-    refresh(frm) {
+    onload: function (frm) {
+        // frm.trigger('triggerOpenStreetMap');
+        if (frappe.user.has_role("Employee") && frm.doc.employee == undefined) {
+            frappe.call({
+                method: "frappe.client.get_value",
+                args: {
+                    doctype: "Employee",
+                    fieldname: "name",
+                    filters: { user_id: frappe.session.user }
+                },
+                callback: function (response) {
+                    if (response && response.message) {
+                        const employee_id = response.message.name;
+                        frm.set_value("employee", employee_id);
+                        console.log("Employee field populated with ID:", employee_id);
+
+                        // After setting employee, check for shift assignment
+                        frm.trigger("check_shift_assignment");
+                    } else {
+                        console.log("No employee found for the current user.");
+                    }
+                }
+            });
+        }
+
+        // Set query for employee field based on department
+        frm.set_query("employee", function () {
+            return {
+                filters: {
+                    department: frm.doc.department,
+                },
+            };
+        });
+
+        frm.set_query("work_from_home_request", function () {
+            return {
+                filters: {
+                    employee: frm.doc.employee,
+                    docstatus: 1,
+                },
+            };
+        });
+    },
+
+    refresh: function(frm) {
         frm.trigger("show_attendance_warnings");
         frm.trigger("triggerOpenStreetMap");
-        if(!frm.doc.__islocal && frm.doc.from_time){
-			hide_field(frm, 'mark_check_in')
-		}
-		if(!frm.doc.__islocal && frm.doc.to_time && frm.doc.mark_check_condition ){
-			hide_field(frm, 'mark_check_out')
-			show_field(frm, 'to_time')
-		}else{
-			hide_field(frm, 'to_time')
-		}
+        triggerCheckInOutBtn(frm);
     },
 
     show_attendance_warnings(frm) {
@@ -66,12 +102,12 @@ frappe.ui.form.on("Attendance Request", {
                         
                         if (attendance.in_time) {
                             const inTime = attendance.in_time.substring(11, 19);
-                            frm.set_value("custom_from", inTime);
+                            frm.set_value("from_time", inTime);
                         }
                         
                         if (attendance.out_time) {
                             const outTime = attendance.out_time.substring(11, 19); 
-                            frm.set_value("custom_to", outTime);
+                            frm.set_value("to_time", outTime);
                         }
                     } else {
                         console.log("No attendance record found for the selected date.");
@@ -87,50 +123,6 @@ frappe.ui.form.on("Attendance Request", {
             frm.trigger("set_leave_approver");
             frm.trigger("check_shift_assignment"); // Mubashir Bashir 12-11-2024
         }
-    },
-
-    onload: function (frm) {
-        frm.trigger('triggerOpenStreetMap');
-        if (frappe.user.has_role("Employee") && frm.doc.employee == undefined) {
-            frappe.call({
-                method: "frappe.client.get_value",
-                args: {
-                    doctype: "Employee",
-                    fieldname: "name",
-                    filters: { user_id: frappe.session.user }
-                },
-                callback: function (response) {
-                    if (response && response.message) {
-                        const employee_id = response.message.name;
-                        frm.set_value("employee", employee_id);
-                        console.log("Employee field populated with ID:", employee_id);
-
-                        // After setting employee, check for shift assignment
-                        frm.trigger("check_shift_assignment");
-                    } else {
-                        console.log("No employee found for the current user.");
-                    }
-                }
-            });
-        }
-
-        // Set query for employee field based on department
-        frm.set_query("employee", function () {
-            return {
-                filters: {
-                    department: frm.doc.department,
-                },
-            };
-        });
-
-        frm.set_query("work_from_home_request", function () {
-            return {
-                filters: {
-                    employee: frm.doc.employee,
-                    docstatus: 1,
-                },
-            };
-        });
     },
 
     check_shift_assignment: function (frm) {
@@ -194,15 +186,27 @@ frappe.ui.form.on("Attendance Request", {
             setupOpenStreetMap();
         }
     },
+    reason: function(frm){
+        frm.set_value('from_time', null);
+        frm.set_value('to_time', null);
+        frm.set_value('travel_request', null);
+        show_field(frm, 'mark_check_in');
+        hide_field(frm, 'mark_check_out');
+    },
     mark_check_in: function(frm){
-		get_current_time(frm, 'from_time','mark_check_in')
+        hide_field(frm, 'mark_check_in');
+        show_field(frm, 'mark_check_out');
+        setTimeout(() => {
+            get_current_time(frm, 'from_time');
+        }, 20);
 	},
 	mark_check_out: function(frm){
-		get_current_time(frm, 'to_time', 'mark_check_out')
+		
+        hide_field(frm, 'mark_check_out');
 		show_field(frm, 'to_time');
         setTimeout(() => {
-            frm.set_value('mark_check_condition', 1);
-        }, 100);
+            get_current_time(frm, 'to_time');
+        }, 20);
 		
 	},
 });
@@ -212,7 +216,6 @@ function CallOpenStreetMap() {
     
     if (cur_frm.doc.latitude == undefined || cur_frm.doc.longitude == undefined) {
         navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-            console.log(result)
             if (result.state === 'denied') {
                 alert("Please enable location access in your browser settings for this feature to work.");
             }
@@ -245,17 +248,14 @@ function CallOpenStreetMap() {
 }
 
 function getLocation() {
-    console.log(navigator.geolocation);
     if (navigator.geolocation) {
-        console.log('in: ');
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                console.log('position: ');
+                console.log(position)
                 cur_frm.set_value("latitude", position.coords.latitude);
                 cur_frm.set_value("longitude", position.coords.longitude);
             },
             (error) => {
-                console.log('error: ');
                 if (error.code === error.PERMISSION_DENIED) {
                     alert("Geolocation permission was revoked. Please re-enable it in your browser settings.");
                 } else {
@@ -314,10 +314,30 @@ function setupOpenStreetMap() {
     }, 1000);
 }
 
+
+
+function triggerCheckInOutBtn(frm){
+    if(!frm.doc.__islocal){
+        if(frm.doc.from_time!=undefined){
+            hide_field(frm, 'mark_check_in');
+            show_field(frm, 'mark_check_out');
+            show_field(frm, 'to_time');
+        }
+        if(frm.doc.to_time!=undefined){
+            hide_field(frm, 'mark_check_out');
+        }
+    }else{
+        if(frm.doc.from_time!=undefined){
+            hide_field(frm, 'mark_check_in');
+        }
+        if(frm.doc.to_time!=undefined){
+            hide_field(frm, 'mark_check_out');
+        }
+    }
+}
 function get_current_time(frm, fieldname, btnname){
 	frm.call('get_current_time').then(r => {
         frm.set_value(fieldname, r.message);
-        hide_field(frm, btnname)
     });
 }
 

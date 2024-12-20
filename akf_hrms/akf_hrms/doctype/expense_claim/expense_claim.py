@@ -732,13 +732,19 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	@frappe.whitelist()
 	def validate_and_set_vehicle_expense(self):
 		if(self.ownership):
-			if(self.expense_rate<=0): frappe.throw(f"In vehicle, expense rate must be greater than zero.", title="Ownership Details")
-			if(self.kilometers<=0): frappe.throw(f"Kilometers must be greater than zero.", title="Ownership Details")
+			if(not self.expense_rate): frappe.throw(f"Please select, vehicle.", title="Ownership Details")
+			if(float(self.expense_rate)<=0): frappe.throw(f"In vehicle, expense rate must be greater than zero.", title="Ownership Details")
+			if(float(self.kilometers)<=0): frappe.throw(f"Kilometers must be greater than zero.", title="Ownership Details")
+			ownership_not_found = True 
 			for d in self.expenses:
 				if(d.expense_type):
-					if(d.expense_type!="Vehicle Expense"): frappe.throw(f"Expense Claim Type must be <b>Vehicle Expense</b>.", title="Expenses Table")
-					d.amount = (self.expense_rate * self.kilometers)
-					d.sanctioned_amount = d.amount
+					if(d.expense_type=="Vehicle Expense"): 
+						ownership_not_found = False
+						# frappe.throw(f"Expense Claim Type must be <b>Vehicle Expense</b>.", title="Expenses Table")
+						d.amount = (self.expense_rate * self.kilometers)
+						d.sanctioned_amount = d.amount
+			if(ownership_not_found):
+				frappe.throw(f"Please select, `Vehicle Expense` expenses table.", title="Expenses Table")
 # ================================================================================================================================================== #
 # ================================================================================================================================================== #
 
