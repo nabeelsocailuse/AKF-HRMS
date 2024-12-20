@@ -515,56 +515,132 @@ def get_attendance_status_for_summarized_view(employee: str, filters: Filters, h
 	}
 
 
+# def get_attendance_summary_and_days(employee: str, filters: Filters) -> tuple[dict, list]:
+# 	Attendance = frappe.qb.DocType("Attendance")
+
+# 	present_case = (
+# 		frappe.qb.terms.Case()
+# 		.when(((Attendance.status == "Present") | (Attendance.status == "Work From Home")), 1)
+# 		.else_(0)
+# 	)
+# 	sum_present = Sum(present_case).as_("total_present")
+
+# 	absent_case = frappe.qb.terms.Case().when(Attendance.status == "Absent", 1).else_(0)
+# 	sum_absent = Sum(absent_case).as_("total_absent")
+
+# 	leave_case = frappe.qb.terms.Case().when(Attendance.status == "On Leave", 1).else_(0)
+# 	sum_leave = Sum(leave_case).as_("total_leaves")
+
+# 	half_day_case = frappe.qb.terms.Case().when(Attendance.status == "Half Day", 0.5).else_(0)
+# 	sum_half_day = Sum(half_day_case).as_("total_half_days")
+
+# 	summary = (
+# 		frappe.qb.from_(Attendance)
+# 		.select(
+# 			sum_present,
+# 			sum_absent,
+# 			sum_leave,
+# 			sum_half_day,
+# 		)
+# 		.where(
+# 			(Attendance.docstatus == 1)
+# 			& (Attendance.employee == employee)
+# 			& (Attendance.company == filters.company)
+# 			& (Extract("month", Attendance.attendance_date) == filters.month)
+# 			& (Extract("year", Attendance.attendance_date) == filters.year)
+# 		)
+# 	).run(as_dict=True)
+
+# 	days = (
+# 		frappe.qb.from_(Attendance)
+# 		.select(Extract("day", Attendance.attendance_date).as_("day_of_month"))
+# 		.distinct()
+# 		.where(
+# 			(Attendance.docstatus == 1)
+# 			& (Attendance.employee == employee)
+# 			& (Attendance.company == filters.company)
+# 			& (Extract("month", Attendance.attendance_date) == filters.month)
+# 			& (Extract("year", Attendance.attendance_date) == filters.year)
+# 		)
+# 	).run(pluck=True)
+
+# 	return summary[0], days
+
+
 def get_attendance_summary_and_days(employee: str, filters: Filters) -> tuple[dict, list]:
-	Attendance = frappe.qb.DocType("Attendance")
+    Attendance = frappe.qb.DocType("Attendance")
+    
+    # Convert year and month to integers
+    year = int(filters.year)
+    month = int(filters.month)
 
-	present_case = (
-		frappe.qb.terms.Case()
-		.when(((Attendance.status == "Present") | (Attendance.status == "Work From Home")), 1)
-		.else_(0)
-	)
-	sum_present = Sum(present_case).as_("total_present")
+    # Cases for Present, Leave, and Half Day statuses
+    present_case = (
+        frappe.qb.terms.Case()
+        .when(((Attendance.status == "Present") | (Attendance.status == "Work From Home")), 1)
+        .else_(0)
+    )
+    sum_present = Sum(present_case).as_("total_present")
 
-	absent_case = frappe.qb.terms.Case().when(Attendance.status == "Absent", 1).else_(0)
-	sum_absent = Sum(absent_case).as_("total_absent")
+    leave_case = frappe.qb.terms.Case().when(Attendance.status == "On Leave", 1).else_(0)
+    sum_leave = Sum(leave_case).as_("total_leaves")
 
-	leave_case = frappe.qb.terms.Case().when(Attendance.status == "On Leave", 1).else_(0)
-	sum_leave = Sum(leave_case).as_("total_leaves")
+    half_day_case = frappe.qb.terms.Case().when(Attendance.status == "Half Day", 0.5).else_(0)
+    sum_half_day = Sum(half_day_case).as_("total_half_days")
 
-	half_day_case = frappe.qb.terms.Case().when(Attendance.status == "Half Day", 0.5).else_(0)
-	sum_half_day = Sum(half_day_case).as_("total_half_days")
+    # Attendance summary with Present, Leave, and Half Day totals
+    summary = (
+        frappe.qb.from_(Attendance)
+        .select(
+            sum_present,
+            sum_leave,
+            sum_half_day,
+        )
+        .where(
+            (Attendance.docstatus == 1)
+            & (Attendance.employee == employee)
+            & (Attendance.company == filters.company)
+            & (Extract("month", Attendance.attendance_date) == month)
+            & (Extract("year", Attendance.attendance_date) == year)
+        )
+    ).run(as_dict=True)
 
-	summary = (
-		frappe.qb.from_(Attendance)
-		.select(
-			sum_present,
-			sum_absent,
-			sum_leave,
-			sum_half_day,
-		)
-		.where(
-			(Attendance.docstatus == 1)
-			& (Attendance.employee == employee)
-			& (Attendance.company == filters.company)
-			& (Extract("month", Attendance.attendance_date) == filters.month)
-			& (Extract("year", Attendance.attendance_date) == filters.year)
-		)
-	).run(as_dict=True)
+    # Days with attendance records
+    days_with_records = (
+        frappe.qb.from_(Attendance)
+        .select(Extract("day", Attendance.attendance_date).as_("day_of_month"))
+        .distinct()
+        .where(
+            (Attendance.docstatus == 1)
+            & (Attendance.employee == employee)
+            & (Attendance.company == filters.company)
+            & (Extract("month", Attendance.attendance_date) == month)
+            & (Extract("year", Attendance.attendance_date) == year)
+        )
+    ).run(pluck=True)
 
-	days = (
-		frappe.qb.from_(Attendance)
-		.select(Extract("day", Attendance.attendance_date).as_("day_of_month"))
-		.distinct()
-		.where(
-			(Attendance.docstatus == 1)
-			& (Attendance.employee == employee)
-			& (Attendance.company == filters.company)
-			& (Extract("month", Attendance.attendance_date) == filters.month)
-			& (Extract("year", Attendance.attendance_date) == filters.year)
-		)
-	).run(pluck=True)
+    # Calculate all days in the month
+    _, days_in_month = monthrange(year, month)
+    all_days = set(range(1, days_in_month + 1))
 
-	return summary[0], days
+    # Fetch holidays for the specified month and year
+    holiday_map = get_holiday_map(filters)
+    
+    # Extract holiday days from all holiday lists
+    holiday_days = {
+        holiday["day_of_month"]
+        for holidays in holiday_map.values()
+        for holiday in holidays
+    }
+    
+    # Absent days are those not in attendance records and not in holiday_days
+    absent_days = list(all_days - set(days_with_records) - holiday_days)
+    total_absent = len(absent_days)
+
+    # Add total_absent to the summary
+    summary[0]["total_absent"] = total_absent
+
+    return summary[0], days_with_records
 
 
 def get_attendance_status_for_detailed_view(
