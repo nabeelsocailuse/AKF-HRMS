@@ -188,11 +188,17 @@ frappe.ui.form.on('Loan Application', {
     //             });
     //     }   // Mubashir Bashir End 11-13-2024
     //   },
+    applicant: function (frm) {
+        frm.set_value("loan_product", "");
+    },
 		
 	loan_product: function (frm) {
         frm.set_value("loan_amount", 0);
         frm.set_value("repayment_method", "");
         frm.set_value("repayment_periods", "");
+        frm.set_value("total_payable_amount", 0);
+
+
         
         if (frm.doc.loan_product == "Advance Salary") {
             frm.set_value("repayment_method", "Repay Fixed Amount per Period");
@@ -306,29 +312,33 @@ frappe.ui.form.on('Loan Application', {
 
 // Mubashir Bashir Start 14-11-2024
 
-function getRepaymentPeriods(grade) {
-    let repayment_periods;
-    if (["M-4", "M-5", "M-6", "O-1", "O-2", "O-3", "O-4", "PC-1", "S-3", "X-1"].includes(grade)) {
-        repayment_periods = 36; // 36 months for 3 years of experience
-    } else if (["A-1", "A-3", "A-4", "A-5", "A-6", "B-1", "B-2", "B-3", "C-1", "C-2", "Contractual - Part time", "D-1", "D-2", "D-3", "Data Management Officer", "F-1", "F-2", "F-3", "G-1", "G-2", "G-3", "G-4", "G-5", "G-8", "M-3", "M-2", "M-1"].includes(grade)) {
-        repayment_periods = 24; // 24 months for 2 years of experience
-    }
-    return repayment_periods;
-}
+// function getRepaymentPeriods(grade) {
+//     let repayment_periods;
+//     if (["M-4", "M-5", "M-6", "O-1", "O-2", "O-3", "O-4", "PC-1", "S-3", "X-1"].includes(grade)) {
+//         repayment_periods = 36; // 36 months for 3 years of experience
+//     } else if (["A-1", "A-3", "A-4", "A-5", "A-6", "B-1", "B-2", "B-3", "C-1", "C-2", "Contractual - Part time", "D-1", "D-2", "D-3", "Data Management Officer", "F-1", "F-2", "F-3", "G-1", "G-2", "G-3", "G-4", "G-5", "G-8", "M-3", "M-2", "M-1"].includes(grade)) {
+//         repayment_periods = 24; // 24 months for 2 years of experience
+//     }
+//     return repayment_periods;
+// }
 
-function get_latest_vehicle_loan_limit(frm, loan_product) {
+function get_latest_vehicle_loan_limit(frm, loan_product) { // updated by mubarrim for Grade
 	
     frappe.db.get_value("Employee", {"name": frm.doc.applicant}, "grade")
         .then(r => {
-            let grade = r.message.grade;
-            let repayment_periods = getRepaymentPeriods(grade);
-            frm.set_value("repayment_periods", repayment_periods);
-            frm.refresh_field("repayment_periods");
             frm.set_value("repayment_method", "Repay Over Number of Periods");
             frm.set_df_property("repayment_method", "read_only", 1);
+            let grade = r.message.grade;
+            // let repayment_periods = getRepaymentPeriods(grade);
+            frappe.db.get_value("Employee Grade", {"name": grade}, "custom_repayment_period").then(r =>{
+                console.log("period: " + r.message.custom_repayment_period)
+                frm.set_value("repayment_periods", r.message.custom_repayment_period);
+                frm.refresh_field("repayment_periods");
+            })
+            
             // frm.set_df_property("repayment_periods", "read_only", 1);
 
-        });
+        }); // End by mubarrim
 
     return new Promise((resolve, reject) => {
         frappe.db.get_doc('Loan Product', loan_product)
