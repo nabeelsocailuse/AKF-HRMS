@@ -168,7 +168,7 @@ def get_employees_data(company=None,branch=None,designation=None,department=None
 			else:
 				conditions = conditions + " and "+ str(key[0]) + " " + str(key[1]) + " '" + str(key[2]) + "'"
 
-	query_e = """select employee, employee_name, user_id, designation, date_of_joining from `tabEmployee` where docstatus='0' {0} {1}""".format(conditions,where)
+	query_e = """select employee, employee_name, user_id, designation, date_of_joining from `tabEmployee` where docstatus='0' and status = 'Active' {0} {1}""".format(conditions,where)
 
 	employee_list = frappe.db.sql(query_e)
 
