@@ -51,11 +51,56 @@ frappe.ui.form.on('Expense Claim', {
             frm.set_value('vehicle', null);
             frm.set_value('expense_rate', 0);
             frm.set_value('kilometers', 0);
+
+            // Mubashir Bashir 24-12-2024 Start    
+            // Remove Vehicle Expense row from child expense if any         
+            const rows_to_remove = frm.doc.expenses.filter(row => row.expense_type === 'Vehicle Expense');
+            rows_to_remove.forEach(row => {frm.get_field('expenses').grid.grid_rows_by_docname[row.name].remove();});
+            frm.refresh_field('expenses');
+
+            // frm.set_df_property('kilometers', 'hidden', 1);
+            // frm.set_df_property('kilometers', 'reqd', 0);
+            // Mubashir Bashir 24-12-2024 End
         }
-    }
+    },
     // nabeel saleem, 19-12-2024 > end
+
+    // Mubashir Bashir 24-12-2024 Start
+    kilometers: function (frm) {
+        if (frm.doc.kilometers) {            
+            const expense_rate = frm.doc.expense_rate || 0;
+            const kilometers = frm.doc.kilometers;
+            const amount = expense_rate * kilometers;
+
+            // Remove empty rows or Vehicle Expense rows
+            if (frm.doc.expenses && frm.doc.expenses.length) {
+                // Get all rows that need to be removed
+                let rows_to_remove = frm.doc.expenses.filter(row => 
+                    !row.expense_type || row.expense_type === 'Vehicle Expense'
+                );                
+                for (let i = frm.doc.expenses.length - 1; i >= 0; i--) {
+                    if (!frm.doc.expenses[i].expense_type || 
+                        frm.doc.expenses[i].expense_type === 'Vehicle Expense') {
+                        frm.get_field('expenses').grid.grid_rows[i].remove();
+                    }
+                }
+                
+                frm.refresh_field('expenses');
+            }
+            // Add a row to the 'expenses' child table
+            const row = frm.add_child('expenses', {
+                expense_date: frappe.datetime.get_today(), 
+                expense_type: 'Vehicle Expense',         
+                amount: amount,
+                sanctioned_amount: amount                        
+            });
+            frm.refresh_field('expenses');
+        }
+    },
 }
 );
+// Mubashir Bashir 24-12-2024 End
+
 
 // nabeel saleem, 19-12-2024
 function set_query_vehicle_expense(frm) {
