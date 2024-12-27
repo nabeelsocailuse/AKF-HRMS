@@ -4,7 +4,7 @@
 frappe.ui.form.on("Travel Request", {
     refresh(frm) {
         if (frm.doc.docstatus === 1) {
-            frm.add_custom_button(__('Exense Claim'), function () {
+            frm.add_custom_button(__('Expense Claim'), function () {
                 frappe.route_options = {
                     employee: frm.doc.employee,
                     travel_request: frm.doc.name,
