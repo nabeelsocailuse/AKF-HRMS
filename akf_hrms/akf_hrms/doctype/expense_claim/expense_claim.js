@@ -97,9 +97,9 @@ frappe.ui.form.on('Expense Claim', {
             frm.refresh_field('expenses');
         }
     },
+    // Mubashir Bashir 24-12-2024 End
 }
 );
-// Mubashir Bashir 24-12-2024 End
 
 
 // nabeel saleem, 19-12-2024
