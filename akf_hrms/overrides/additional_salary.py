@@ -15,7 +15,7 @@ class XAdditionalSalary(AdditionalSalary):
             # start, Mubarrim, [18-12-2024]
             marital_status = frappe.db.get_value('Employee', self.employee, 'marital_status')
             if(marital_status != 'Single'):
-                frappe.throw("You are not eligible to claim the Marriage Allowance")
+                frappe.throw(f"Marriage Allowance is only available to individuals who are single.")
             # end, Mubarrim, [18-12-2024]
             
             # start, nabeel, [18-12-2024]
