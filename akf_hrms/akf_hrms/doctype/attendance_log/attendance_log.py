@@ -53,7 +53,6 @@ class AttendanceLog(Document):
 		frappe.db.set_value("Attendance", attendance.name, "custom_hours_worked", hours_worked)
 		frappe.db.set_value("Attendance", attendance.name, "custom_overtime_hours", self.cal_overtime_hours(hours_worked))
 		frappe.db.set_value("Attendance", attendance.name, "early_exit", self.early_exit())
-		self.set_attendance_id(attendance.name)
 	
 	def cal_hours_worked(self, in_time):
 		# frappe.msgprint(f"{self.log} {in_time}")
@@ -68,17 +67,13 @@ class AttendanceLog(Document):
 				"shift": self.shift,
 				"in_time": self.log,
 				"custom_in_times": get_time(self.log),
+				"custom_out_times": "",
 				"late_entry": self.late_entry(),
 				# "custom_2_hours_late": self.get_2_hours_late()
 			}
 		doc = frappe.get_doc(args).save(ignore_permissions=True)
 		doc.submit()
-		self.set_attendance_id(doc.name)
 
-	def set_attendance_id(self, attendance_id):
-		frappe.db.set_value('Attendance Log', self.name, 'attendance_id', attendance_id)
-		self.reload()
-  
 	def late_entry(self):
 		if (not self.shift or not self.log): 
 			return False
