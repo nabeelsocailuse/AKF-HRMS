@@ -11,9 +11,14 @@
   "naming_series",
   "year",
   "month",
+  "employee_name",
   "employee",
+  "employee_designation",
+  "employee_department",
+  "employee_cnic",
   "salary_structure_assignment",
   "additional_salary",
+  "employee_shift",
   "column_break_l4dw",
   "employee_info_html",
   "detail_of_overtime_section",
@@ -22,6 +27,7 @@
   "total_hours_worked",
   "total_overtime_hours",
   "hourly_rate",
+  "basic_salary",
   "column_break_fcwe",
   "amount_in_figures",
   "amount_in_words",
@@ -203,12 +209,54 @@
    "label": "Approval Status",
    "options": "\nPending\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the CEO\nRejected by the CEO\nCancelled",
    "permlevel": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Employee Name"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "employee_designation",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Employee Designation"
+  },
+  {
+   "fetch_from": "employee.custom_cnic",
+   "fieldname": "employee_cnic",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Employee CNIC"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "employee_department",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Employee Department"
+  },
+  {
+   "fetch_from": "salary_structure_assignment.base",
+   "fieldname": "basic_salary",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Basic Salary"
+  },
+  {
+   "fetch_from": "employee.default_shift",
+   "fieldname": "employee_shift",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Employee Shift"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-05 14:23:57.907464",
+ "modified": "2024-12-30 14:37:09.282952",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Overtime Claim Form",

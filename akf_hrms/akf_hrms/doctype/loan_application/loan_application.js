@@ -189,7 +189,9 @@ frappe.ui.form.on('Loan Application', {
     //     }   // Mubashir Bashir End 11-13-2024
     //   },
     applicant: function (frm) {
-        frm.set_value("loan_product", "");
+        frm.set_value("loan_product", ""); 
+        frm.set_value("custom_guarantor_of_loan_application", "");
+        frm.set_value("custom_guarantor_2_of_loan_application", "");
     },
 		
 	loan_product: function (frm) {
