@@ -658,7 +658,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				else:
 					frappe.throw(f"No attendance Record found against travel request '{self.travel_request}' for date '{expense.expense_date}'")
 
-				time_obj = datetime.strptime(dur, "%H:%M:%S")
+				time_obj = datetime.strptime(dur, "%H:%M:%S.%f")
 
 				# Extract hours, minutes, and seconds
 				hours = time_obj.hour
