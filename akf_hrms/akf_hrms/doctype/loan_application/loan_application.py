@@ -118,7 +118,7 @@ class LoanApplication(Document):
 
 				if self.posting_date:
 					try:
-						posting_date = datetime.strptime(self.posting_date, '%Y-%m-%d')
+						posting_date = datetime.strptime(self.posting_date.strftime('%Y-%m-%d'), '%Y-%m-%d')
 						current_month = today.month
 						current_year = today.year
 

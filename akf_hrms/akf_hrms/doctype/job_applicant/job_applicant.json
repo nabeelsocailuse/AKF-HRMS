@@ -96,7 +96,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Open\nReplied\nRejected\nHold\nAccepted",
+   "options": "Open\nReplied\nRejected\nHold\nShortlisted\nLonglisted\nAccepted",
    "reqd": 1
   },
   {
@@ -194,7 +194,7 @@
  "idx": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-12 15:35:16.407283",
+ "modified": "2025-01-01 17:44:30.063407",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Job Applicant",
