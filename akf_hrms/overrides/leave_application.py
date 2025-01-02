@@ -1,9 +1,17 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-""" custom functions 
-1- validate_only_three_leaves_in_current_month
-
+"""
+1- validate_three_casual_leaves_in_current_month (DONE)
+2- Short Leave, only one in month
+2.1- Short Leave, difference of (to_time - from_time) cannot exceed more than 3 hours
+3- Half Day Leave, only one in month
+3.1- Half Day Leave, difference of (to_time - from_time) cannot exceed more than 5 hours
+4- Earned Leave, employee cannot get before two years. (DONE)
+5- Update previous stats of records which may be submitted. (live server)
+6- Leave application workflow cancel state is not defined, status 'Approved' is still showing even the doc is cancelled
+7- Leave Tracking issue (DONE)
+8- Leave work flow for Employee directly reports to HOD
 """
 import datetime
 from typing import Dict, Optional, Tuple, Union
@@ -90,7 +98,11 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_value("Leave Type", self.leave_type, "is_optional_leave"):
 			self.validate_optional_leave()
 		self.validate_applicable_after()
-		self.validate_only_three_leaves_in_current_month()
+		self.validate_three_casual_leaves_in_current_month()
+		self.short_leave_one_in_a_month()
+		self.half_day_leave_one_in_a_month()
+		self.short_leave_cannot_exceed_3_hours()
+		self.half_day_leave_cannot_exceed_4_hours()
 		self.validate_half_day_leave()
 		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
 		self.record_application_state() # Nabeel Saleem, 29-11-2024
@@ -265,61 +277,295 @@ class LeaveApplication(Document, PWANotificationsMixin):
 
 	""" HR Leave Policy """
 	""" Casual Leave allowed 3 three in a month... """
-	def validate_only_three_leaves_in_current_month(self):
-		from akf_hrms.patches.skip_validations import skip
-		if(skip()): 
-			return
-		if(self.leave_type!="Casual Leave"): return
-		# start validation
-		from frappe.utils import get_first_day, get_last_day, getdate
-		import datetime
-		# Parse the from_date string into a datetime object
-		from_month = getdate(self.from_date)
-		# Get the month name
-		from_month_name = from_month.strftime("%B")
-		# Parse the to_date string into a datetime object
-		to_month = getdate(self.to_date)
-		# Get the month name
-		to_month_name = to_month.strftime("%B")
+	# def validate_three_casual_leaves_in_current_month(self):
+	# 	from akf_hrms.patches.skip_validations import skip
+	# 	if(skip()): 
+	# 		return
+	# 	if(self.leave_type!="Casual Leave"): return
+	# 	# start validation
+	# 	from frappe.utils import get_first_day, get_last_day, getdate
+	# 	import datetime
+	# 	# Parse the from_date string into a datetime object
+	# 	from_month = getdate(self.from_date)
+	# 	# Get the month name
+	# 	from_month_name = from_month.strftime("%B")
+	# 	# Parse the to_date string into a datetime object
+	# 	to_month = getdate(self.to_date)
+	# 	# Get the month name
+	# 	to_month_name = to_month.strftime("%B")
 
 
-		def verifyLeaves(conditions, month_name):
-			result = frappe.db.sql(f""" 
-				select 
-					ifnull(sum(total_leave_days),0) total_leaves
-				from 
-					`tabLeave Application` 
-				{conditions}
-				""")
-			if(result): 
-				total_leaves = result[0][0] + self.total_leave_days
-				if(total_leaves>3):
-					frappe.throw(f"3 <b>{self.leave_type}</b> allowed in a month <b>{month_name}</b>.", title="Exception")
+	# 	def verifyLeaves(conditions, month_name):
+	# 		result = frappe.db.sql(f""" 
+	# 			select 
+	# 				ifnull(sum(total_leave_days),0) total_leaves
+	# 			from 
+	# 				`tabLeave Application` 
+	# 			{conditions}
+	# 			""")
+	# 		if(result): 
+	# 			total_leaves = result[0][0] + self.total_leave_days
+	# 			if(total_leaves>3):
+	# 				frappe.throw(f"3 <b>{self.leave_type}</b> allowed in a month <b>{month_name}</b>.", title="Exception")
 
-		conditions = f""" 
-		where 
-			docstatus=1
-			and employee = '{self.employee}'
-			and company = '{self.company}'
-			and leave_type = '{self.leave_type}'
+	# 	conditions = f""" 
+	# 	where 
+	# 		docstatus=1
+	# 		and employee = '{self.employee}'
+	# 		and company = '{self.company}'
+	# 		and leave_type = '{self.leave_type}'
+	# 	"""
+	# 	if(from_month_name == to_month_name):
+	# 		start_date =  get_first_day(self.from_date)
+	# 		end_date =  get_last_day(self.to_date)
+	# 		conditions += f" and (from_date>='{start_date}' and to_date<='{end_date}') "
+	# 		verifyLeaves(conditions, from_month_name)
+			
+	# 	else:
+	# 		# validate with from date
+	# 		start_date =  get_first_day(self.from_date)
+	# 		end_date =  get_last_day(self.from_date)
+	# 		conditions += " and (from_date>='{start_date}' and to_date<='{end_date}') "
+	# 		verifyLeaves(conditions, from_month_name)
+	# 		# validate with to date
+	# 		start_date =  get_first_day(self.to_date)
+	# 		end_date =  get_last_day(self.to_date)
+	# 		verifyLeaves(conditions, to_month_name)
+	
+	""" HR Policy for Casual, Short, and Half day leaves Implemented By Mubashir """
+	""" --------------------------------START----------------------------------- """
+	# Implemented by Mubashir 1-1-2025
+	def get_payroll_period_dates(self, date):
+		"""Returns start and end dates for payroll period containing the given date
+		
+		For dates 1-20: Period is 21st of previous month to 20th of current month
+		For dates 21-31: Period is 21st of current month to 20th of next month
 		"""
-		if(from_month_name == to_month_name):
-			start_date =  get_first_day(self.from_date)
-			end_date =  get_last_day(self.to_date)
-			conditions += f" and (from_date>='{start_date}' and to_date<='{end_date}') "
-			verifyLeaves(conditions, from_month_name)
+		date = getdate(date)
+		
+		if date.day <= 20:
+			# For dates 1-20
+			# Start: 21st of previous month
+			period_start = getdate(date).replace(day=21)
+			period_start = frappe.utils.add_months(period_start, -1)
+			
+			# End: 20th of current month
+			period_end = getdate(date).replace(day=20)
 			
 		else:
-			# validate with from date
-			start_date =  get_first_day(self.from_date)
-			end_date =  get_last_day(self.from_date)
-			conditions += " and (from_date>='{start_date}' and to_date<='{end_date}') "
-			verifyLeaves(conditions, from_month_name)
-			# validate with to date
-			start_date =  get_first_day(self.to_date)
-			end_date =  get_last_day(self.to_date)
-			verifyLeaves(conditions, to_month_name)
+			# For dates 21-31
+			# Start: 21st of current month
+			period_start = getdate(date).replace(day=21)
+			
+			# End: 20th of next month
+			period_end = getdate(date).replace(day=20)
+			period_end = frappe.utils.add_months(period_end, 1)
+		
+		# frappe.msgprint(f'Payroll Dates: {period_start} - {period_end} - {date} - {date.day}')
+			
+		return period_start, period_end
 	
+	# Implemented by Mubashir 1-1-2025
+	def get_period_name(self, start_date):
+		"""Returns a formatted name for the payroll period
+		Format: 'January 21 - February 20' for each period
+		"""
+		start_date = getdate(start_date)
+		end_date = getdate(start_date).replace(day=20)		
+		if start_date.day == 21:
+			end_date = frappe.utils.add_months(end_date, 1)		
+		period_name = f"{start_date.strftime('%B %d')} - {end_date.strftime('%B %d')}"
+		# frappe.msgprint(f"Period Name: {period_name}")		
+		return period_name
+	
+	# Implemented by Mubashir 1-1-2025
+	def verify_leave_count(self, start_date, end_date, period_name, max_leaves, leave_type):
+		"""Generic helper function to verify leave count for a date range"""
+		try:
+			# First get existing leaves in the period
+			result = frappe.db.sql("""
+				SELECT 
+					DATEDIFF(to_date, from_date) + 1 as days
+				FROM `tabLeave Application`
+				WHERE 
+					docstatus != 2
+					AND employee = %s
+					AND company = %s
+					AND leave_type = %s
+					AND from_date >= %s 
+					AND to_date <= %s
+			""", (
+				self.employee,
+				self.company,
+				leave_type,
+				start_date,
+				end_date
+			), as_dict=1)
+
+			# Calculate total days from existing applications
+			existing_days = sum(r.days for r in result)
+			# Calculate days in current application
+			current_days = date_diff(self.to_date, self.from_date) + 1
+			# Total days including current application
+			total_days = existing_days + current_days
+
+			if total_days > max_leaves:
+				frappe.throw(
+					msg=f"Only {max_leaves} {leave_type} {'day' if max_leaves == 1 else 'days'} allowed in payroll period "
+						f"({period_name}). This would be {total_days} days.",
+					title=f"Maximum {leave_type} Days Exceeded"
+				)
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error checking {leave_type} for period {period_name}: {str(e)}",
+				title=f"{leave_type} Validation Error"
+			)
+			raise
+
+	# Implemented by Mubashir 1-1-2025			
+	def validate_three_casual_leaves_in_current_month(self):
+		"""Validates that an employee doesn't exceed 3 casual leaves in a payroll period"""
+		from akf_hrms.patches.skip_validations import skip
+		if skip() or self.leave_type != "Casual Leave":
+			return
+
+		try:
+			# Get payroll periods for from_date and to_date
+			from_date_period_start, from_date_period_end = self.get_payroll_period_dates(self.from_date)
+			to_date_period_start, to_date_period_end = self.get_payroll_period_dates(self.to_date)
+
+			# If leave application spans multiple payroll periods
+			if from_date_period_start != to_date_period_start:
+				self.verify_leave_count(					
+					from_date_period_start,
+					from_date_period_end,
+					self.get_period_name(from_date_period_start),
+					3,
+					"Casual Leave"
+				)
+				self.verify_leave_count(					
+					to_date_period_start,
+					to_date_period_end,
+					self.get_period_name(to_date_period_start),
+					3,
+					"Casual Leave"
+				)
+			else:
+				self.verify_leave_count(					
+					from_date_period_start,
+					from_date_period_end,
+					self.get_period_name(from_date_period_start),
+					3,
+					"Casual Leave"
+				)
+
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error in casual leave validation: {str(e)}",
+				title="Casual Leave Validation Error"
+			)
+			# frappe.throw(
+			# 	msg="Error validating casual leaves. Please contact system administrator.",
+			# 	title="Validation Error"
+			# )
+	
+	# Implemented by Mubashir 1-1-2025
+	def short_leave_one_in_a_month(self):
+		"""Validates that an employee doesn't exceed 1 short leave in a payroll period"""
+		from akf_hrms.patches.skip_validations import skip
+		if skip() or self.leave_type != "Short Leave":
+			return
+
+		try:
+			# Ensure short leave is for single day
+			if getdate(self.from_date) != getdate(self.to_date):
+				frappe.throw(
+					msg="Short Leave must be for a single day only.",
+					title="Invalid Short Leave Duration"
+				)
+
+			# Get payroll period and verify
+			period_start, period_end = self.get_payroll_period_dates(self.from_date)
+			self.verify_leave_count(				
+				period_start,
+				period_end,
+				self.get_period_name(period_start),
+				1,
+				"Short Leave"
+			)
+
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error in short leave validation: {str(e)}",
+				title="Short Leave Validation Error"
+			)
+			# frappe.throw(
+			# 	msg="Error validating short leaves. Please contact system administrator.",
+			# 	title="Validation Error"
+			# )
+
+	# Implemented by Mubashir 1-1-2025
+	def half_day_leave_one_in_a_month(self):
+		"""Validates that an employee doesn't exceed 1 half day leave in a payroll period"""
+		from akf_hrms.patches.skip_validations import skip
+		if skip() or self.leave_type != "Half Day":
+			return
+		if self.leave_type != "Half Day Leave":
+			return
+
+		try:
+			# Ensure half day leave is for single day
+			if getdate(self.from_date) != getdate(self.to_date):
+				frappe.throw(
+					msg="Half Day Leave must be for a single day only.",
+					title="Invalid Half Day Leave Duration"
+				)
+
+			# Get payroll period and verify
+			period_start, period_end = self.get_payroll_period_dates(self.from_date)
+			self.verify_leave_count(				
+				period_start,
+				period_end,
+				self.get_period_name(period_start),
+				1,
+				"Half Day Leave"
+			)
+
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error in half day leave validation: {str(e)}",
+				title="Half Day Leave Validation Error"
+			)
+			# frappe.throw(
+			# 	msg="Error validating half day leaves. Please contact system administrator.",
+			# 	title="Validation Error"
+			# )
+
+	# Implemented by Mubashir 1-1-2025
+	def short_leave_cannot_exceed_3_hours(self):
+		"""Validates that short leave duration doesn't exceed 3 hours"""
+		if self.custom_from_time and self.custom_to_time:
+			hours = frappe.utils.time_diff_in_hours(self.custom_to_time, self.custom_from_time)
+			if self.leave_type == 'Short Leave' and hours > 3:
+				frappe.throw(
+					msg='Short Leave cannot exceed 3 hours. Please adjust the duration accordingly.',
+					title='Invalid Short Leave Duration'
+				)
+
+	# Implemented by Mubashir 1-1-2025
+	def half_day_leave_cannot_exceed_4_hours(self):
+		"""Validates that half day leave duration doesn't exceed 4 hours"""
+		if self.custom_from_time and self.custom_to_time:
+			hours = frappe.utils.time_diff_in_hours(self.custom_to_time, self.custom_from_time)
+			if self.leave_type == 'Half Day Leave' and hours > 4:
+				frappe.throw(
+					msg='Half Day Leave cannot exceed 4 hours. Please adjust the duration accordingly.',
+					title='Invalid Half Day Duration'
+				)
+
+	""" HR Policy for Casual, Short, and Half day leaves Implemented By Mubashir """
+	""" --------------------------------END------------------------------------- """
+
 	@frappe.whitelist()
 	def validate_half_day_leave(self):  	
 		from akf_hrms.utils.leave_policy import verify_half_day_leave
