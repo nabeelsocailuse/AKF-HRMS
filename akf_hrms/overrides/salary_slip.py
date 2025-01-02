@@ -797,8 +797,17 @@ class SalarySlip(TransactionBase):
 
 		if self.salary_structure:
 			self.calculate_component_amounts("deductions")
+		
+		# Nabeel Saleem, 02-01-2024
+		if(hasattr(self, "custom_deduction_end_date")):
+			posting_date = self.posting_date
+			self.posting_date = self.custom_deduction_end_date
+			set_loan_repayment(self)
+			self.posting_date = posting_date
+		else:
+			set_loan_repayment(self)
+		# End
 
-		set_loan_repayment(self)
 
 		self.set_precision_for_component_amounts()
 		self.set_net_pay()
@@ -906,7 +915,7 @@ class SalarySlip(TransactionBase):
 	def compute_income_tax_breakup(self):
 		if not self.payroll_period:
 			return
-
+		
 		self.standard_tax_exemption_amount = 0
 		self.tax_exemption_declaration = 0
 		self.deductions_before_tax_calculation = 0
@@ -1093,11 +1102,15 @@ class SalarySlip(TransactionBase):
 			self._salary_structure_doc = frappe.get_cached_doc("Salary Structure", self.salary_structure)
 
 		self.add_structure_components(component_type)
-		self.add_additional_salary_components(component_type)
+		# Added by Nabeel Saleem
+		flag = self.add_additional_salary_components(component_type)
 		if component_type == "earnings":
 			self.add_employee_benefits()
 		else:
-			self.add_tax_components()
+			# Updated by Nabeel Saleem
+			self.add_tax_components(flag)
+			# orginal method
+			# self.add_tax_components()
 
 	def add_structure_components(self, component_type):
 		self.data, self.default_data = self.get_data_for_eval()
@@ -1264,7 +1277,7 @@ class SalarySlip(TransactionBase):
 		additional_salaries = get_additional_salaries(
 			self.employee, self.start_date, self.end_date, component_type
 		)
-
+		flag = False # Added by Nabeel Saleem
 		for additional_salary in additional_salaries:
 			self.update_component_row(
 				get_salary_component_data(additional_salary.component),
@@ -1273,32 +1286,39 @@ class SalarySlip(TransactionBase):
 				additional_salary,
 				is_recurring=additional_salary.is_recurring,
 			)
+			# Added by Nabeel Saleem
+			if(additional_salary.component == "Income Tax"): flag = True
+		# Added by Nabeel Saleem
+		return flag
 
-	def add_tax_components(self):
+	def add_tax_components(self, flag=False):
 		# Calculate variable_based_on_taxable_salary after all components updated in salary slip
 		tax_components, self.other_deduction_components = [], []
 		for d in self._salary_structure_doc.get("deductions"):
 			if d.variable_based_on_taxable_salary == 1 and not d.formula and not flt(d.amount):
-				tax_components.append(d.salary_component)
+				if(not flag): tax_components.append(d.salary_component) # Nabeel Saleem
+				# tax_components.append(d.salary_component)
 			else:
-				self.other_deduction_components.append(d.salary_component)
-
-		# consider manually added tax component
+				if(not flag): self.other_deduction_components.append(d.salary_component)
+				# self.other_deduction_components.append(d.salary_component)
+		
+  		# consider manually added tax component
 		if not tax_components:
 			tax_components = [
 				d.salary_component for d in self.get("deductions") if d.variable_based_on_taxable_salary
-			]
-
+			] if(not flag) else [] # Nabeel Saleem
+		
 		if self.is_new() and not tax_components:
-			tax_components = self.get_tax_components()
-			frappe.msgprint(
-				_(
-					"Added tax components from the Salary Component master as the salary structure didn't have any tax component."
-				),
-				indicator="blue",
-				alert=True,
-			)
-
+			if(not flag): # Nabeel Saleem
+				tax_components = self.get_tax_components() 
+				frappe.msgprint(
+					_(
+						"Added tax components from the Salary Component master as the salary structure didn't have any tax component."
+					),
+					indicator="blue",
+					alert=True,
+				)
+		tax_components = ['Income Tax']
 		if tax_components and self.payroll_period and self.salary_structure:
 			self.tax_slab = self.get_income_tax_slabs()
 			self.compute_taxable_earnings_for_year()
@@ -1376,7 +1396,7 @@ class SalarySlip(TransactionBase):
 			):
 				component_row = d
 				break
-
+		
 		if additional_salary and additional_salary.overwrite:
 			# Additional Salary with overwrite checked, remove default rows of same component
 			self.set(
@@ -1389,7 +1409,7 @@ class SalarySlip(TransactionBase):
 					or d == component_row
 				],
 			)
-
+		
 		if not component_row:
 			if not (amount or default_amount) and remove_if_zero_valued:
 				return
@@ -1523,7 +1543,6 @@ class SalarySlip(TransactionBase):
 					self.payroll_period.start_date
 				)
 			)
-
 		return income_tax_slab_doc
 
 	def get_taxable_earnings_for_prev_period(self, start_date, end_date, allow_tax_exemption=False):
