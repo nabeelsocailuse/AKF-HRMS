@@ -19,6 +19,7 @@
   "salary_structure_assignment",
   "additional_salary",
   "employee_shift",
+  "company",
   "column_break_l4dw",
   "employee_info_html",
   "detail_of_overtime_section",
@@ -251,12 +252,19 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Employee Shift"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Employee Company"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-30 15:44:39.938892",
+ "modified": "2025-01-02 11:59:15.629798",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Overtime Claim Form",

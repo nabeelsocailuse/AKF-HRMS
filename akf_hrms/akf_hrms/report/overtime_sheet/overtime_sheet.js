@@ -12,6 +12,27 @@ frappe.query_reports["Overtime Sheet"] = {
 			"reqd": 1
 		},
 		{
+			"fieldname":"year",
+			"label": __("Year"),
+			"fieldtype": "Select",
+			"options": [
+                { value: "2024", label: __("2024") },
+                { value: "2025", label: __("2025") },
+                { value: "2026", label: __("2026") },
+                { value: "2027", label: __("2027") },
+                { value: "2028", label: __("2028") },
+                { value: "2029", label: __("2029") },
+                { value: "2030", label: __("2030") },
+                { value: "2031", label: __("2031") },
+                { value: "2032", label: __("2032") },
+                { value: "2033", label: __("2033") },
+                { value: "2034", label: __("2034") },
+                { value: "2035", label: __("2035") }
+            ],
+			"default": "2025",
+			"reqd": 1
+		},
+		{
 			"fieldname":"month",
 			"label": __("Period Covered"),
 			"fieldtype": "Select",

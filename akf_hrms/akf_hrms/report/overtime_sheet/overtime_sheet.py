@@ -53,6 +53,7 @@ def get_data(filters):
     """.format(condition=conditions)
 
     # Fetch the data and process in a single function
+    frappe.msgprint(f"{emp_record}")
     raw_data = frappe.db.sql(emp_record, filters, as_dict=True)
     
     # Initialize totals and data list
@@ -114,8 +115,10 @@ def get_data(filters):
 
 def get_conditions(filters):
 	conditions = ""
-	# if filters.get("company"):
-	# 	conditions += " and company = %(company)s"
+	if filters.get("company"):
+		conditions += " and company = %(company)s"
+	if filters.get("year"):
+		conditions += " and year = %(year)s"
 	if filters.get("month"):
 		conditions += " and month = %(month)s"
 	
