@@ -53,7 +53,6 @@ def get_data(filters):
     """.format(condition=conditions)
 
     # Fetch the data and process in a single function
-    frappe.msgprint(f"{emp_record}")
     raw_data = frappe.db.sql(emp_record, filters, as_dict=True)
     
     # Initialize totals and data list
