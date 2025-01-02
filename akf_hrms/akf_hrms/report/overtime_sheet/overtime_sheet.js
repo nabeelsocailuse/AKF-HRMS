@@ -3,59 +3,40 @@
 
 frappe.query_reports["Overtime Sheet"] = {
 	"filters": [
-		// {
-		// 	"fieldname":"company",
-		// 	"label": __("Company"),
-		// 	"fieldtype": "Link",
-		// 	"options": "Company",
-		// 	"default": frappe.defaults.get_user_default("Company"),
-		// 	"reqd": 1
-		// },
-		// {
-		// 	"fieldname":"from_date",
-		// 	"label": __("From Date"),
-		// 	"fieldtype": "Date",
-		// 	"reqd": 1
-		// },
-		// {
-		// 	"fieldname":"to_date",
-		// 	"label": __("To Date"),
-		// 	"fieldtype": "Date",
-		// 	"reqd": 1
-		// },
-		// {
-		// 	"fieldname":"from_time",
-		// 	"label": __("From Time"),
-		// 	"fieldtype": "Time"
-		// },
-		// {
-		// 	"fieldname":"to_time",
-		// 	"label": __("To Time"),
-		// 	"fieldtype": "Time"
-		// },
-		// {
-		// 	"fieldname":"branch",
-		// 	"label": __("Branch"),
-		// 	"fieldtype": "Link",
-		// 	"options": "Branch"
-		// },
-		// {
-		// 	"fieldname":"department",
-		// 	"label": __("Department"),
-		// 	"fieldtype": "Link",
-		// 	"options": "Department"
-		// },
-		// {
-		// 	"fieldname":"employee",
-		// 	"label": __("Employee"),
-		// 	"fieldtype": "Link",
-		// 	"options": "Employee"
-		// },
-		// {
-		// 	"fieldname":"status",
-		// 	"label": __("Status"),
-		// 	"fieldtype": "Select",
-		// 	"options": "\nPending\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the Executive Director\nRejected by the Executive Director"
-		// }
+		{
+			"fieldname":"company",
+			"label": __("Company"),
+			"fieldtype": "Link",
+			"options": "Company",
+			"default": frappe.defaults.get_user_default("Company"),
+			"reqd": 1
+		},
+		{
+			"fieldname":"month",
+			"label": __("Period Covered"),
+			"fieldtype": "Select",
+			"options": [
+                { value: "January", label: __("January") },
+                { value: "February", label: __("February") },
+                { value: "March", label: __("March") },
+                { value: "April", label: __("April") },
+                { value: "May", label: __("May") },
+                { value: "June", label: __("June") },
+                { value: "July", label: __("July") },
+                { value: "August", label: __("August") },
+                { value: "September", label: __("September") },
+                { value: "October", label: __("October") },
+                { value: "November", label: __("November") },
+                { value: "December", label: __("December") }
+            ],
+			"reqd": 1
+		},
 	],
+	onload: function (report) {
+        // Get the current month name
+        const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+
+        // Set the default value for the month filter
+        frappe.query_report.set_filter_value("month", currentMonth);
+    }
 };
