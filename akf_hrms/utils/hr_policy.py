@@ -23,7 +23,7 @@
 6. Any employee can adjust his late sittings in office/ In-station duties against upcoming late arrivals within a week. Late sitting should be
 """
 import frappe, math
-from frappe.utils import (flt, month_diff, add_months, getdate, get_datetime, add_to_date)
+from frappe.utils import (flt, month_diff, add_months, getdate, get_datetime, add_to_date, get_first_day, get_last_day, date_diff)
 from datetime import datetime, timedelta
 from dateutil import relativedelta
 
@@ -696,3 +696,87 @@ def get_leave_without_pay_count(self=None):
     if(lwp): 
         return (-1 * lwp[0][0])
     return 0
+
+""" 
+    > Salary Period: [21-Nov, 20-Dec]. 
+    > If salary disburse at 20-Dec. 
+    > But new employee joins at 21-Dec pay his arrears through Additional Salary. 
+"""
+def record_employee_arrears_draft_additional_salary(self=None):
+    
+    def no_salary_slip():
+        if(frappe.db.exists('Salary Slip', 
+            {'docstatus': ['<', 2], 'employee': self.employee, 'company':self.company}
+        )):
+            return False
+        return True
+            
+    def validate_date_of_joining():
+        date_of_joining = getdate(self.date_of_joining)
+        payroll_start_date = getdate(self.date_of_joining).replace(day=21)
+        
+        if(date_of_joining>=payroll_start_date):
+            create_additional_salary()
+        else:
+            remove_additional_salary()
+    
+    def get_args(): 
+        return {
+            'employee': self.employee,
+            'docstatus': 0,
+            'salary_component': "Arrears",
+            'company': self.company,
+            'overwrite_salary_structure_amount': 0,
+        }
+    
+    def get_no_of_days():
+        return date_diff(get_last_day(self.date_of_joining), self.date_of_joining) + 1
+    
+    def create_additional_salary():
+        payroll_date = get_first_day(add_to_date(self.date_of_joining, months=1))
+        args = get_args()
+        name = frappe.db.get_value('Additional Salary', args, 'name')
+        if(name):
+            doc = frappe.get_doc('Additional Salary', name)
+            doc.amount = get_no_of_days()
+            doc.flags.ignore_permissions=1
+            doc.save()
+        else:
+            args.update({
+                'doctype': 'Additional Salary',
+                'payroll_date': payroll_date,
+                'amount': get_no_of_days(),
+            })
+            doc = frappe.get_doc(args)
+            doc.flags.ignore_permissions=1
+            doc.insert()
+    
+    def remove_additional_salary():
+        args = get_args()
+        name = frappe.db.get_value('Additional Salary', args, 'name')
+        if(name):
+            frappe.delete_doc('Additional Salary', name)
+    
+    if(self.status=='Active' and no_salary_slip()): 
+        validate_date_of_joining()
+        
+
+def submit_employee_additional_salary_arrears(self=None):
+    def get_args(): 
+        return {
+            'payroll_date': [">", self.from_date],
+            'docstatus': 0,
+            'employee': self.employee,
+            'salary_component': "Arrears",
+            'company': self.company,
+            'overwrite_salary_structure_amount': 0,
+        }
+    args = get_args()
+    for d in frappe.db.get_list('Additional Salary', filters=args, fields=["*"]):
+        doc = frappe.get_doc('Additional Salary', d.name)
+        doc.amount  = doc.amount * self.custom_per_day
+        doc.flags.ignore_permissions
+        doc.save()
+        doc.submit()
+        
+        

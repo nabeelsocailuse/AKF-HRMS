@@ -24,7 +24,7 @@ class InactiveEmployeeStatusError(frappe.ValidationError):
 
 # Nabeel Saleem, 03-12-2024
 from akf_hrms.utils.employee_utils import verify_identity_card_no, set_base64_image
-
+from akf_hrms.utils.hr_policy import record_employee_arrears_draft_additional_salary
 class Employee(NestedSet):
 	nsm_parent_field = "reports_to"
 
@@ -57,6 +57,7 @@ class Employee(NestedSet):
 		verify_identity_card_no(self)
 		# set_base64_image(self)
 		# End, Nabeel Saleem, 03-12-2024
+		record_employee_arrears_draft_additional_salary(self)
 	
 	def after_rename(self, old, new, merge):
 		self.db_set("employee", new)

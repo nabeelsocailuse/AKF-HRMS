@@ -27,25 +27,23 @@ class XAdditionalSalary(AdditionalSalary):
                 frappe.throw("You have already applied for the Marriage Allowance and cannot apply again.")
             # end, nabeel, [18-12-2024]
             
-        employee_type = frappe.db.get_value("Employee", {"name": self.employee, "status": "Active"}, "employment_type")
-        
-        if employee_type:
-            if employee_type == "Permanent":
-                gross_salary = frappe.db.get_value(
-                        "Salary Structure Assignment",
-                        {"employee": ["like", f"{self.employee}%"], "docstatus": 1},
-                        "base"
-                    )
+            employee_type = frappe.db.get_value("Employee", {"name": self.employee, "status": "Active"}, "employment_type")
+            if (employee_type):
+                if employee_type == "Permanent":
+                    gross_salary = frappe.db.get_value(
+                            "Salary Structure Assignment",
+                            {"employee": ["like", f"{self.employee}%"], "docstatus": 1},
+                            "base"
+                        )
 
-                if gross_salary:
-                    if float(gross_salary) < float(self.amount):
-                        frappe.throw(f"The requested amount exceeds the gross salary PKR: {gross_salary}")
+                    if gross_salary:
+                        if float(gross_salary) < float(self.amount):
+                            frappe.throw(f"The requested amount exceeds the gross salary PKR: {gross_salary}")
+                        else:
+                            pass
                     else:
-                        pass
-                else:
-                    frappe.throw("No salary structure found for this employee. Please ensure the employee has a valid salary structure.")
-            elif(self.salary_component == "Marriage Allowance"):
-                frappe.throw("You are not eligible to apply for the Marriage Allowance as you are not a permanent employee.")
-                
-        else:
-            frappe.throw("Employee type could not be determined. Please check the employee record.")
+                        frappe.throw("No salary structure found for this employee. Please ensure the employee has a valid salary structure.")
+                elif(self.salary_component == "Marriage Allowance"):
+                    frappe.throw("You are not eligible to apply for the Marriage Allowance as you are not a permanent employee.")
+            else:
+                frappe.throw("Employee type must be permanent of employee.")
