@@ -464,6 +464,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 				message=f"Error in casual leave validation: {str(e)}",
 				title="Casual Leave Validation Error"
 			)
+			raise
 			# frappe.throw(
 			# 	msg="Error validating casual leaves. Please contact system administrator.",
 			# 	title="Validation Error"
@@ -499,6 +500,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 				message=f"Error in short leave validation: {str(e)}",
 				title="Short Leave Validation Error"
 			)
+			raise
 			# frappe.throw(
 			# 	msg="Error validating short leaves. Please contact system administrator.",
 			# 	title="Validation Error"
@@ -536,6 +538,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 				message=f"Error in half day leave validation: {str(e)}",
 				title="Half Day Leave Validation Error"
 			)
+			raise
 			# frappe.throw(
 			# 	msg="Error validating half day leaves. Please contact system administrator.",
 			# 	title="Validation Error"
