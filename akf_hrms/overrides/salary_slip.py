@@ -1527,12 +1527,14 @@ class SalarySlip(TransactionBase):
 		income_tax_slab = self._salary_structure_assignment.income_tax_slab
 
 		if not income_tax_slab:
-			frappe.throw(
+			""" frappe.throw(
 				_("Income Tax Slab not set in Salary Structure Assignment: {0}").format(
 					self._salary_structure_assignment
 				)
-			)
-
+			) """
+			frappe.throw(
+			_("Income Tax Slab not set in Salary Structure Assignment."))
+		
 		income_tax_slab_doc = frappe.get_cached_doc("Income Tax Slab", income_tax_slab)
 		if income_tax_slab_doc.disabled:
 			frappe.throw(_("Income Tax Slab: {0} is disabled").format(income_tax_slab))
