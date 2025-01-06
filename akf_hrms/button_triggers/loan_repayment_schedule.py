@@ -10,13 +10,13 @@ def update_schedule(docname, row_number):
     doc = frappe.get_doc("Loan Repayment Schedule", docname)
     check = False
     for row in doc.get("repayment_schedule"):
-        if int(row.idx) == int(row_number) and row.custom_skipped:
+        if int(row.idx) == int(row_number) and row.custom_skipped_loan_installment:
             frappe.msgprint(f"This installment-{row_number} has been already skipped!")
             
-        if int(row.idx) == int(row_number) and not row.custom_skipped:
+        if int(row.idx) == int(row_number) and not row.custom_skipped_loan_installment:
             payment_date = row.payment_date
             next_payment_date = add_single_month(payment_date)
-            row.custom_skipped = 1
+            row.custom_skipped_loan_installment = 1
             row.custom_skipped_date = row.payment_date
             row.payment_date = next_payment_date
             check = True

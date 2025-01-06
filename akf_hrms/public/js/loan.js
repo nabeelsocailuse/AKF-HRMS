@@ -1,4 +1,28 @@
 frappe.ui.form.on("Loan", {
+  applicant: function(frm){
+    if(frm.doc.applicant_type == "Employee") {
+      frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+            doctype: 'Employee',
+            fieldname: 'branch',
+            filters: {
+                employee: frm.doc.applicant
+            }
+        },
+        callback: function(response) {
+            if (response.message) {
+                const branch = response.message.branch;
+                frm.set_value("branch", branch);
+                console.log('Employee branhc:', branch);
+            } else {
+                console.log('No record found');
+            }
+        }
+    });
+    
+    }
+  },
   loan_category: function (frm) {
     if (frm.doc.loan_category == "Term Loan(Salary Advance)") {
       frm.set_value("repay_from_salary", 1);

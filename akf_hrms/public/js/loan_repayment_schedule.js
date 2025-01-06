@@ -22,29 +22,29 @@ frappe.ui.form.on("Loan Repayment Schedule", {
       });
     }
 
-    var check = false;
-    frappe.call({
-      method: "akf_hrms.button_triggers.loan_repayment_schedule.skip_status",
-      args: {
-        docname: frm.docname,
-      },
-      async: false,
-      callback: function (r) {
-        check = r.message;
-      },
-    });
+    // var check = false;
+    // frappe.call({
+    //   method: "akf_hrms.button_triggers.loan_repayment_schedule.skip_status",
+    //   args: {
+    //     docname: frm.docname,
+    //   },
+    //   async: false,
+    //   callback: function (r) {
+    //     check = r.message;
+    //   },
+    // });
 
-    if (frm.doc.docstatus == 1 && check) {
-      frm.add_custom_button(__("Revert All Changes"), function () {
-        frappe.call({
-          method: "akf_hrms.button_triggers.loan_repayment_schedule.revert",
-          args: {
-            docname: frm.docname,
-          },
-          async: false,
-          callback: function (r) {},
-        });
-      });
-    }
+    // if (frm.doc.docstatus == 1 && check) {
+    //   frm.add_custom_button(__("Revert All Changes"), function () {
+    //     frappe.call({
+    //       method: "akf_hrms.button_triggers.loan_repayment_schedule.revert",
+    //       args: {
+    //         docname: frm.docname,
+    //       },
+    //       async: false,
+    //       callback: function (r) {},
+    //     });
+    //   });
+    // }
   },
 });
