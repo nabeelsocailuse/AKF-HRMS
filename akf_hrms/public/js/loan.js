@@ -1,5 +1,5 @@
 frappe.ui.form.on("Loan", {
-  applicant: function(frm){
+  onload: function(frm){
     if(frm.doc.applicant_type == "Employee") {
       frappe.call({
         method: 'frappe.client.get_value',
