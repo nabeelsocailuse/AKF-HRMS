@@ -27,25 +27,32 @@ class LoanApplication(Document):
 	def validate(self):
 		self.set_pledge_amount()
 		self.set_loan_amount()
+		self.validate_permanent_employee()	# Mubashir Bashir 03-01-2024
+		self.validate_guaranters()	        # Mubashir Bashir 03-01-2024
 		self.validate_loan_amount()
 
 		if self.is_term_loan:
 			self.validate_repayment_method()
 
 		self.validate_loan_product()
+		self.set_branch() #mubarrim 06-01-2025
 
 		self.get_repayment_details()
 		self.check_sanctioned_amount_limit()
 		self.validations()
 		self.validate_both_guarantor_cannot_be_same() # nabeel saleem, 19-12-2024
 		self.validate_loan_amount_not_exceed_to_max_loan_amount() # nabeel saleem, 19-12-2024
-		self.check_overall_loan_limit()		# Mubashir Bashir 13-11-2024
+		self.check_total_loan_budget()		# Mubashir Bashir 13-11-2024
 		self.advance_salary()
 	
 	# Mubashir Bashir Start 13-11-2024
 	def on_submit(self):
-		self.check_overall_loan_limit()
+		self.check_total_loan_budget()
 	# Mubashir Bashir End 13-11-2024
+
+	def set_branch(self): #mubarrim 06-01-2025
+		if(self.applicant_type == "Employee"):
+			self.branch=frappe.db.get_value("Employee",self.applicant,"branch")
 
 
 	def validate_repayment_method(self):
@@ -100,9 +107,7 @@ class LoanApplication(Document):
 			)
 
 	def advance_salary(self):
-		# frappe.msgprint("Advanced Salary!")
 		required_days = 10
-		permanent_employee = frappe.db.get_value("Employee", {"name": self.applicant}, "employment_type")
 
 		if frappe.db.exists("Loan Application", {
 			"applicant": self.applicant, 
@@ -112,125 +117,36 @@ class LoanApplication(Document):
 			frappe.throw("You have already applied for Advanced Salary and cannot apply again.")
 			return
 
-		if permanent_employee == "Permanent":
-			if self.loan_product == "Advance Salary":
-				today = datetime.now()
-
-				if self.posting_date:
-					try:
-						posting_date = datetime.strptime(self.posting_date.strftime('%Y-%m-%d'), '%Y-%m-%d')
-						current_month = today.month
-						current_year = today.year
-
-						if posting_date.month == current_month and posting_date.year == current_year:
-							if posting_date.day > required_days:
-								gross_salary = frappe.db.get_value(
-									"Salary Structure Assignment",
-									{"employee": ["like", f"{self.applicant}%"], "docstatus": 1},
-									"base"
-								)
-
-								if gross_salary:
-									assigned_gross_salary = gross_salary / 2
-									if float(assigned_gross_salary) < float(self.loan_amount):
-										frappe.throw(f"The requested amount exceeds the limit PKR: {assigned_gross_salary}")
-										return
-							else:
-								frappe.throw("Cannot apply for advanced salary before the 10th of the current month.")
-						else:
-							frappe.throw("Advanced Salary Application must be within the current month.")
-					except ValueError:
-						frappe.throw("Posting date is not in the correct format. Please use 'YYYY-MM-DD'.")
-				else:
-					frappe.throw("Posting date is required.")
-
-		# def validations(self):		# Mubashir Bashir Start 13-11-2024
-		if self.loan_product == "Vehicle Loan" or self.loan_product == "Bike Loan":
-
+		if self.loan_product == "Advance Salary":
 			today = datetime.now()
-			required_experience_days = 730  
 
-			permanent_employee = frappe.db.get_value("Employee", {"name": self.applicant}, "employment_type")
+			if self.posting_date:
+				try:
+					posting_date = datetime.strptime(self.posting_date, '%Y-%m-%d') if isinstance(self.posting_date, str) else self.posting_date
+					current_month = today.month
+					current_year = today.year
 
-			if self.loan_product == "Vehicle Loan" and frappe.db.exists("Loan Application", {
-				"applicant": self.applicant, 
-				"docstatus": 1
-			}):
-				frappe.throw("You have already applied for Loan cannot apply again.")
-				return
+					if posting_date.month == current_month and posting_date.year == current_year:
+						if posting_date.day > required_days:
+							gross_salary = frappe.db.get_value(
+								"Salary Structure Assignment",
+								{"employee": ["like", f"{self.applicant}%"], "docstatus": 1},
+								"base"
+							)
 
-			if permanent_employee == "Permanent":
-				guarantor_1 = self.custom_guarantor_of_loan_application
-				date_of_joining_1 = frappe.db.get_value("Employee", {"name": guarantor_1}, "date_of_joining")
-
-				guarantor_2 = self.custom_guarantor_2_of_loan_application
-				date_of_joining_2 = frappe.db.get_value("Employee", {"name": guarantor_2}, "date_of_joining")
-													
-				# Check if the guarantors have existing loan applications
-				if frappe.db.exists("Loan Application", {
-					"applicant": guarantor_1,
-					"docstatus": 1
-				}):
-					frappe.throw(f"Guarantor {guarantor_1} already has an active loan application.")
-				
-				if frappe.db.exists("Loan Application", {
-					"applicant": guarantor_2,
-					"docstatus": 1
-				}):
-					frappe.throw(f"Guarantor {guarantor_2} already has an active loan application.")
-
-				# Check if the guarantors are already guarantors in other loan applications
-				if frappe.db.exists("Loan Application", {
-					"custom_guarantor_of_loan_application": guarantor_1,
-					"docstatus": 1
-				}) or frappe.db.exists("Loan Application", {
-					"custom_guarantor_2_of_loan_application": guarantor_1,
-					"docstatus": 1
-				}):
-					frappe.throw(f"Guarantor {guarantor_1} is already acting as a guarantor for another loan application.")
-
-				if frappe.db.exists("Loan Application", {
-					"custom_guarantor_of_loan_application": guarantor_2,
-					"docstatus": 1
-				}) or frappe.db.exists("Loan Application", {
-					"custom_guarantor_2_of_loan_application": guarantor_2,
-					"docstatus": 1
-				}):
-					frappe.throw(f"Guarantor {guarantor_2} is already acting as a guarantor for another loan application.")
-
-				# Mubashir Bashir End 13-11-2024
-
-
-				# Convert date_of_joining to datetime if it's a date
-				if isinstance(date_of_joining_1, datetime):
-					date_of_joining_1_dt = date_of_joining_1
-				else:
-					date_of_joining_1_dt = datetime.combine(date_of_joining_1, datetime.min.time())
-
-				if isinstance(date_of_joining_2, datetime):
-					date_of_joining_2_dt = date_of_joining_2
-				else:
-					date_of_joining_2_dt = datetime.combine(date_of_joining_2, datetime.min.time())
-
-				experience_valid_1 = date_of_joining_1_dt and (today - date_of_joining_1_dt).days >= required_experience_days
-				experience_valid_2 = date_of_joining_2_dt and (today - date_of_joining_2_dt).days >= required_experience_days
-
-				if not experience_valid_1:
-					if not date_of_joining_1:
-						frappe.throw(f"Guarantor {guarantor_1} does not have a valid date of joining.")
+							if gross_salary:
+								assigned_gross_salary = gross_salary / 2
+								if float(assigned_gross_salary) < float(self.loan_amount):
+									frappe.throw(f"The requested amount exceeds the limit PKR: {assigned_gross_salary}")
+									return
+						else:
+							frappe.throw("Cannot apply for advanced salary before the 10th of the current month.")
 					else:
-						frappe.throw(f"Guarantor {guarantor_1} should have at least 2 years of experience.")
-
-				if not experience_valid_2:
-					if not date_of_joining_2:
-						frappe.throw(f"Guarantor {guarantor_2} does not have a valid date of joining.")
-					else:
-						frappe.throw(f"Guarantor {guarantor_2} should have at least 2 years of experience.")
-
-				# if experience_valid_1 and experience_valid_2:
-				# 	frappe.throw("Both guarantors have the required experience.")
+						frappe.throw("Advanced Salary Application must be within the current month.")
+				except ValueError:
+					frappe.throw("Posting date is not in the correct format. Please use 'YYYY-MM-DD'.")
 			else:
-				frappe.throw("Only Permanent Employees are Eligible")
+				frappe.throw("Posting date is required.")
 	
 	# nabeel saleem, 19-12-2024
 	def validate_both_guarantor_cannot_be_same(self):
@@ -244,7 +160,87 @@ class LoanApplication(Document):
 			if(self.custom_maximum_allowed_loan and self.loan_amount):
 				if(float(self.loan_amount) > float(self.custom_maximum_allowed_loan)):
 					frappe.throw(f"Loan amount: <b>{fmt_money(self.loan_amount)}</b> is exceeding the maximum allowed loan: <b>{fmt_money(self.custom_maximum_allowed_loan)}</b>.", title="Loan Conflict")
-            
+	
+	# Mubashir Bashir Start 03-01-2025
+	def validate_permanent_employee(self):
+		loan_type = ['Advance Salary', 'Vehicle Loan', 'Bike Loan']
+		applicant_employment_type = frappe.db.get_value("Employee", {"name": self.applicant}, "employment_type")
+		if self.loan_product in loan_type and applicant_employment_type != 'Permanent':
+			frappe.throw("Only Permanent Employees are eligible for this Loan")
+
+	# Mubashir Bashir Start 03-01-2025
+	def validate_guaranters(self):
+		if not (self.custom_guarantor_of_loan_application and self.custom_guarantor_2_of_loan_application):
+			return
+			
+		today = datetime.now()
+		required_experience_days = 730  
+
+		guarantor_1 = self.custom_guarantor_of_loan_application
+		date_of_joining_1 = frappe.db.get_value("Employee", {"name": guarantor_1}, "date_of_joining")
+
+		guarantor_2 = self.custom_guarantor_2_of_loan_application
+		date_of_joining_2 = frappe.db.get_value("Employee", {"name": guarantor_2}, "date_of_joining")
+											
+		# Check if the guarantors have existing loan applications
+		if frappe.db.exists("Loan Application", {
+			"applicant": guarantor_1,
+			"docstatus": 1
+		}):
+			frappe.throw(f"Guarantor {guarantor_1} already has an active loan application.")
+
+		if frappe.db.exists("Loan Application", {
+			"applicant": guarantor_2,
+			"docstatus": 1
+		}):
+			frappe.throw(f"Guarantor {guarantor_2} already has an active loan application.")
+
+		# Check if the guarantors are already guarantors in other loan applications
+		if frappe.db.exists("Loan Application", {
+			"custom_guarantor_of_loan_application": guarantor_1,
+			"docstatus": 1
+		}) or frappe.db.exists("Loan Application", {
+			"custom_guarantor_2_of_loan_application": guarantor_1,
+			"docstatus": 1
+		}):
+			frappe.throw(f"Guarantor {guarantor_1} is already acting as a guarantor for another loan application.")
+
+		if frappe.db.exists("Loan Application", {
+			"custom_guarantor_of_loan_application": guarantor_2,
+			"docstatus": 1
+		}) or frappe.db.exists("Loan Application", {
+			"custom_guarantor_2_of_loan_application": guarantor_2,
+			"docstatus": 1
+		}):
+			frappe.throw(f"Guarantor {guarantor_2} is already acting as a guarantor for another loan application.")
+
+		# Convert date_of_joining to datetime if it's a date
+		if isinstance(date_of_joining_1, datetime):
+			date_of_joining_1_dt = date_of_joining_1
+		else:
+			date_of_joining_1_dt = datetime.combine(date_of_joining_1, datetime.min.time())
+
+		if isinstance(date_of_joining_2, datetime):
+			date_of_joining_2_dt = date_of_joining_2
+		else:
+			date_of_joining_2_dt = datetime.combine(date_of_joining_2, datetime.min.time())
+
+		experience_valid_1 = date_of_joining_1_dt and (today - date_of_joining_1_dt).days >= required_experience_days
+		experience_valid_2 = date_of_joining_2_dt and (today - date_of_joining_2_dt).days >= required_experience_days
+
+		if not experience_valid_1:
+			if not date_of_joining_1:
+				frappe.throw(f"Guarantor {guarantor_1} does not have a valid date of joining.")
+			else:
+				frappe.throw(f"Guarantor {guarantor_1} should have at least 2 years of experience.")
+
+		if not experience_valid_2:
+			if not date_of_joining_2:
+				frappe.throw(f"Guarantor {guarantor_2} does not have a valid date of joining.")
+			else:
+				frappe.throw(f"Guarantor {guarantor_2} should have at least 2 years of experience.")
+
+
 	def validations(self):	# Mubashir Bashir Start 13-11-2024
 		# List of eligible grades for loan applications
 		eligible_grades = [
@@ -328,13 +324,14 @@ class LoanApplication(Document):
 			if applicant_experience_days < required_experience_days:
 				experience_years = required_experience_days // 365
 				frappe.throw(f"Applicant should have at least {experience_years} years of experience for this loan.")
-			
-	def check_overall_loan_limit(self):
+
+	# Mubashir Bashir Start 03-01-2025		
+	def check_total_loan_budget(self):
 		if self.loan_product == "Vehicle Loan" or self.loan_product == "Bike Loan":
 			loan_product_doc = frappe.get_doc("Loan Product", self.loan_product)
 
 			latest_fiscal_year = None
-			latest_overall_loan_limit = 0
+			latest_total_loan_budget = 0
 
 			for loan_limit_row in loan_product_doc.custom_loan_limit:
 				fiscal_year_doc = frappe.get_doc("Fiscal Year", loan_limit_row.fiscal_year)
@@ -343,9 +340,11 @@ class LoanApplication(Document):
 
 				if not latest_fiscal_year or to_date > latest_fiscal_year:
 					latest_fiscal_year = to_date
-					latest_overall_loan_limit = flt(loan_limit_row.overall_loan_limit)
+					latest_total_loan_budget = flt(loan_limit_row.total_loan_budget)
+				
+				# frappe.throw(f'fiscal year {latest_fiscal_year}, total loan budget {latest_total_loan_budget}, loan_per_emp {loan_limit_row.max_loan_per_emp}')
 
-			if not latest_overall_loan_limit:
+			if not latest_total_loan_budget:
 				frappe.throw("No total loan limit set for the latest fiscal year.")
 
 			total_loan_amount = frappe.db.sql("""
@@ -357,8 +356,8 @@ class LoanApplication(Document):
 			total_loan_amount = flt(self.loan_amount)
 			total_loan_amount += flt(self.loan_amount) if self.loan_amount else 0.0
 
-			if total_loan_amount > latest_overall_loan_limit:
-				frappe.throw(f"The loan amount for {self.loan_product} applications exceeds the total limit of {latest_overall_loan_limit}.")
+			if total_loan_amount > latest_total_loan_budget:
+				frappe.throw(f"The loan amount for {self.loan_product} applications exceeds the total limit of {latest_total_loan_budget}.")
 	# Mubashir Bashir End 14-11-2024
 
 

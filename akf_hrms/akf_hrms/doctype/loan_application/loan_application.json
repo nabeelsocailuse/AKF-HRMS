@@ -9,6 +9,7 @@
   "applicant_type",
   "applicant",
   "applicant_name",
+  "branch",
   "column_break_2",
   "company",
   "posting_date",
@@ -210,12 +211,19 @@
    "options": "Loan Application",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Branch",
+   "options": "Branch"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-13 12:57:54.159837",
+ "modified": "2025-01-06 17:48:12.509660",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Loan Application",
