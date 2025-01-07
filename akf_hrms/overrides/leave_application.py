@@ -389,6 +389,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 				FROM `tabLeave Application`
 				WHERE 
 					docstatus != 2
+					AND workflow_state != 'Rejected'
 					AND employee = %s
 					AND company = %s
 					AND leave_type = %s
@@ -510,7 +511,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 	def half_day_leave_one_in_a_month(self):
 		"""Validates that an employee doesn't exceed 1 half day leave in a payroll period"""
 		from akf_hrms.patches.skip_validations import skip
-		if skip() or self.leave_type != "Half Day":
+		if skip() or self.leave_type != "Half Day Leave":
 			return
 		if self.leave_type != "Half Day Leave":
 			return
