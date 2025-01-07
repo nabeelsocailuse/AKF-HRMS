@@ -98,11 +98,11 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_value("Leave Type", self.leave_type, "is_optional_leave"):
 			self.validate_optional_leave()
 		self.validate_applicable_after()
-		# self.validate_three_casual_leaves_in_current_month()
-		self.short_leave_one_in_a_month()
-		self.half_day_leave_one_in_a_month()
-		self.short_leave_cannot_exceed_3_hours()
-		self.half_day_leave_cannot_exceed_4_hours()
+		self.validate_three_casual_leaves_in_current_month() # Mubashir Bashir 1-1-2025
+		self.short_leave_one_in_a_month() # Mubashir Bashir 1-1-2025
+		self.half_day_leave_one_in_a_month() # Mubashir Bashir 1-1-2025
+		self.short_leave_cannot_exceed_3_hours() # Mubashir Bashir 1-1-2025
+		self.half_day_leave_cannot_exceed_4_hours() # Mubashir Bashir 1-1-2025
 		self.validate_half_day_leave()
 		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
 		self.record_application_state() # Nabeel Saleem, 29-11-2024
