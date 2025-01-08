@@ -11,6 +11,12 @@ frappe.query_reports["Attendance Leave Summary Report"] = {
 			"reqd": 1
 		},		
 		{
+			"fieldname":"branch",
+			"label": __("Branch"),
+			"fieldtype": "Link",
+			"options": "Branch"
+		},
+		{
 			"fieldname":"department",
 			"label": __("Department"),
 			"fieldtype": "Link",
@@ -83,7 +89,7 @@ frappe.query_reports["Attendance Leave Summary Report"] = {
 				method: "frappe.client.get_value",
 				args: {
 					doctype: "Employee",
-					fieldname: ["name", "designation", "department", "employment_type"],
+					fieldname: ["name", "designation", "department", "branch", "employment_type"],
 					filters: { user_id: frappe.session.user }
 				},
 				callback: function(response) {
@@ -91,6 +97,7 @@ frappe.query_reports["Attendance Leave Summary Report"] = {
 						const employee_id = response.message.name;
 						const designation = response.message.designation;
 						const department = response.message.department;
+						const branch = response.message.branch;
 						const employment_type = response.message.employment_type;
 
 						report.set_filter_value("employee", employee_id);
@@ -99,6 +106,9 @@ frappe.query_reports["Attendance Leave Summary Report"] = {
 						}
 						if (department) {
 							report.set_filter_value("department", department);
+						}
+						if (branch) {
+							report.set_filter_value("branch", branch);
 						}
 						if (employment_type) {
 							report.set_filter_value("status", employment_type);
