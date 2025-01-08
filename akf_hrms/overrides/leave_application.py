@@ -390,6 +390,9 @@ class LeaveApplication(Document, PWANotificationsMixin):
 				WHERE 
 					docstatus != 2
 					AND workflow_state != 'Rejected'
+					AND workflow_state != 'Rejected by the Line Manager'
+					AND workflow_state != 'Rejected by the Head of Department'
+					AND workflow_state != 'Rejected by the CEO'
 					AND employee = %s
 					AND company = %s
 					AND leave_type = %s
