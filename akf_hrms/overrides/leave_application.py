@@ -156,30 +156,49 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		if(not hasattr(self, "workflow_state")): return
 		frappe.db.set_value('Leave Application', self.name, 'status', 'Cancelled')
 		self.reload()
-			
+	
+	# Leave Type applicable after working days commented by Mubashir on 14-01-2025 requested by AKFP HR in error sheet		
+	# def validate_applicable_after(self):
+	# 	from akf_hrms.patches.skip_validations import skip
+	# 	if(skip()): 
+	# 		return
+	# 	if self.leave_type:
+	# 		leave_type = frappe.get_doc("Leave Type", self.leave_type)
+	# 		if leave_type.applicable_after > 0:
+	# 			date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
+	# 			leave_days = get_approved_leaves_for_period(
+	# 				self.employee, False, date_of_joining, self.from_date
+	# 			)
+	# 			number_of_days = date_diff(getdate(self.from_date), date_of_joining)
+	# 			if number_of_days >= 0:
+	# 				holidays = 0
+	# 				if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
+	# 					holidays = get_holidays(self.employee, date_of_joining, self.from_date)
+	# 				number_of_days = number_of_days - leave_days - holidays
+	# 				if number_of_days < leave_type.applicable_after:
+	# 					frappe.throw(
+	# 						_("{0} applicable after {1} working days").format(
+	# 							self.leave_type, leave_type.applicable_after
+	# 						)
+	# 					)
+
+	#Leave Type applicable after normal days done by Mubashir on 14-01-2025 requeted by AKFP HR in error sheet	 
 	def validate_applicable_after(self):
 		from akf_hrms.patches.skip_validations import skip
 		if(skip()): 
 			return
 		if self.leave_type:
 			leave_type = frappe.get_doc("Leave Type", self.leave_type)
-			if leave_type.applicable_after > 0:
+			if leave_type.custom_applicable_after_days > 0:
 				date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
-				leave_days = get_approved_leaves_for_period(
-					self.employee, False, date_of_joining, self.from_date
-				)
 				number_of_days = date_diff(getdate(self.from_date), date_of_joining)
-				if number_of_days >= 0:
-					holidays = 0
-					if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
-						holidays = get_holidays(self.employee, date_of_joining, self.from_date)
-					number_of_days = number_of_days - leave_days - holidays
-					if number_of_days < leave_type.applicable_after:
-						frappe.throw(
-							_("{0} applicable after {1} working days").format(
-								self.leave_type, leave_type.applicable_after
-							)
+				if number_of_days < leave_type.custom_applicable_after_days:
+					frappe.throw(
+						_("{0} applicable after {1} days after joining date").format(
+							self.leave_type, leave_type.custom_applicable_after_days
 						)
+					)
+
 
 	def validate_dates(self):
 		if frappe.db.get_single_value("HR Settings", "restrict_backdated_leave_application"):
