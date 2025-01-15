@@ -527,7 +527,6 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		# 	return
 		if (not self.grade):
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
-		# nabeel saleem, 19-12-2024
 		if(self.ownership): return
 
 		travel_settings = frappe.get_all(
@@ -564,7 +563,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		for e in self.expenses:
 			allowed_amount = allowed_expenses.get(e.expense_type)
 
-			if allowed_amount is not None:  
+			if allowed_amount is not None and allowed_amount.strip():  # Ensure the allowed amount is not empty or just whitespace  
 				try:
 					allowed_amount_float = float(allowed_amount)
 					expense_amount_float = float(e.amount)
