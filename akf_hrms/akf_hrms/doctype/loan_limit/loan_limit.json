@@ -7,8 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "fiscal_year",
-  "overall_loan_limit",
-  "per_vehicle_loan_limit"
+  "total_loan_budget",
+  "max_loan_per_emp"
  ],
  "fields": [
   {
@@ -18,20 +18,20 @@
    "options": "Fiscal Year"
   },
   {
-   "fieldname": "overall_loan_limit",
+   "fieldname": "max_loan_per_emp",
    "fieldtype": "Data",
-   "label": "Total Loan Limit (Rs)"
+   "label": "Maximum Loan Per Employee (Rs)"
   },
   {
-   "fieldname": "per_vehicle_loan_limit",
+   "fieldname": "total_loan_budget",
    "fieldtype": "Data",
-   "label": "Loan Amount (Rs)"
+   "label": "Total Loan Budget (Rs)"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-14 17:01:31.809455",
+ "modified": "2025-01-03 09:10:30.850437",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Loan Limit",

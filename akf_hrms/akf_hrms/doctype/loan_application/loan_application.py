@@ -27,8 +27,9 @@ class LoanApplication(Document):
 	def validate(self):
 		self.set_pledge_amount()
 		self.set_loan_amount()
-		self.validate_permanent_employee()	# Mubashir Bashir 03-01-2024
-		self.validate_guaranters()	        # Mubashir Bashir 03-01-2024
+		self.validate_permanent_employee()					# Mubashir Bashir 03-01-2025
+		self.validate_guaranters()	        				# Mubashir Bashir 03-01-2025
+		self.validate_eligiblity_on_the_basis_of_grade()	# Mubashir Bashir 08-01-2025
 		self.validate_loan_amount()
 
 		if self.is_term_loan:
@@ -39,7 +40,7 @@ class LoanApplication(Document):
 
 		self.get_repayment_details()
 		self.check_sanctioned_amount_limit()
-		self.validations()
+		# self.validations()
 		self.validate_both_guarantor_cannot_be_same() # nabeel saleem, 19-12-2024
 		self.validate_loan_amount_not_exceed_to_max_loan_amount() # nabeel saleem, 19-12-2024
 		self.check_total_loan_budget()		# Mubashir Bashir 13-11-2024
@@ -240,90 +241,40 @@ class LoanApplication(Document):
 			else:
 				frappe.throw(f"Guarantor {guarantor_2} should have at least 2 years of experience.")
 
+	# Implemented by Mubsahir 8-1-2025
+	def validate_eligiblity_on_the_basis_of_grade(self):
+		if self.loan_product not in ['Vehicle Loan', 'Bike Loan']:
+			return
+		employee = frappe.get_doc("Employee", self.applicant)
+		if not employee.grade:
+			frappe.throw("Grade is not set for the employee")
 
-	def validations(self):	# Mubashir Bashir Start 13-11-2024
-		# List of eligible grades for loan applications
-		eligible_grades = [
-			"A-1", "A-3", "A-4", "A-5", "A-6", "B-1", "B-2", "B-3",
-			"C-1", "C-2", "Contractual - Part time", "D-1", "D-2", "D-3",
-			"Data Management Officer", "F-1", "F-2", "F-3", "G-1", "G-2", "G-3",
-			"G-4", "G-5", "G-8", "M-1", "M-2", "M-3", "M-4", "M-5", "M-6",
-			"O-1", "O-2", "O-3", "O-4", "PC-1", "S-1", "S-2", "S-3", "X-1"
-		]
-
-		if self.loan_product in ["Vehicle Loan", "Bike Loan"]:		
-			employee = frappe.get_doc("Employee", self.applicant)
-			employment_type = employee.employment_type
-			grade = employee.grade
-
-			if grade not in eligible_grades:
-				frappe.throw(f"Employees with grade '{grade}' are not eligible to apply for Vehicle or Bike loans.")
+		# Get Employee Grade doc
+		grade_doc = frappe.get_doc("Employee Grade", employee.grade)
+		
+		# Calculate current experience in years
+		if not employee.date_of_joining:
+			frappe.throw("Date of Joining is not set for the employee")
 			
-			today = datetime.now()
-			two_years_experience_days = 730
-			three_years_experience_days = 1095
-
-			if self.loan_product == "Vehicle Loan" and frappe.db.exists("Loan Application", {
-				"applicant": self.applicant,
-				"docstatus": 1
-			}):
-				frappe.throw("You cannot avail a vehicle loan after availing any other loan")
-				return
-
-			if employment_type != "Permanent":
-				frappe.throw("Only Permanent Employees are Eligible.")
-
-			if grade in ["M-4", "M-5", "M-6", "O-1", "O-2", "O-3", "O-4", "PC-1", "S-3", "X-1"]:
-				required_experience_days = three_years_experience_days
-			else:
-				required_experience_days = two_years_experience_days
-
-			if grade in ["A-1", "A-3", "A-4", "A-5", "A-6", "B-1", "B-2", "B-3", "C-1", "C-2", "Contractual - Part time", "D-1", "D-2", "D-3", "Data Management Officer", "F-1", "F-2", "F-3", "G-1", "G-2", "G-3", "G-4", "G-5", "G-8"]:
-				if self.loan_product == "Vehicle Loan":
-					frappe.throw("Employees below grade M-3 are only eligible for a Bike Loan.")
-
-			# Validate guarantors' experience and loan application statuses
-			guarantor_1 = self.custom_guarantor_of_loan_application
-			guarantor_2 = self.custom_guarantor_2_of_loan_application
-
-			if (self.applicant == guarantor_1 or self.applicant == guarantor_2):
-				frappe.throw(f"You cannot add yourself as Gurantor")
-			for guarantor in [guarantor_1, guarantor_2]:
-				if guarantor:
-					if frappe.db.exists("Loan Application", {"applicant": guarantor, "docstatus": 1}):
-						frappe.throw(f"Guarantor {guarantor} already has an active loan application.")
-					if frappe.db.exists("Loan Application", {
-						"custom_guarantor_of_loan_application": guarantor, "docstatus": 1
-					}) or frappe.db.exists("Loan Application", {
-						"custom_guarantor_2_of_loan_application": guarantor, "docstatus": 1
-					}):
-						frappe.throw(f"Guarantor {guarantor} is already acting as a guarantor for another loan application.")
-					
-					date_of_joining = frappe.db.get_value("Employee", {"name": guarantor}, "date_of_joining")
-					if not date_of_joining:
-						frappe.throw(f"Guarantor {guarantor} does not have a valid date of joining.")
-					
-					date_of_joining_dt = datetime.combine(date_of_joining, datetime.min.time())
-					experience_days = (today - date_of_joining_dt).days
-					if experience_days < two_years_experience_days:
-						experience_years = two_years_experience_days // 365
-						frappe.throw(f"Guarantor {guarantor} should have at least {experience_years} years of experience.")
-
-			# Validate applicant's experience
-			applicant_date_of_joining = employee.date_of_joining
-			if not applicant_date_of_joining:
-				frappe.throw("Applicant does not have a valid date of joining.")
-
-			# Convert applicant_date_of_joining to datetime.datetime if it's a datetime.date object
-			if isinstance(applicant_date_of_joining, date):
-				applicant_date_of_joining = datetime.combine(applicant_date_of_joining, datetime.min.time())
-
-			applicant_experience_days = (today - applicant_date_of_joining).days
-
-			# applicant_experience_days = (today - applicant_date_of_joining).days
-			if applicant_experience_days < required_experience_days:
-				experience_years = required_experience_days // 365
-				frappe.throw(f"Applicant should have at least {experience_years} years of experience for this loan.")
+		today = datetime.now().date()
+		experience_days = (today - employee.date_of_joining).days
+		experience_years = experience_days / 365.0  # Convert days to years
+		
+		# Find matching loan entitlement
+		matching_entitlement = None
+		for entitlement in grade_doc.custom_loan_entitlement:
+			if entitlement.loan_entitlement == self.loan_product:
+				if experience_years >= entitlement.services_in_years:
+					matching_entitlement = entitlement
+					break
+		
+		if not matching_entitlement:
+			frappe.throw(f"Employee is not eligible for {self.loan_product} based on grade {employee.grade}")
+		
+		# Validate repayment periods if method is 'Repay Over Number of Periods'
+		if self.repayment_method == 'Repay Over Number of Periods':
+			if self.repayment_periods > matching_entitlement.repayment_period:
+				frappe.throw(f"Repayment periods cannot exceed {matching_entitlement.repayment_period} months for {self.loan_product}")
 
 	# Mubashir Bashir Start 03-01-2025		
 	def check_total_loan_budget(self):

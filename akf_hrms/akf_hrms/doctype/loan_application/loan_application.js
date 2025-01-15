@@ -115,79 +115,6 @@ frappe.ui.form.on('Loan Application', {
 		}
 	},
 
-    // loan_product: function (frm) {
-    //     if (frm.doc.loan_product == "Advance Salary") {
-    //       frm.set_value("repayment_method", "Repay Fixed Amount per Period");
-    //       frappe.call({
-    //         method: "frappe.client.get_list",
-    //         args: {
-    //           doctype: "Salary Structure Assignment",
-    //           fields: ["base"],
-    //           filters: {
-    //             employee: frm.doc.applicant,
-    //             docstatus: 1,
-    //             from_date: ["<", new Date()],
-    //           },
-    //           order_by: "from_date DESC",
-    //           limit_page_length: 1,
-    //         },
-    //         callback: function (r) {
-    //           if (r.message[0]) {
-    //             frm.set_value("custom_maximum_allowed_loan", r.message[0].base / 2);
-    //             frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
-    //             frm.set_value(
-    //               "repayment_amount",
-    //               frm.doc.custom_maximum_allowed_loan
-    //             );
-    //             frm.set_value("repay_from_salary", 1);
-    //             // frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);
-    //             frm.set_df_property("applicant", "read_only", 1);
-    //             frm.set_df_property("repay_from_salary", "read_only", 1);
-    //           } else {
-    //             frm.set_value("loan_product", "");
-    //             frappe.msgprint(
-    //               __(
-    //                 "Not authorized to apply for the loan as there is no Salary Structure Assignment currently active."
-    //               )
-    //             );
-    //           }
-    //         },
-    //       });
-    //     } else {
-    //     //   frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
-    //       frm.set_df_property("applicant", "read_only", 0);
-    //       frm.set_df_property("repay_from_salary", "read_only", 0);
-    //     }
-
-	// 	// Mubashir Bashir Start 11-13-2024
-	// 	if (frm.doc.loan_product == "Vehicle Loan") {
-	// 		frm.set_value("repayment_method", "Repay Over Number of Periods");
-
-    //         frappe.db.get_doc('Loan Product', frm.doc.loan_product)
-    //             .then(doc => {
-    //                 if (doc.custom_loan_limit && doc.custom_loan_limit.length > 0) {
-    //                     let latest_limit = null;
-    //                     let latest_date = null;
-
-    //                     doc.custom_loan_limit.forEach(row => {
-    //                         frappe.db.get_doc('Fiscal Year', row.fiscal_year)
-    //                             .then(fiscal_year => {
-    //                                 let to_date = new Date(fiscal_year.to_date);
-
-    //                                 if (!latest_date || to_date > latest_date) {
-    //                                     latest_date = to_date;
-    //                                     latest_limit = row.per_vehicle_loan_limit;
-    //                                 }
-
-    //                                 if (latest_limit) {
-    //                                     frm.set_value("custom_maximum_allowed_loan", latest_limit);
-    //                                 }
-    //                             });
-    //                     });
-    //                 }
-    //             });
-    //     }   // Mubashir Bashir End 11-13-2024
-    //   },
     applicant: function (frm) {
         frm.set_value("loan_product", ""); 
         frm.set_value("custom_guarantor_of_loan_application", "");
@@ -242,7 +169,8 @@ frappe.ui.form.on('Loan Application', {
 							// Mubashir Bashir Start 14-11-2024
         // For Vehicle Loan
         if (frm.doc.loan_product == "Vehicle Loan" || frm.doc.loan_product == "Bike Loan") {
-            
+            validate_eligibility_on_the_basis_of_grade(frm);    // <-- Mubashir 15-01-25
+
             get_latest_vehicle_loan_limit(frm, frm.doc.loan_product)
                 .then(latest_limit => {
                     console.log(latest_limit);
@@ -324,23 +252,35 @@ frappe.ui.form.on('Loan Application', {
 //     return repayment_periods;
 // }
 
-function get_latest_vehicle_loan_limit(frm, loan_product) { // updated by mubarrim for Grade
-	
-    frappe.db.get_value("Employee", {"name": frm.doc.applicant}, "grade")
+function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-01-2025 Start
+    // Get employee grade first
+    frappe.db.get_value("Employee", {"name": frm.doc.applicant}, ["grade", "date_of_joining"])
         .then(r => {
             frm.set_value("repayment_method", "Repay Over Number of Periods");
             frm.set_df_property("repayment_method", "read_only", 1);
             let grade = r.message.grade;
-            // let repayment_periods = getRepaymentPeriods(grade);
-            frappe.db.get_value("Employee Grade", {"name": grade}, "custom_repayment_period").then(r =>{
-                console.log("period: " + r.message.custom_repayment_period)
-                frm.set_value("repayment_periods", r.message.custom_repayment_period);
-                frm.refresh_field("repayment_periods");
-            })
-            
-            // frm.set_df_property("repayment_periods", "read_only", 1);
+            let date_of_joining = r.message.date_of_joining;
 
-        }); // End by mubarrim
+            // Get Employee Grade doc with child table
+            frappe.db.get_doc("Employee Grade", grade)
+                .then(grade_doc => {
+                    // Find matching entitlement based on loan product and experience
+                    let today = new Date();
+                    let joining_date = new Date(date_of_joining);
+                    let experience_days = Math.floor((today - joining_date) / (1000 * 60 * 60 * 24));
+                    let experience_years = experience_days / 365.0;
+
+                    let matching_entitlement = grade_doc.custom_loan_entitlement.find(entitlement => 
+                        entitlement.loan_entitlement === loan_product && 
+                        experience_years >= entitlement.services_in_years
+                    );
+
+                    if (matching_entitlement) {
+                        frm.set_value("repayment_periods", matching_entitlement.repayment_period);
+                        frm.refresh_field("repayment_periods");
+                    }
+                });
+        });  // Mubashir 15-01-2025 END
 
     return new Promise((resolve, reject) => {
         frappe.db.get_doc('Loan Product', loan_product)
@@ -357,7 +297,7 @@ function get_latest_vehicle_loan_limit(frm, loan_product) { // updated by mubarr
                                 
                                 if (!latest_date || to_date > latest_date) {
                                     latest_date = to_date;
-                                    latest_limit = row.per_vehicle_loan_limit;
+                                    latest_limit = row.max_loan_per_emp;
                                 }
                             });
                     });
@@ -370,6 +310,56 @@ function get_latest_vehicle_loan_limit(frm, loan_product) { // updated by mubarr
             .catch(error => reject(error));
     });
 }  // Mubashir Bashir End 14-11-2024
+
+// Mubashir Bashir 15-01-2025 START
+
+function validate_eligibility_on_the_basis_of_grade(frm) {
+    if (!['Vehicle Loan', 'Bike Loan'].includes(frm.doc.loan_product)) {
+        return;
+    }
+
+    // Get Employee details
+    frappe.db.get_doc("Employee", frm.doc.applicant)
+        .then(employee => {
+            if (!employee.grade) {
+                frappe.throw("Grade is not set for the employee");
+                return;
+            }
+            if (!employee.date_of_joining) {
+                frappe.throw("Date of Joining is not set for the employee");
+                return;
+            }
+            // Get Employee Grade doc
+            frappe.db.get_doc("Employee Grade", employee.grade)
+                .then(grade_doc => {
+                    // Calculate experience in years
+                    let today = new Date();
+                    let joining_date = new Date(employee.date_of_joining);
+                    let experience_days = Math.floor((today - joining_date) / (1000 * 60 * 60 * 24));
+                    let experience_years = experience_days / 365.0;
+
+                    // Find matching entitlement
+                    let matching_entitlement = grade_doc.custom_loan_entitlement.find(entitlement => 
+                        entitlement.loan_entitlement === frm.doc.loan_product && 
+                        experience_years >= entitlement.services_in_years
+                    );
+                    if (!matching_entitlement) {
+                        frappe.throw(`Employee is not eligible for ${frm.doc.loan_product} based on grade ${employee.grade}`);
+                        frm.set_value('loan_product', '');
+                        return;
+                    }
+                    // Set and validate repayment periods
+                    if (frm.doc.repayment_method === 'Repay Over Number of Periods') {
+                        if (frm.doc.repayment_periods > matching_entitlement.repayment_period) {
+                            frappe.throw(`Repayment periods cannot exceed ${matching_entitlement.repayment_period} months for ${frm.doc.loan_product}`);
+                            frm.set_value('repayment_periods', matching_entitlement.repayment_period);
+                        }
+                    }
+                });
+        });
+}
+
+// Mubashir Bashir 15-01-2025 END
 
 
 frappe.ui.form.on("Proposed Pledge", {
