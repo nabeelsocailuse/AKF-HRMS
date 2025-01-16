@@ -173,14 +173,22 @@ class LoanApplication(Document):
 	def validate_guaranters(self):
 		if not (self.custom_guarantor_of_loan_application and self.custom_guarantor_2_of_loan_application):
 			return
+		if self.applicant == self.custom_guarantor_of_loan_application or self.applicant == self.custom_guarantor_2_of_loan_application:
+			frappe.throw("Applicant can not be their own guarantor.")
 			
 		today = datetime.now()
 		required_experience_days = 730  
-
+		
 		guarantor_1 = self.custom_guarantor_of_loan_application
-		date_of_joining_1 = frappe.db.get_value("Employee", {"name": guarantor_1}, "date_of_joining")
-
 		guarantor_2 = self.custom_guarantor_2_of_loan_application
+
+		employment_type_1 = frappe.db.get_value("Employee", {"name": guarantor_1}, "employment_type")
+		employment_type_2 = frappe.db.get_value("Employee", {"name": guarantor_2}, "employment_type")
+
+		if employment_type_1 != 'Permanent' or employment_type_2 != 'Permanent':
+			frappe.throw("Only permanent employees can be guarantor.")
+
+		date_of_joining_1 = frappe.db.get_value("Employee", {"name": guarantor_1}, "date_of_joining")
 		date_of_joining_2 = frappe.db.get_value("Employee", {"name": guarantor_2}, "date_of_joining")
 											
 		# Check if the guarantors have existing loan applications

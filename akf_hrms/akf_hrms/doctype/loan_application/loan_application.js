@@ -114,20 +114,29 @@ frappe.ui.form.on('Loan Application', {
 			frm.set_value('maximum_loan_amount', flt(maximum_amount));
 		}
 	},
-
+    // Mubashir Bashir 16-01-2025 START
     applicant: function (frm) {
         frm.set_value("loan_product", ""); 
         frm.set_value("custom_guarantor_of_loan_application", "");
         frm.set_value("custom_guarantor_2_of_loan_application", "");
+
+        validatePermanentEmployee(frm);
     },
+
+    custom_guarantor_of_loan_application: function (frm) {
+        debouncedValidateGuaranters(frm);
+    },
+
+    custom_guarantor_2_of_loan_application: function (frm) {
+        debouncedValidateGuaranters(frm);
+    },
+    // Mubashir Bashir 16-01-2025 END
 		
 	loan_product: function (frm) {
         frm.set_value("loan_amount", 0);
         frm.set_value("repayment_method", "");
         frm.set_value("repayment_periods", "");
         frm.set_value("total_payable_amount", 0);
-
-
         
         if (frm.doc.loan_product == "Advance Salary") {
             frm.set_value("repayment_method", "Repay Fixed Amount per Period");
@@ -242,16 +251,6 @@ frappe.ui.form.on('Loan Application', {
 
 // Mubashir Bashir Start 14-11-2024
 
-// function getRepaymentPeriods(grade) {
-//     let repayment_periods;
-//     if (["M-4", "M-5", "M-6", "O-1", "O-2", "O-3", "O-4", "PC-1", "S-3", "X-1"].includes(grade)) {
-//         repayment_periods = 36; // 36 months for 3 years of experience
-//     } else if (["A-1", "A-3", "A-4", "A-5", "A-6", "B-1", "B-2", "B-3", "C-1", "C-2", "Contractual - Part time", "D-1", "D-2", "D-3", "Data Management Officer", "F-1", "F-2", "F-3", "G-1", "G-2", "G-3", "G-4", "G-5", "G-8", "M-3", "M-2", "M-1"].includes(grade)) {
-//         repayment_periods = 24; // 24 months for 2 years of experience
-//     }
-//     return repayment_periods;
-// }
-
 function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-01-2025 Start
     // Get employee grade first
     frappe.db.get_value("Employee", {"name": frm.doc.applicant}, ["grade", "date_of_joining"])
@@ -312,7 +311,6 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-0
 }  // Mubashir Bashir End 14-11-2024
 
 // Mubashir Bashir 15-01-2025 START
-
 function validate_eligibility_on_the_basis_of_grade(frm) {
     if (!['Vehicle Loan', 'Bike Loan'].includes(frm.doc.loan_product)) {
         return;
@@ -358,8 +356,154 @@ function validate_eligibility_on_the_basis_of_grade(frm) {
                 });
         });
 }
-
 // Mubashir Bashir 15-01-2025 END
+
+// Mubashir Bashir 16-01-2025 START
+function validatePermanentEmployee(frm) {
+    
+    frappe.db.get_value('Employee', { name: frm.doc.applicant }, 'employment_type')
+        .then(r => {
+            const employmentType = r.message.employment_type;
+            if (employmentType !== 'Permanent') {
+                frappe.throw(__("Only Permanent Employees are eligible for Loan"));
+            }
+        });
+}
+
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+async function validateGuaranters(frm) {
+    try {
+        const guarantor1 = frm.doc.custom_guarantor_of_loan_application;
+        const guarantor2 = frm.doc.custom_guarantor_2_of_loan_application;
+
+        // Basic validation checks
+        if (!guarantor1 && !guarantor2) return;
+        
+        // Check if applicant is their own guarantor
+        if (frm.doc.applicant === guarantor1 || frm.doc.applicant === guarantor2) {
+            frappe.show_alert({
+                message: __("Applicant can not be their own guarantor."),
+                indicator: 'red'
+            });
+            // frappe.throw(__("Applicant can not be their own guarantor."));
+            return;
+        }
+
+        // Check if both guarantors are the same
+        if (guarantor1 && guarantor2 && guarantor1 === guarantor2) {
+            frappe.show_alert({
+                message: __("Both guarantors cannot be the same person."),
+                indicator: 'red'
+            });
+            // frappe.throw(__("Both guarantors cannot be the same person."));
+            return;
+        }
+
+        // Only proceed with full validation if both guarantors are set
+        if (!(guarantor1 && guarantor2)) {
+            frappe.show_alert({
+                message: __("Please select both guarantors."),
+                indicator: 'orange'
+            });
+            return;
+        }
+
+        const today = new Date();
+        const requiredExperienceDays = 730;
+
+        // Get employee details for both guarantors
+        const [emp1, emp2] = await Promise.all([
+            frappe.db.get_doc('Employee', guarantor1),
+            frappe.db.get_doc('Employee', guarantor2)
+        ]);
+
+        // Validate employment types
+        if (emp1.employment_type !== 'Permanent' || emp2.employment_type !== 'Permanent') {
+            frappe.show_alert({
+                message: __("Only permanent employees can be guarantor."),
+                indicator: 'red'
+            });
+            // frappe.throw(__("Only permanent employees can be guarantor."));
+            return;
+        }
+
+        // Check for existing loans and guarantor roles
+        const existingLoans = await frappe.db.get_list('Loan Application', {
+            filters: {
+                docstatus: 1,
+                $or: [
+                    { applicant: ["in", [guarantor1, guarantor2]] },
+                    { custom_guarantor_of_loan_application: ["in", [guarantor1, guarantor2]] },
+                    { custom_guarantor_2_of_loan_application: ["in", [guarantor1, guarantor2]] }
+                ]
+            },
+            fields: ['applicant', 'custom_guarantor_of_loan_application', 'custom_guarantor_2_of_loan_application']
+        });
+
+        // Check for existing loans
+        for (const loan of existingLoans) {
+            if (loan.applicant === guarantor1) {
+                frappe.throw(__(`Guarantor ${guarantor1} already has an active loan application.`));
+                return;
+            }
+            if (loan.applicant === guarantor2) {
+                frappe.throw(__(`Guarantor ${guarantor2} already has an active loan application.`));
+                return;
+            }
+            if ([loan.custom_guarantor_of_loan_application, loan.custom_guarantor_2_of_loan_application].includes(guarantor1)) {
+                frappe.throw(__(`Guarantor ${guarantor1} is already acting as a guarantor for another loan application.`));
+                return;
+            }
+            if ([loan.custom_guarantor_of_loan_application, loan.custom_guarantor_2_of_loan_application].includes(guarantor2)) {
+                frappe.throw(__(`Guarantor ${guarantor2} is already acting as a guarantor for another loan application.`));
+                return;
+            }
+        }
+
+        // Experience validation
+        for (const [emp, guarantor] of [[emp1, guarantor1], [emp2, guarantor2]]) {
+            if (!emp.date_of_joining) {
+                frappe.throw(__(`Guarantor ${guarantor} does not have a valid date of joining.`));
+                return;
+            }
+
+            const joining = new Date(emp.date_of_joining);
+            const experience = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
+
+            if (experience < requiredExperienceDays) {
+                frappe.throw(__(`Guarantor ${guarantor} should have at least 2 years of experience.`));
+                return;
+            }
+        }
+        // If all validations pass
+        frappe.show_alert({
+            message: __("Guarantor validation successful"),
+            indicator: 'green'
+        }, 5);
+
+    } catch (error) {
+        console.error("Error in validateGuaranters:", error);
+        frappe.throw(__("Error validating guarantors. Please try again."));
+    }
+}
+
+// Debounced version of the validation function
+const debouncedValidateGuaranters = debounce(validateGuaranters, 300);
+
+// Mubashir Bashir 16-01-2025 END
+
+
 
 
 frappe.ui.form.on("Proposed Pledge", {
