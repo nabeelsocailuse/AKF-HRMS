@@ -12,11 +12,13 @@ class XAdditionalSalary(AdditionalSalary):
         super().validate()
         
         if(self.salary_component == "Marriage Allowance"):
-            # start, Mubarrim, [18-12-2024]
-            marital_status = frappe.db.get_value('Employee', self.employee, 'marital_status')
-            if(marital_status != 'Single'):
-                frappe.throw(f"Marriage Allowance is only available to individuals who are single.")
-            # end, Mubarrim, [18-12-2024]
+            # # start, Mubarrim, [18-12-2024]
+            # marital_status = frappe.db.get_value('Employee', self.employee, 'marital_status')
+            # if(marital_status != 'Single'):
+            #     frappe.throw(f"Marriage Allowance is only available to individuals who are single.")
+            # # end, Mubarrim, [18-12-2024]
+
+            # the above validation for single status is commented by Mubashir on request by Mobeen, 16-01-2025
             
             # start, nabeel, [18-12-2024]
             if frappe.db.exists("Additional Salary", {
