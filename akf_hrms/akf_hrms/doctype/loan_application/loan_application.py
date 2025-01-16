@@ -283,31 +283,27 @@ class LoanApplication(Document):
 			if not details or details.employment_type != 'Permanent':
 				frappe.throw(f"Only permanent employees can be guarantor. Check guarantor {guarantor}")
 
-		# Check for existing loans and guarantor roles in one query
-		existing_loans = frappe.get_all("Loan Application",
-			filters={
+		# Check for existing loans
+		for guarantor in [guarantor_1, guarantor_2]:
+			# Check if guarantor has an active loan
+			if frappe.db.exists("Loan Application", {
+				"applicant": guarantor,
 				"docstatus": 1,
-				"name": ["!=", self.name],  # Exclude current application
-				"$or": [
-					{"applicant": ["in", [guarantor_1, guarantor_2]]},
-					{"custom_guarantor_of_loan_application": ["in", [guarantor_1, guarantor_2]]},
-					{"custom_guarantor_2_of_loan_application": ["in", [guarantor_1, guarantor_2]]}
-				]
-			},
-			fields=["applicant", "custom_guarantor_of_loan_application", "custom_guarantor_2_of_loan_application"]
-		)
+				"name": ["!=", self.name]
+			}):
+				frappe.throw(f"Guarantor {guarantor} already has an active loan application.")
 
-		# Process existing loans
-		for loan in existing_loans:
-			if loan.applicant == guarantor_1:
-				frappe.throw(f"Guarantor {guarantor_1} already has an active loan application.")
-			elif loan.applicant == guarantor_2:
-				frappe.throw(f"Guarantor {guarantor_2} already has an active loan application.")
-			
-			if guarantor_1 in [loan.custom_guarantor_of_loan_application, loan.custom_guarantor_2_of_loan_application]:
-				frappe.throw(f"Guarantor {guarantor_1} is already acting as a guarantor for another loan application.")
-			elif guarantor_2 in [loan.custom_guarantor_of_loan_application, loan.custom_guarantor_2_of_loan_application]:
-				frappe.throw(f"Guarantor {guarantor_2} is already acting as a guarantor for another loan application.")
+			# Check if guarantor is already a guarantor in another loan
+			if frappe.db.exists("Loan Application", {
+				"custom_guarantor_of_loan_application": guarantor,
+				"docstatus": 1,
+				"name": ["!=", self.name]
+			}) or frappe.db.exists("Loan Application", {
+				"custom_guarantor_2_of_loan_application": guarantor,
+				"docstatus": 1,
+				"name": ["!=", self.name]
+			}):
+				frappe.throw(f"Guarantor {guarantor} is already acting as a guarantor for another loan application.")
 
 		# Validate experience
 		today = datetime.now()
