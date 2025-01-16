@@ -396,7 +396,6 @@ async function validateGuaranters(frm) {
                 message: __("Applicant can not be their own guarantor."),
                 indicator: 'red'
             });
-            // frappe.throw(__("Applicant can not be their own guarantor."));
             return;
         }
 
@@ -406,7 +405,6 @@ async function validateGuaranters(frm) {
                 message: __("Both guarantors cannot be the same person."),
                 indicator: 'red'
             });
-            // frappe.throw(__("Both guarantors cannot be the same person."));
             return;
         }
 
@@ -434,47 +432,98 @@ async function validateGuaranters(frm) {
                 message: __("Only permanent employees can be guarantor."),
                 indicator: 'red'
             });
-            // frappe.throw(__("Only permanent employees can be guarantor."));
             return;
         }
 
         // Check for existing loans and guarantor roles
-        const existingLoans = await frappe.db.get_list('Loan Application', {
-            filters: {
-                docstatus: 1,
-                $or: [
-                    { applicant: ["in", [guarantor1, guarantor2]] },
-                    { custom_guarantor_of_loan_application: ["in", [guarantor1, guarantor2]] },
-                    { custom_guarantor_2_of_loan_application: ["in", [guarantor1, guarantor2]] }
-                ]
-            },
-            fields: ['applicant', 'custom_guarantor_of_loan_application', 'custom_guarantor_2_of_loan_application']
-        });
+        const [
+            hasLoan1,
+            hasLoan2,
+            isGuarantor1A,
+            isGuarantor1B,
+            isGuarantor2A,
+            isGuarantor2B
+        ] = await Promise.all([
+            frappe.db.count('Loan Application', {
+                filters: {
+                    applicant: guarantor1,
+                    docstatus: 1,
+                    name: ['!=', frm.doc.name] // Exclude current document
+                }
+            }),
+            frappe.db.count('Loan Application', {
+                filters: {
+                    applicant: guarantor2,
+                    docstatus: 1,
+                    name: ['!=', frm.doc.name]
+                }
+            }),
+            frappe.db.count('Loan Application', {
+                filters: {
+                    custom_guarantor_of_loan_application: guarantor1,
+                    docstatus: 1,
+                    name: ['!=', frm.doc.name]
+                }
+            }),
+            frappe.db.count('Loan Application', {
+                filters: {
+                    custom_guarantor_2_of_loan_application: guarantor1,
+                    docstatus: 1,
+                    name: ['!=', frm.doc.name]
+                }
+            }),
+            frappe.db.count('Loan Application', {
+                filters: {
+                    custom_guarantor_of_loan_application: guarantor2,
+                    docstatus: 1,
+                    name: ['!=', frm.doc.name]
+                }
+            }),
+            frappe.db.count('Loan Application', {
+                filters: {
+                    custom_guarantor_2_of_loan_application: guarantor2,
+                    docstatus: 1,
+                    name: ['!=', frm.doc.name]
+                }
+            })
+        ]);
 
-        // Check for existing loans
-        for (const loan of existingLoans) {
-            if (loan.applicant === guarantor1) {
-                frappe.throw(__(`Guarantor ${guarantor1} already has an active loan application.`));
-                return;
-            }
-            if (loan.applicant === guarantor2) {
-                frappe.throw(__(`Guarantor ${guarantor2} already has an active loan application.`));
-                return;
-            }
-            if ([loan.custom_guarantor_of_loan_application, loan.custom_guarantor_2_of_loan_application].includes(guarantor1)) {
-                frappe.throw(__(`Guarantor ${guarantor1} is already acting as a guarantor for another loan application.`));
-                return;
-            }
-            if ([loan.custom_guarantor_of_loan_application, loan.custom_guarantor_2_of_loan_application].includes(guarantor2)) {
-                frappe.throw(__(`Guarantor ${guarantor2} is already acting as a guarantor for another loan application.`));
-                return;
-            }
+        if (hasLoan1 > 0) {
+            frappe.show_alert({
+                message: __(`Guarantor ${guarantor1} already has an active loan application.`),
+                indicator: 'red'
+            });
+            return;
+        }
+        if (hasLoan2 > 0) {
+            frappe.show_alert({
+                message: __(`Guarantor ${guarantor2} already has an active loan application.`),
+                indicator: 'red'
+            });
+            return;
+        }
+        if (isGuarantor1A > 0 || isGuarantor1B > 0) {
+            frappe.show_alert({
+                message: __(`Guarantor ${guarantor1} is already acting as a guarantor for another loan application.`),
+                indicator: 'red'
+            });
+            return;
+        }
+        if (isGuarantor2A > 0 || isGuarantor2B > 0) {
+            frappe.show_alert({
+                message: __(`Guarantor ${guarantor2} is already acting as a guarantor for another loan application.`),
+                indicator: 'red'
+            });
+            return;
         }
 
         // Experience validation
         for (const [emp, guarantor] of [[emp1, guarantor1], [emp2, guarantor2]]) {
             if (!emp.date_of_joining) {
-                frappe.throw(__(`Guarantor ${guarantor} does not have a valid date of joining.`));
+                frappe.show_alert({
+                    message: __(`Guarantor ${guarantor} does not have a valid date of joining.`),
+                    indicator: 'red'
+                });
                 return;
             }
 
@@ -482,10 +531,14 @@ async function validateGuaranters(frm) {
             const experience = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
 
             if (experience < requiredExperienceDays) {
-                frappe.throw(__(`Guarantor ${guarantor} should have at least 2 years of experience.`));
+                frappe.show_alert({
+                    message: __(`Guarantor ${guarantor} should have at least 2 years of experience.`),
+                    indicator: 'red'
+                });
                 return;
             }
         }
+
         // If all validations pass
         frappe.show_alert({
             message: __("Guarantor validation successful"),
@@ -494,7 +547,10 @@ async function validateGuaranters(frm) {
 
     } catch (error) {
         console.error("Error in validateGuaranters:", error);
-        frappe.throw(__("Error validating guarantors. Please try again."));
+        frappe.show_alert({
+            message: __("Error validating guarantors. Please try again."),
+            indicator: 'red'
+        });
     }
 }
 
