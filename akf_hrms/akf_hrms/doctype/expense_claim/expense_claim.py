@@ -678,7 +678,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			"Dinner": "dinner",
 			"Refrehment": "refrehment",
 			"Dinner (Late Sitting)": "dinner_late_sitting",
-			"Lunch (Off Day)": "lunch_off_day"
+			"Lunch (Off Day)": "lunch_off_day",
+			"Medical": "medical"	#added by Mubashir on 16-01-25
 		}
 
 		for setting in travel_settings:
