@@ -215,22 +215,23 @@ scheduler_events = {
         "0 0 * * *": [
             "akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
         ],
-        "*/5 * * * *": [
-            "akf_hrms.services.cron_jobs.attendance.mark_attendance",
-        ],
-        "*/45 * * * *": [
-            "akf_hrms.services.cron_jobs.attendance.fetch_attendance",
-        ],
-        "*/20 * * * *": [
-            "akf_hrms.services.cron_jobs.attendance.mark_proxy_attendance_logs",
-        ]
+        # "*/5 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.mark_attendance",
+        # ],
+        # "*/45 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.fetch_attendance",
+        # ],
+        # "*/20 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.mark_proxy_attendance_logs",
+        # ]
     },
     # 	"all": [
     # 		"akf_hrms.tasks.all"
     # 	],
-    # 	"daily": [
-    # 		"akf_hrms.tasks.daily"
-    # 	],
+    	"daily": [
+    		# "akf_hrms.tasks.daily"
+            "akf_hrms.utils.hr_crons.notify_managers_for_contract_probation_interns"
+    	],
     # 	"hourly": [
     # 		"akf_hrms.tasks.hourly"
     # 	],
