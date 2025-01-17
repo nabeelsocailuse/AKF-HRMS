@@ -685,7 +685,11 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		for setting in travel_settings:
 			for expense in self.expenses:
 				if expense.expense_type in expense_mapping:
-					amount = int(setting.get(expense_mapping[expense.expense_type]))
+					# amount = setting.get(expense_mapping[expense.expense_type]) commented by Mubashir 17-01-25
+					mapped_amount = setting.get(expense_mapping[expense.expense_type])	#Mubashir 17-01-25 Start
+					if mapped_amount is None:
+						frappe.throw(f"Amount not configured for expense type '{expense.expense_type}' in Travel Settings")					
+					amount = int(mapped_amount)			#Mubashir 17-01-25 End
 					# frappe.throw(f"{amount}")
 					if(expense.expense_type == "Daily Allowance"):
 						duty_hours = self.get_travel_attendance()
