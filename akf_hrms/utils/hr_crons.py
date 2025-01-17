@@ -29,6 +29,7 @@ def notify_managers_for_contract_probation_interns():
                 continue
             
             end_date = frappe.utils.add_days(employee.date_of_joining, 90)
+            formatted_end_date = frappe.utils.formatdate(end_date, 'dd-mm-yyyy')
             remaining_days = frappe.utils.date_diff(end_date, today)
             subject = f"Probation/Internship Period Ending Soon - {employee.employee_name}"
             message = f"""
@@ -36,7 +37,7 @@ def notify_managers_for_contract_probation_interns():
                     <p>Dear Manager,</p>
                     
                     <p>This is to inform you that the {employee.employment_type.lower()} period for <strong>{employee.employee_name}</strong> 
-                    is about to end in <strong>{remaining_days} days</strong> (on {end_date}).</p>
+                    is about to end in <strong>{remaining_days} days</strong> (on {formatted_end_date}).</p>
                     
                     <p>Please take necessary actions regarding their continuation/extension.</p>
                     
