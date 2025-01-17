@@ -16,7 +16,7 @@ def notify_managers_for_contract_probation_interns():
         "Employee",
         filters = {
             "date_of_joining": notification_date,
-            "employment_type": ["in", ["Permanent", "Intern", "Contract"]],
+            "employment_type": ["in", ["Probation", "Intern", "Contract"]],
             "status": "Active"
         },
         fields = ["name", "employee_name", "reports_to", "employment_type", "date_of_joining"]
