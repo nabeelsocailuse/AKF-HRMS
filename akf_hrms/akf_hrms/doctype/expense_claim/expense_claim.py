@@ -668,7 +668,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		travel_settings = frappe.get_all(
 		"Travel Expense Setting Table",
 		filters={"band": ["=", f"{self.grade}"]},
-		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
+		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day", "medical"]
 	)
 
 		expense_mapping = {
