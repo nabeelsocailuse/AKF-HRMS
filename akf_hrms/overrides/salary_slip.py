@@ -1085,7 +1085,7 @@ class SalarySlip(TransactionBase):
 
 		local_data = self.data.copy()
 		local_data.update({"start_date": start_date, "end_date": end_date, "posting_date": posting_date})
-
+		
 		return flt(self.eval_condition_and_formula(struct_row, local_data))
 
 	def get_income_tax_deducted_till_date(self):
@@ -1119,7 +1119,6 @@ class SalarySlip(TransactionBase):
 		for struct_row in self._salary_structure_doc.get(component_type):
 			if self.salary_slip_based_on_timesheet and struct_row.salary_component == timesheet_component:
 				continue
-
 			amount = self.eval_condition_and_formula(struct_row, self.data)
 			if struct_row.statistical_component:
 				# update statitical component amount in reference data based on payment days
@@ -1200,6 +1199,8 @@ class SalarySlip(TransactionBase):
 			amount = struct_row.amount
 			if struct_row.amount_based_on_formula:
 				formula = sanitize_expression(struct_row.formula)
+				# frappe.msgprint(frappe.as_json(formula))
+				# frappe.msgprint(frappe.as_json(amount))
 				if formula:
 					amount = flt(
 						_safe_eval(formula, self.whitelisted_globals, data), struct_row.precision("amount")
@@ -1307,7 +1308,7 @@ class SalarySlip(TransactionBase):
 			tax_components = [
 				d.salary_component for d in self.get("deductions") if d.variable_based_on_taxable_salary
 			] if(not flag) else [] # Nabeel Saleem
-		
+		# frappe.throw(f"{tax_components} {flag}")
 		if self.is_new() and not tax_components:
 			if(not flag): # Nabeel Saleem
 				tax_components = self.get_tax_components() 
@@ -1492,7 +1493,8 @@ class SalarySlip(TransactionBase):
 			self.total_taxable_earnings_without_full_tax_addl_components,
 			self.tax_slab,
 			self.whitelisted_globals,
-			eval_locals,
+			# eval_locals,
+			eval_locals.update({"remaining_sub_periods": self.remaining_sub_periods})
 		)
 
 		self.current_structured_tax_amount = (
@@ -1506,7 +1508,7 @@ class SalarySlip(TransactionBase):
 				self.total_taxable_earnings, self.tax_slab, self.whitelisted_globals, eval_locals
 			)
 			self.full_tax_on_additional_earnings = self.total_tax_amount - self.total_structured_tax_amount
-
+		
 		current_tax_amount = self.current_structured_tax_amount + self.full_tax_on_additional_earnings
 		if flt(current_tax_amount) < 0:
 			current_tax_amount = 0
@@ -1525,7 +1527,6 @@ class SalarySlip(TransactionBase):
 
 	def get_income_tax_slabs(self):
 		income_tax_slab = self._salary_structure_assignment.income_tax_slab
-
 		if not income_tax_slab:
 			""" frappe.throw(
 				_("Income Tax Slab not set in Salary Structure Assignment: {0}").format(
@@ -1536,6 +1537,7 @@ class SalarySlip(TransactionBase):
 			_("Income Tax Slab not set in Salary Structure Assignment."))
 		
 		income_tax_slab_doc = frappe.get_cached_doc("Income Tax Slab", income_tax_slab)
+		
 		if income_tax_slab_doc.disabled:
 			frappe.throw(_("Income Tax Slab: {0} is disabled").format(income_tax_slab))
 
@@ -1545,6 +1547,7 @@ class SalarySlip(TransactionBase):
 					self.payroll_period.start_date
 				)
 			)
+		
 		return income_tax_slab_doc
 
 	def get_taxable_earnings_for_prev_period(self, start_date, end_date, allow_tax_exemption=False):
@@ -2128,20 +2131,39 @@ def get_payroll_payable_account(company, payroll_entry):
 
 	return payroll_payable_account
 
+# Start: Nabeel Saleem, 22-01-2025
+def get_amount_base_on_formula(slab, eval_globals=None, eval_locals=None):
+	if (slab.custom_amount_based_on_formula):
+		formula = sanitize_expression(slab.custom_formula)
+		if (formula):
+			# self.whitelisted_globals
+			amount = flt(
+				_safe_eval(formula, eval_globals, eval_locals)
+				#  , slab.precision("amount")
+			)
+			return amount
+	return 0
 
 def calculate_tax_by_tax_slab(
 	annual_taxable_earning, tax_slab, eval_globals=None, eval_locals=None
 ):
 	eval_locals.update({"annual_taxable_earning": annual_taxable_earning})
 	tax_amount = 0
+	tax_amount_with_formula = 0
 	for slab in tax_slab.slabs:
 		cond = cstr(slab.condition).strip()
+
 		if cond and not eval_tax_slab_condition(cond, eval_globals, eval_locals):
 			continue
 		if not slab.to_amount and annual_taxable_earning >= slab.from_amount:
 			tax_amount += (annual_taxable_earning - slab.from_amount + 1) * slab.percent_deduction * 0.01
 			continue
 
+		# Start: Nabeel Saleem, 22-01-2025
+		isCondition = eval_tax_slab_condition(cond, eval_globals, eval_locals)
+		if (isCondition): tax_amount_with_formula += get_amount_base_on_formula(slab, eval_globals, eval_locals)
+		# End: Nabeel Saleem, 22-01-2025
+	
 		if annual_taxable_earning >= slab.from_amount and annual_taxable_earning < slab.to_amount:
 			tax_amount += (annual_taxable_earning - slab.from_amount + 1) * slab.percent_deduction * 0.01
 		elif annual_taxable_earning >= slab.from_amount and annual_taxable_earning >= slab.to_amount:
@@ -2156,8 +2178,14 @@ def calculate_tax_by_tax_slab(
 			continue
 
 		tax_amount += tax_amount * flt(d.percent) / 100
-
-	return tax_amount
+	
+	# Start: Nabeel Saleem, 22-01-2025
+	if(tax_amount_with_formula>0):
+		# future_structure_tax
+		return (tax_amount_with_formula * eval_locals.remaining_sub_periods)
+	# End: Nabeel Saleem, 22-01-2025	
+	# return (tax_amount * eval_locals.remaining_sub_periods)
+	return (tax_amount)
 
 
 def eval_tax_slab_condition(condition, eval_globals=None, eval_locals=None):

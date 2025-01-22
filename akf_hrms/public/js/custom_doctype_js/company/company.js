@@ -57,6 +57,16 @@ frappe.ui.form.on("Company", {
                 }
             };
         });
+
+        frm.set_query("custom_default_retention_payable_account", function() {
+            return {
+                filters: {
+                    "company": frm.doc.name,
+                    "root_type": 'Liability',
+                    "account_type": 'Payable',
+                }
+            };
+        });
     },
     
 });
