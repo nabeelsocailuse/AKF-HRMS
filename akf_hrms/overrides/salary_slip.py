@@ -2134,14 +2134,17 @@ def get_payroll_payable_account(company, payroll_entry):
 # Start: Nabeel Saleem, 22-01-2025
 def get_amount_base_on_formula(slab, eval_globals=None, eval_locals=None):
 	if (slab.custom_amount_based_on_formula):
-		formula = sanitize_expression(slab.custom_formula)
-		if (formula):
-			# self.whitelisted_globals
-			amount = flt(
-				_safe_eval(formula, eval_globals, eval_locals)
-				#  , slab.precision("amount")
-			)
-			return amount
+		try:
+			formula = sanitize_expression(slab.custom_formula)
+			if (formula):
+				# self.whitelisted_globals
+				amount = flt(
+					_safe_eval(formula, eval_globals, eval_locals)
+					#  , slab.precision("amount")
+				)
+				return amount
+		except TypeError as e:
+			raise TypeError(f"Invalid formula: {formula}")
 	return 0
 
 def calculate_tax_by_tax_slab(
