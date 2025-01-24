@@ -15,7 +15,8 @@
   "dinner",
   "refrehment",
   "dinner_late_sitting",
-  "lunch_off_day"
+  "lunch_off_day",
+  "medical"
  ],
  "fields": [
   {
@@ -72,12 +73,17 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Lunch (Off Day)"
+  },
+  {
+   "fieldname": "medical",
+   "fieldtype": "Data",
+   "label": "Medical"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-14 17:45:30.057710",
+ "modified": "2025-01-15 15:58:17.203894",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Travel Expense Setting Table",

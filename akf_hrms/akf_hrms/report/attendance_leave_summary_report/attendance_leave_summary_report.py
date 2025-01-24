@@ -48,7 +48,7 @@ def get_employee_data(filters):
             e.name, e.employee_name, e.branch, e.department, e.designation, e.employment_type,
             COALESCE(e.holiday_list, '') as _holiday_list
         FROM `tabEmployee` as e
-        WHERE {condition}
+        WHERE {condition} AND e.custom_no_attendance != 1 AND e.status = 'Active'
     """.format(condition=conditions)
 
     data = frappe.db.sql(emp_record, filters, as_dict=1)

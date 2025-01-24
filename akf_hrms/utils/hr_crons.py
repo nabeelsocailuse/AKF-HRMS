@@ -3,34 +3,34 @@
 import frappe
 
 """
-This function is to notify the employee managers (employee.reports_to) before 15 days of job period.
+This function is to notify the employee managers (employee.reports_to) before 15 days of Job Completion Period.
 Due to the lack of complete requirements, we'll assume the term period as 3 months and we'll notify 
 the managers after 2.5 months.
 """
 @frappe.whitelist()
 def notify_managers_for_contract_probation_interns():
     today = frappe.utils.today()
-    notification_date = frappe.utils.add_days(today, -75)
+    notification_date = frappe.utils.add_days(today, 15)
 
     employees = frappe.get_all(
         "Employee",
         filters = {
-            "date_of_joining": notification_date,
             "employment_type": ["in", ["Probation", "Intern", "Contract"]],
-            "status": "Active"
+            "status": "Active",
+            "custom_completion_date": ["<=", notification_date],
+            "custom_completion_date": [">", today]
         },
-        fields = ["name", "employee_name", "reports_to", "employment_type", "date_of_joining"]
+        fields = ["name", "employee_name", "reports_to", "employment_type", "custom_completion_date"]
     )
 
     for employee in employees:
-        if employee.reports_to:
+        if employee.reports_to and employee.custom_completion_date:
             manager = frappe.get_value("Employee", employee.reports_to, "user_id")
             if not manager:
                 continue
             
-            end_date = frappe.utils.add_days(employee.date_of_joining, 90)
-            formatted_end_date = frappe.utils.formatdate(end_date, 'dd-mm-yyyy')
-            remaining_days = frappe.utils.date_diff(end_date, today)
+            formatted_end_date = frappe.utils.formatdate(employee.custom_completion_date, 'dd-mm-yyyy')
+            remaining_days = frappe.utils.date_diff(employee.custom_completion_date, today)
             subject = f"Probation/Internship Period Ending Soon - {employee.employee_name}"
             message = f"""
                 <div style="font-family: Arial, sans-serif; padding: 20px;">

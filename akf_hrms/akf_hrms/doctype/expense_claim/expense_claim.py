@@ -58,7 +58,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		validate_active_employee(self.employee)
 		set_employee_name(self)
 		self.validate_sanctioned_amount()
-		self.validate_medical_expense()
+		self.validate_medical_expenses()	# Mubashir Bashir 24-01-25
 		self.calculate_total_amount()
 		self.validate_advances()
 		self.set_expense_account(validate=True)
@@ -396,18 +396,66 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				)
 
 
-	def validate_medical_expense(self):			#Mubashir Bashir
+	# def validate_medical_expense(self):			#Mubashir Bashir
+
+	# 	from akf_hrms.patches.skip_validations import skip
+	# 	if(skip()):
+	# 		# frappe.msgprint("Validation is skipped") 
+	# 		return
+
+	# 	social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
+	# 	employee_doc = frappe.get_doc("Employee", self.employee)
+	# 	branch = employee_doc.branch
+	# 	employment_type = employee_doc.employment_type
+
+		
+	# 	salary_structure = frappe.db.sql("""
+	# 		SELECT base 
+	# 		FROM `tabSalary Structure Assignment`
+	# 		WHERE docstatus = 1 AND employee = %s
+	# 		ORDER BY from_date DESC
+	# 		LIMIT 1
+	# 	""", (self.employee), as_dict=True)
+
+	# 	if not salary_structure:
+	# 		frappe.throw(_("No Salary Structure Assignment found for the employee."))
+
+	# 	current_salary = salary_structure[0].get('base', 0)
+
+	# 	# frappe.msgprint(f'ss {social_security_amount}, branch {branch}, company {self.company}, emp type {employment_type}, emp {self.employee}, cur salary {current_salary}')
+
+		
+	# 	if (self.company == "Alkhidmat Foundation Pakistan" and 
+	# 		branch == "Central Office" and 
+	# 		employment_type == "Permanent" and 
+	# 		current_salary > social_security_amount):
+
+	# 		max_reimbursement = max(current_salary * 2, 50000)			
+	# 		medical_amount = 0
+	# 		for d in self.get("expenses"):
+	# 			if d.expense_type == 'Medical':
+	# 				medical_amount += d.amount
+	# 		# Calculate the 60% of the claimed amount.
+	# 		allowed_reimbursement = min(medical_amount * 0.6, max_reimbursement)
+
+	# 		if allowed_reimbursement > max_reimbursement:
+	# 			frappe.throw(
+	# 				_("The medical expense for {0} cannot exceed 60% of the total claim, "
+	# 				"up to a maximum of {1}. Please adjust the amount.")
+	# 				.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
+	# 			)
+
+	def validate_medical_expenses(self):	# Mubashir Bashir 24-01-25 Start
 
 		from akf_hrms.patches.skip_validations import skip
 		if(skip()):
-			# frappe.msgprint("Validation is skipped") 
 			return
 
 		social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
 		employee_doc = frappe.get_doc("Employee", self.employee)
 		branch = employee_doc.branch
 		employment_type = employee_doc.employment_type
-
+		employment_status = employee_doc.status
 		
 		salary_structure = frappe.db.sql("""
 			SELECT base 
@@ -421,31 +469,73 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			frappe.throw(_("No Salary Structure Assignment found for the employee."))
 
 		current_salary = salary_structure[0].get('base', 0)
-
-		# frappe.msgprint(f'ss {social_security_amount}, branch {branch}, company {self.company}, emp type {employment_type}, emp {self.employee}, cur salary {current_salary}')
-
 		
-		if (self.company == "Alkhidmat Foundation Pakistan" and 
-			branch == "Central Office" and 
-			employment_type == "Permanent" and 
+		if (self.company == "Alkhidmat Foundation Pakistan" and
+			branch == "Central Office" and
+			employment_type == "Permanent" and
+			employment_status == "Active" and
 			current_salary > social_security_amount):
 
-			max_reimbursement = max(current_salary * 2, 50000)
+			current_fiscal_year = frappe.db.sql("""
+            SELECT name, year_start_date, year_end_date
+            FROM `tabFiscal Year`
+            WHERE %s BETWEEN year_start_date AND year_end_date
+            LIMIT 1
+			""", frappe.utils.today(), as_dict=True)[0]
+
+			previous_reimbursements = frappe.db.sql("""
+            SELECT child.expense_type, SUM(child.amount * 0.6) as reimbursed_amount
+            FROM `tabExpense Claim` parent
+            JOIN `tabExpense Claim Detail` child ON parent.name = child.parent
+            WHERE parent.employee = %s
+            AND parent.docstatus = 1
+            AND parent.posting_date BETWEEN %s AND %s
+            AND parent.name != %s
+            GROUP BY child.expense_type
+        	""", (self.employee, current_fiscal_year.year_start_date, 
+            current_fiscal_year.year_end_date, self.name), as_dict=True)
 			
-			medical_amount = 0  
+			previous_claims = {d.expense_type: d.reimbursed_amount for d in previous_reimbursements}
+
 			for d in self.get("expenses"):
-				if d.expense_type == 'Medical':
-					medical_amount += d.amount
-			# Calculate the 60% of the claimed amount.
-			allowed_reimbursement = min(medical_amount * 0.6, max_reimbursement)
+				if d.expense_type in ['Medical', 'Vision Support Equipment', 
+					'Hearing Support Equipment', 'Artificial Limbs']:
+					
+					if d.expense_type == 'Medical':
+						max_reimbursement = max(current_salary * 2, 50000)
+					elif d.expense_type == 'Vision Support Equipment':
+						max_reimbursement = 1000
+					elif d.expense_type == 'Hearing Support Equipment':
+						max_reimbursement = 18000
+					elif d.expense_type == 'Artificial Limbs':
+						max_reimbursement = 45000
 
-			if allowed_reimbursement > max_reimbursement:
-				frappe.throw(
-					_("The medical expense for {0} cannot exceed 60% of the total claim, "
-					"up to a maximum of {1}. Please adjust the amount.")
-					.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
-				)
+					current_allowed = min(d.amount * 0.6, max_reimbursement)					
+					previous_amount = previous_claims.get(d.expense_type, 0)					
+					remaining_limit = max_reimbursement - previous_amount
 
+					if remaining_limit <= 0:
+						frappe.throw(_(
+							"You have already reached the maximum reimbursement limit of {0} "
+							"for {1} in this fiscal year ({2})."
+						).format(
+							frappe.format_value(max_reimbursement, "Currency"),
+							d.expense_type,
+							current_fiscal_year.name
+						))
+
+					if current_allowed > remaining_limit:
+						frappe.throw(_(
+							"The medical expense for {0} cannot exceed {1} "
+							"(Remaining limit for fiscal year {2}). "
+							"You have already claimed {3} this fiscal year."
+						).format(
+							d.expense_type,
+							frappe.format_value(remaining_limit, "Currency"),
+							current_fiscal_year.name,
+							frappe.format_value(previous_amount, "Currency")
+						))
+		# Mubashir Bashir 24-01-25 End
 
 	def set_expense_account(self, validate=False):
 		for expense in self.expenses:
@@ -532,7 +622,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
 			filters={"band": ["=", f"{self.grade}"]},
-			fields=["band", "daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day", "medical"]
+			fields=["band", "daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 		)
 
 		allowed_expenses = {}
@@ -543,8 +633,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			"Dinner": "dinner",
 			"Refrehment": "refrehment",
 			"Dinner (Late Sitting)": "dinner_late_sitting",
-			"Lunch (Off Day)": "lunch_off_day",
-			"Medical":"medical"
+			"Lunch (Off Day)": "lunch_off_day"
 		}
 
 		grade_defined = False
@@ -668,7 +757,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		travel_settings = frappe.get_all(
 		"Travel Expense Setting Table",
 		filters={"band": ["=", f"{self.grade}"]},
-		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day", "medical"]
+		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
 	)
 
 		expense_mapping = {
@@ -678,8 +767,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			"Dinner": "dinner",
 			"Refrehment": "refrehment",
 			"Dinner (Late Sitting)": "dinner_late_sitting",
-			"Lunch (Off Day)": "lunch_off_day",
-			"Medical": "medical"	#added by Mubashir on 16-01-25
+			"Lunch (Off Day)": "lunch_off_day"
 		}
 
 		for setting in travel_settings:
