@@ -512,10 +512,10 @@ def get_eobi_pf_social_security_details(self=None):
         if date_of_joining < delay_limit:
             pf_employer_contribution_percent = frappe.db.get_value("AKF Payroll Settings", None, "provident_employer_contribution_percent")
             pf_employer_contribution_percent = float(pf_employer_contribution_percent if pf_employer_contribution_percent is not None else 0)
-            self.custom_provident_fund_employer_contribution = (float(self.gross_pay) * pf_employer_contribution_percent)/100.0
-            
+            gross_pay = float(self.gross_pay or 0.0)
+            self.custom_provident_fund_employer_contribution = (gross_pay * float(pf_employer_contribution_percent))/100.0
             pf_employee_contribution_percent = frappe.db.get_value("AKF Payroll Settings", None, "provident_employee_contribution_percent")
-            provident_fund_employee_contribution = (float(self.gross_pay) * float(pf_employee_contribution_percent))/100.0
+            provident_fund_employee_contribution = (gross_pay * float(pf_employee_contribution_percent))/100.0
             for d in self.deductions:
                 if d.salary_component == "Provident Fund":
                     d.amount = provident_fund_employee_contribution
