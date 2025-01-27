@@ -447,9 +447,9 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 	def validate_medical_expenses(self):	# Mubashir Bashir 24-01-25 Start
 
-		from akf_hrms.patches.skip_validations import skip
-		if(skip()):
-			return
+		# from akf_hrms.patches.skip_validations import skip
+		# if(skip()):
+		# 	return
 
 		social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
 		employee_doc = frappe.get_doc("Employee", self.employee)
