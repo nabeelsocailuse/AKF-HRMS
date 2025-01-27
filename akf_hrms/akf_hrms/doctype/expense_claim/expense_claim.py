@@ -536,6 +536,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 							frappe.format_value(previous_amount, "Currency")
 						))
 					else:
+						frappe.msgprint(f'allowed sanctioned amount: {d.sanctioned_amount}')
 						d.sanctioned_amount = current_allowed
 		# Mubashir Bashir 24-01-25 End
 
