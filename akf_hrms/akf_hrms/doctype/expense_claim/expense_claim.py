@@ -535,6 +535,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 							current_fiscal_year.name,
 							frappe.format_value(previous_amount, "Currency")
 						))
+					else:
+						d.sanctioned_amount = current_allowed
 		# Mubashir Bashir 24-01-25 End
 
 	def set_expense_account(self, validate=False):
