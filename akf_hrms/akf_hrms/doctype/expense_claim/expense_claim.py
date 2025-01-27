@@ -621,6 +621,9 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
 		if(self.ownership): return
 
+		for e in self.expenses:
+			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']: return
+
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
 			filters={"band": ["=", f"{self.grade}"]},
@@ -756,6 +759,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			frappe.throw(f"You can't apply twice for Expense Claim against travel request: {self.travel_request}")
 
 	def validate_travel_expenses(self): #by mubarrim
+		# Mubashir Bashir 27-01-2025 Start
+		for e in self.expenses:
+			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']: return
+		# Mubashir Bashir 27-01-2025 End
 		travel_settings = frappe.get_all(
 		"Travel Expense Setting Table",
 		filters={"band": ["=", f"{self.grade}"]},
@@ -846,6 +853,11 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	def get_travel_expense_amount(self, expense_type):
 		if(not self.grade):
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
+		
+		# Mubashir Bashir 27-01-2025 Start
+		for e in self.expenses:
+			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']: return
+		# Mubashir Bashir 27-01-2025 End
 		
 		travel_settings = frappe.get_all(
 			"Travel Expense Setting Table",
