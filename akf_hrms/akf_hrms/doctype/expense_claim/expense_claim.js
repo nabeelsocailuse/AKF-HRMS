@@ -123,6 +123,8 @@ frappe.ui.form.on('Expense Claim Detail', {
             return;
         }
         var d = locals[cdt][cdn];
+        d.sanctioned_amount = 0;    // Mubashir Bashir 28-01-2025
+        d.amount = 0;    // Mubashir Bashir 28-01-2025
         if (d.expense_type === "Daily Allowance") {
             frm.toggle_reqd("travel_request", true);
             frm.set_df_property("travel_request", "read_only", 0);
