@@ -446,22 +446,17 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	# 			)
 
 	def validate_medical_expenses(self):	# Mubashir Bashir 24-01-25 Start
-		# frappe.msgprint("validate_medical_expenses 1")
 
 		from akf_hrms.patches.skip_validations import skip
 		if(skip()):
 			return
 		
-		# frappe.msgprint("validate_medical_expenses 2")
-
 		social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
 		employee_doc = frappe.get_doc("Employee", self.employee)
 		branch = employee_doc.branch
 		employment_type = employee_doc.employment_type
 		employment_status = employee_doc.status
-		
-		# frappe.msgprint("validate_medical_expenses 3")
-		
+				
 		salary_structure = frappe.db.sql("""
 			SELECT base
 			FROM `tabSalary Structure Assignment`
@@ -469,8 +464,6 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			ORDER BY from_date DESC
 			LIMIT 1
 		""", (self.employee), as_dict=True)
-
-		# frappe.msgprint("validate_medical_expenses 4")
 
 		if not salary_structure:
 			frappe.throw(_("No Salary Structure Assignment found for the employee."))
@@ -486,8 +479,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				employment_status == "Active" and
 				current_salary > social_security_amount)):
 				frappe.throw(_(
-					"You are not eligible for {0} expense reimbursement."
-				).format(d.expense_type))		
+					"Only permanent employees in the Central Office with a current salary greater than the social security amount are eligible for {0} expense reimbursement."
+				).format(d.expense_type), title=_("Not Eligible"))		
 
 		current_fiscal_year = frappe.db.sql("""
 		SELECT name, year_start_date, year_end_date
