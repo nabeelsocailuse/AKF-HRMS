@@ -446,10 +446,13 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	# 			)
 
 	def validate_medical_expenses(self):	# Mubashir Bashir 24-01-25 Start
+		# frappe.msgprint("validate_medical_expenses 1")
 
-		# from akf_hrms.patches.skip_validations import skip
-		# if(skip()):
-		# 	return
+		from akf_hrms.patches.skip_validations import skip
+		if(skip()):
+			return
+		
+		# frappe.msgprint("validate_medical_expenses 2")
 
 		social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
 		employee_doc = frappe.get_doc("Employee", self.employee)
@@ -457,87 +460,96 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		employment_type = employee_doc.employment_type
 		employment_status = employee_doc.status
 		
+		# frappe.msgprint("validate_medical_expenses 3")
+		
 		salary_structure = frappe.db.sql("""
-			SELECT base 
+			SELECT base
 			FROM `tabSalary Structure Assignment`
 			WHERE docstatus = 1 AND employee = %s
 			ORDER BY from_date DESC
 			LIMIT 1
 		""", (self.employee), as_dict=True)
 
+		# frappe.msgprint("validate_medical_expenses 4")
+
 		if not salary_structure:
 			frappe.throw(_("No Salary Structure Assignment found for the employee."))
 
 		current_salary = salary_structure[0].get('base', 0)
+
+		for d in self.get("expenses"):
+			if (d.expense_type in ['Medical', 'Vision Support Equipment', 
+				'Hearing Support Equipment', 'Artificial Limbs'] and not
+				(self.company == "Alkhidmat Foundation Pakistan" and
+				branch == "Central Office" and
+				employment_type == "Permanent" and
+				employment_status == "Active" and
+				current_salary > social_security_amount)):
+				frappe.throw(_(
+					"You are not eligible for {0} expense reimbursement."
+				).format(d.expense_type))		
+
+		current_fiscal_year = frappe.db.sql("""
+		SELECT name, year_start_date, year_end_date
+		FROM `tabFiscal Year`
+		WHERE %s BETWEEN year_start_date AND year_end_date
+		LIMIT 1
+		""", frappe.utils.today(), as_dict=True)[0]
+
+		previous_reimbursements = frappe.db.sql("""
+		SELECT child.expense_type, SUM(child.amount * 0.6) as reimbursed_amount
+		FROM `tabExpense Claim` parent
+		JOIN `tabExpense Claim Detail` child ON parent.name = child.parent
+		WHERE parent.employee = %s
+		AND parent.docstatus = 1
+		AND parent.posting_date BETWEEN %s AND %s
+		AND parent.name != %s
+		GROUP BY child.expense_type
+		""", (self.employee, current_fiscal_year.year_start_date, 
+		current_fiscal_year.year_end_date, self.name), as_dict=True)
 		
-		if (self.company == "Alkhidmat Foundation Pakistan" and
-			branch == "Central Office" and
-			employment_type == "Permanent" and
-			employment_status == "Active" and
-			current_salary > social_security_amount):
+		previous_claims = {d.expense_type: d.reimbursed_amount for d in previous_reimbursements}
 
-			current_fiscal_year = frappe.db.sql("""
-            SELECT name, year_start_date, year_end_date
-            FROM `tabFiscal Year`
-            WHERE %s BETWEEN year_start_date AND year_end_date
-            LIMIT 1
-			""", frappe.utils.today(), as_dict=True)[0]
+		for d in self.get("expenses"):
+			if d.expense_type in ['Medical', 'Vision Support Equipment', 
+				'Hearing Support Equipment', 'Artificial Limbs']:
+				
+				if d.expense_type == 'Medical':
+					max_reimbursement = max(current_salary * 2, 50000)
+				elif d.expense_type == 'Vision Support Equipment':
+					max_reimbursement = 1000
+				elif d.expense_type == 'Hearing Support Equipment':
+					max_reimbursement = 18000
+				elif d.expense_type == 'Artificial Limbs':
+					max_reimbursement = 45000
 
-			previous_reimbursements = frappe.db.sql("""
-            SELECT child.expense_type, SUM(child.amount * 0.6) as reimbursed_amount
-            FROM `tabExpense Claim` parent
-            JOIN `tabExpense Claim Detail` child ON parent.name = child.parent
-            WHERE parent.employee = %s
-            AND parent.docstatus = 1
-            AND parent.posting_date BETWEEN %s AND %s
-            AND parent.name != %s
-            GROUP BY child.expense_type
-        	""", (self.employee, current_fiscal_year.year_start_date, 
-            current_fiscal_year.year_end_date, self.name), as_dict=True)
-			
-			previous_claims = {d.expense_type: d.reimbursed_amount for d in previous_reimbursements}
+				current_allowed = min(d.amount * 0.6, max_reimbursement)					
+				previous_amount = previous_claims.get(d.expense_type, 0)					
+				remaining_limit = max_reimbursement - previous_amount
 
-			for d in self.get("expenses"):
-				if d.expense_type in ['Medical', 'Vision Support Equipment', 
-					'Hearing Support Equipment', 'Artificial Limbs']:
-					
-					if d.expense_type == 'Medical':
-						max_reimbursement = max(current_salary * 2, 50000)
-					elif d.expense_type == 'Vision Support Equipment':
-						max_reimbursement = 1000
-					elif d.expense_type == 'Hearing Support Equipment':
-						max_reimbursement = 18000
-					elif d.expense_type == 'Artificial Limbs':
-						max_reimbursement = 45000
+				if remaining_limit <= 0:
+					frappe.throw(_(
+						"You have already reached the maximum reimbursement limit of {0} "
+						"for {1} in this fiscal year ({2})."
+					).format(
+						frappe.format_value(max_reimbursement, "Currency"),
+						d.expense_type,
+						current_fiscal_year.name
+					))
 
-					current_allowed = min(d.amount * 0.6, max_reimbursement)					
-					previous_amount = previous_claims.get(d.expense_type, 0)					
-					remaining_limit = max_reimbursement - previous_amount
-
-					if remaining_limit <= 0:
-						frappe.throw(_(
-							"You have already reached the maximum reimbursement limit of {0} "
-							"for {1} in this fiscal year ({2})."
-						).format(
-							frappe.format_value(max_reimbursement, "Currency"),
-							d.expense_type,
-							current_fiscal_year.name
-						))
-
-					if current_allowed > remaining_limit:
-						frappe.throw(_(
-							"The medical expense for {0} cannot exceed {1} "
-							"(Remaining limit for fiscal year {2}). "
-							"You have already claimed {3} this fiscal year."
-						).format(
-							d.expense_type,
-							frappe.format_value(remaining_limit, "Currency"),
-							current_fiscal_year.name,
-							frappe.format_value(previous_amount, "Currency")
-						))
-					else:
-						frappe.msgprint(f'allowed sanctioned amount: {d.sanctioned_amount}')
-						d.sanctioned_amount = current_allowed
+				if current_allowed > remaining_limit:
+					frappe.throw(_(
+						"The medical expense for {0} cannot exceed {1} "
+						"(Remaining limit for fiscal year {2}). "
+						"You have already claimed {3} this fiscal year."
+					).format(
+						d.expense_type,
+						frappe.format_value(remaining_limit, "Currency"),
+						current_fiscal_year.name,
+						frappe.format_value(previous_amount, "Currency")
+					))
+				else:
+					d.sanctioned_amount = current_allowed
 		# Mubashir Bashir 24-01-25 End
 
 	def set_expense_account(self, validate=False):

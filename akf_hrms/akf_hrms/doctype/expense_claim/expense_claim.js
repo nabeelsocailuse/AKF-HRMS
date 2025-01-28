@@ -476,18 +476,18 @@ frappe.ui.form.on("Expense Claim Detail", {
     
     // 80% sanctioned amount in case of medical expense 100% in other cases. 
     // Make sanctioned amount field readonly in case of medical expnese.
-    amount: function (frm, cdt, cdn) {
-        var child = locals[cdt][cdn];
-        if (child.expense_type == 'Medical'){
-            // 80% sanctioned amount in case of medical expense
-            frappe.model.set_value(cdt, cdn, 'sanctioned_amount', child.amount*0.8);
-            frm.get_field('expenses').grid.grid_rows_by_docname[cdn].toggle_editable('sanctioned_amount', false);
-        }
-        else {
-            frappe.model.set_value(cdt, cdn, 'sanctioned_amount', child.amount);
-            frm.get_field('expenses').grid.grid_rows_by_docname[cdn].toggle_editable('sanctioned_amount', true);
-        }
-    },
+    // amount: function (frm, cdt, cdn) {
+    //     var child = locals[cdt][cdn];
+    //     if (child.expense_type == 'Medical'){
+    //         // 80% sanctioned amount in case of medical expense
+    //         frappe.model.set_value(cdt, cdn, 'sanctioned_amount', child.amount*0.8);
+    //         frm.get_field('expenses').grid.grid_rows_by_docname[cdn].toggle_editable('sanctioned_amount', false);
+    //     }
+    //     else {
+    //         frappe.model.set_value(cdt, cdn, 'sanctioned_amount', child.amount);
+    //         frm.get_field('expenses').grid.grid_rows_by_docname[cdn].toggle_editable('sanctioned_amount', true);
+    //     }
+    // },
     // Mubashir Bashir 14-01-2025 End
 
 
