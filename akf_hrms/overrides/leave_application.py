@@ -417,12 +417,14 @@ class LeaveApplication(Document, PWANotificationsMixin):
 					AND leave_type = %s
 					AND from_date >= %s 
 					AND to_date <= %s
+					AND name != %s
 			""", (
 				self.employee,
 				self.company,
 				leave_type,
 				start_date,
-				end_date
+				end_date,
+				self.name
 			), as_dict=1)
 
 			# Calculate total days from existing applications
