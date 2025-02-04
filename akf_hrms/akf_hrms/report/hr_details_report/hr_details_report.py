@@ -76,7 +76,8 @@ def get_data(filters):
 	return data
 
 def get_conditions(filters):
-    conditions = " and e.company = %(company)s " if(filters.company) else ""
+    conditions = ""
+    conditions += " and e.company = %(company)s " if(filters.company) else ""
     conditions += " and e.branch = %(branch)s " if(filters.branch) else ""
     conditions += " and e.name = %(employee_id)s " if(filters.employee_id) else ""
     conditions += " and e.status = %(employee_status)s " if(filters.employee_status) else ""
