@@ -23,3 +23,36 @@ frappe.ui.form.on("Travel Request", {
         }
     },
 });
+
+// Mubashir Bashir 07-02-2025 Start
+frappe.ui.form.on("Travel Itinerary", {
+    departure_date: function(frm, cdt, cdn){
+        validate_dates(frm, cdt, cdn);
+    },
+    arrival_date: function(frm, cdt, cdn){
+        validate_dates(frm, cdt, cdn);
+    }
+});
+
+function validate_dates(frm, cdt, cdn){
+    console.log('validate dates running...');
+    
+    let row = locals[cdt][cdn];
+
+    if (row.departure_date && row.arrival_date){
+        let departure = new Date(row.departure_date);
+        let arrival = new Date(row.arrival_date);
+
+        if (departure > arrival) {
+            frappe.msgprint({
+                title: __('Validation Error'),
+                message: __('Departure Date cannot be greater than Arrival Date.'),
+                indicator: __('red')
+            });
+
+            // frappe.model.set_value(cdt, cdn, 'departure_date', null);
+            frappe.model.set_value(cdt, cdn, 'arrival_date', null);
+        }
+    }
+}
+// Mubashir Bashir 07-02-2025 End
