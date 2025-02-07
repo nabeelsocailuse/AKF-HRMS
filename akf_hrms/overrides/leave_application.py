@@ -189,10 +189,12 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			return
 		if self.leave_type:
 			leave_type = frappe.get_doc("Leave Type", self.leave_type)
-			if leave_type.custom_applicable_after_days > 0:
+			applicable_after_days = int(leave_type.custom_applicable_after_days or 0)
+			
+			if applicable_after_days > 0:
 				date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
 				number_of_days = date_diff(getdate(self.from_date), date_of_joining)
-				if number_of_days < leave_type.custom_applicable_after_days:
+				if number_of_days < applicable_after_days:
 					frappe.throw(
 						_("{0} applicable after {1} days after joining date").format(
 							self.leave_type, leave_type.custom_applicable_after_days
