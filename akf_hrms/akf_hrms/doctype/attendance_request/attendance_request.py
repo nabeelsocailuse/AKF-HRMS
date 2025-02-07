@@ -28,7 +28,7 @@ class AttendanceRequest(Document):
 		self.mark_check_in_on_save() # nabeel saleem, 20-12-2024
 		self.validate_from_time_and_to_time() # nabeel saleem, 20-12-2024
 		self.validate_half_day() # nabeel saleem, 20-12-2024
-		self.validate_work_from_home()
+		# self.validate_work_from_home()	#Commented by Mubashir on 07-02-25
 
 	def validate_future_request_and_date_of_joining(self):
 		date_of_joining = frappe.db.get_value(
