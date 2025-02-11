@@ -829,7 +829,15 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				else:
 					frappe.throw(f"No attendance Record found against travel request '{self.travel_request}' for date '{expense.expense_date}'")
 
-				time_obj = datetime.strptime(dur, "%H:%M:%S.%f")
+				# Mubashir 11-02-25 Start
+				dur = str(dur).strip()
+
+				try:
+					time_obj = datetime.strptime(dur, "%H:%M:%S.%f")
+				except ValueError:
+					time_obj = datetime.strptime(dur, "%H:%M:%S")
+				
+				# Mubashir 11-02-25 End
 
 				# Extract hours, minutes, and seconds
 				hours = time_obj.hour
@@ -839,7 +847,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				# Convert the entire time into hours as a float
 				time_in_hours = hours + minutes / 60 + seconds / 3600
 
-				duration = duration + time_in_hours
+				duration += time_in_hours
 
 		# frappe.throw(f"duration: {time_in_hours}")
 		
