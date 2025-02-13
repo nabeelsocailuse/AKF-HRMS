@@ -56,9 +56,9 @@ doctype_js = {
     ],
     "Attendance": "public/js/custom_doctype_js/attendance/load_attendance_log_details.js",
     "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
-    "Salary Slip": [
-        "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
-        ],
+    # "Salary Slip": [
+    #     "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
+    #     ],
     "Company": [
         "public/js/custom_doctype_js/company/company.js",
     ],
