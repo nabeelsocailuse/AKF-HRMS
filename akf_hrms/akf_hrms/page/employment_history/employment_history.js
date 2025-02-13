@@ -89,7 +89,6 @@ frappe.pages['employment-history'].on_page_load = function(wrapper) {
                 freeze: true,
                 freeze_message: "Fetching employee information...",
                 callback: function(r) {
-                    console.log(r.message);
                     design.loadDesign(page, r.message);
                     // Show Print and Refresh buttons once the employee record is being shown.
                     if (filters.employee) {

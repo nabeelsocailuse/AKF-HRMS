@@ -1,9 +1,17 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-""" custom functions 
-1- validate_only_three_leaves_in_current_month
-
+"""
+1- validate_three_casual_leaves_in_current_month (DONE)
+2- Short Leave, only one in month
+2.1- Short Leave, difference of (to_time - from_time) cannot exceed more than 3 hours
+3- Half Day Leave, only one in month
+3.1- Half Day Leave, difference of (to_time - from_time) cannot exceed more than 5 hours
+4- Earned Leave, employee cannot get before two years. (DONE)
+5- Update previous stats of records which may be submitted. (live server)
+6- Leave application workflow cancel state is not defined, status 'Approved' is still showing even the doc is cancelled
+7- Leave Tracking issue (DONE)
+8- Leave work flow for Employee directly reports to HOD
 """
 import datetime
 from typing import Dict, Optional, Tuple, Union
@@ -90,8 +98,14 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_value("Leave Type", self.leave_type, "is_optional_leave"):
 			self.validate_optional_leave()
 		self.validate_applicable_after()
-		self.validate_only_three_leaves_in_current_month()
+		self.validate_three_casual_leaves_in_current_month() # Mubashir Bashir 1-1-2025
+		self.short_leave_one_in_a_month() # Mubashir Bashir 1-1-2025
+		self.half_day_leave_one_in_a_month() # Mubashir Bashir 1-1-2025
+		self.short_leave_cannot_exceed_3_hours() # Mubashir Bashir 1-1-2025
+		self.half_day_leave_cannot_exceed_4_hours() # Mubashir Bashir 1-1-2025
 		self.validate_half_day_leave()
+		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
+		self.record_application_state() # Nabeel Saleem, 29-11-2024
 
 	def on_update(self):
 		if self.status == "Open" and self.docstatus < 1:
@@ -128,8 +142,8 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_single_value("HR Settings", "send_leave_notification"):
 			self.notify_employee()
 		self.cancel_attendance()
-
 		self.publish_update()
+		self.update_status()
 
 	def after_delete(self):
 		self.publish_update()
@@ -138,29 +152,57 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		employee_user = frappe.db.get_value("Employee", self.employee, "user_id", cache=True)
 		hrms.refetch_resource("hrms:my_leaves", employee_user)
 
+	def update_status(self):
+		if(not hasattr(self, "workflow_state")): return
+		frappe.db.set_value('Leave Application', self.name, 'status', 'Cancelled')
+		self.reload()
+
+	# Leave Type applicable after working days commented by Mubashir on 14-01-2025 requested by AKFP HR in error sheet		
+	# def validate_applicable_after(self):
+	# 	from akf_hrms.patches.skip_validations import skip
+	# 	if(skip()): 
+	# 		return
+	# 	if self.leave_type:
+	# 		leave_type = frappe.get_doc("Leave Type", self.leave_type)
+	# 		if leave_type.applicable_after > 0:
+	# 			date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
+	# 			leave_days = get_approved_leaves_for_period(
+	# 				self.employee, False, date_of_joining, self.from_date
+	# 			)
+	# 			number_of_days = date_diff(getdate(self.from_date), date_of_joining)
+	# 			if number_of_days >= 0:
+	# 				holidays = 0
+	# 				if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
+	# 					holidays = get_holidays(self.employee, date_of_joining, self.from_date)
+	# 				number_of_days = number_of_days - leave_days - holidays
+	# 				if number_of_days < leave_type.applicable_after:
+	# 					frappe.throw(
+	# 						_("{0} applicable after {1} working days").format(
+	# 							self.leave_type, leave_type.applicable_after
+	# 						)
+	# 					)
+
+	#Leave Type applicable after normal days done by Mubashir on 14-01-2025 requeted by AKFP HR in error sheet	 
 	def validate_applicable_after(self):
-		from akf_hrms.patches.skip_validations import skip
-		if(skip()): 
-			return
+		from akf_hrms.patches.skip_validations import skip		
+		if skip():
+			return		
 		if self.leave_type:
 			leave_type = frappe.get_doc("Leave Type", self.leave_type)
-			if leave_type.applicable_after > 0:
+			applicable_after_days = int(leave_type.custom_applicable_after_days or 0)
+			
+			if applicable_after_days > 0:
 				date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
-				leave_days = get_approved_leaves_for_period(
-					self.employee, False, date_of_joining, self.from_date
-				)
 				number_of_days = date_diff(getdate(self.from_date), date_of_joining)
-				if number_of_days >= 0:
-					holidays = 0
-					if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
-						holidays = get_holidays(self.employee, date_of_joining, self.from_date)
-					number_of_days = number_of_days - leave_days - holidays
-					if number_of_days < leave_type.applicable_after:
-						frappe.throw(
-							_("{0} applicable after {1} working days").format(
-								self.leave_type, leave_type.applicable_after
-							)
+				
+				if number_of_days < applicable_after_days:
+					frappe.throw(
+						_("{0} applicable after {1} days after joining date").format(
+							self.leave_type, leave_type.custom_applicable_after_days
 						)
+					)
+
+
 
 	def validate_dates(self):
 		if frappe.db.get_single_value("HR Settings", "restrict_backdated_leave_application"):
@@ -258,66 +300,464 @@ class LeaveApplication(Document, PWANotificationsMixin):
 
 	""" HR Leave Policy """
 	""" Casual Leave allowed 3 three in a month... """
-	def validate_only_three_leaves_in_current_month(self):
-		from akf_hrms.patches.skip_validations import skip
-		if(skip()): 
-			return
-		if(self.leave_type!="Casual Leave"): return
-		# start validation
-		from frappe.utils import get_first_day, get_last_day, getdate
-		import datetime
-		# Parse the from_date string into a datetime object
-		from_month = getdate(self.from_date)
-		# Get the month name
-		from_month_name = from_month.strftime("%B")
-		# Parse the to_date string into a datetime object
-		to_month = getdate(self.to_date)
-		# Get the month name
-		to_month_name = to_month.strftime("%B")
+	# def validate_three_casual_leaves_in_current_month(self):
+	# 	from akf_hrms.patches.skip_validations import skip
+	# 	if(skip()): 
+	# 		return
+	# 	if(self.leave_type!="Casual Leave"): return
+	# 	# start validation
+	# 	from frappe.utils import get_first_day, get_last_day, getdate
+	# 	import datetime
+	# 	# Parse the from_date string into a datetime object
+	# 	from_month = getdate(self.from_date)
+	# 	# Get the month name
+	# 	from_month_name = from_month.strftime("%B")
+	# 	# Parse the to_date string into a datetime object
+	# 	to_month = getdate(self.to_date)
+	# 	# Get the month name
+	# 	to_month_name = to_month.strftime("%B")
 
 
-		def verifyLeaves(conditions, month_name):
-			result = frappe.db.sql(f""" 
-				select 
-					ifnull(sum(total_leave_days),0) total_leaves
-				from 
-					`tabLeave Application` 
-				{conditions}
-				""")
-			if(result): 
-				total_leaves = result[0][0] + self.total_leave_days
-				if(total_leaves>3):
-					frappe.throw(f"3 <b>{self.leave_type}</b> allowed in a month <b>{month_name}</b>.", title="Exception")
+	# 	def verifyLeaves(conditions, month_name):
+	# 		result = frappe.db.sql(f""" 
+	# 			select 
+	# 				ifnull(sum(total_leave_days),0) total_leaves
+	# 			from 
+	# 				`tabLeave Application` 
+	# 			{conditions}
+	# 			""")
+	# 		if(result): 
+	# 			total_leaves = result[0][0] + self.total_leave_days
+	# 			if(total_leaves>3):
+	# 				frappe.throw(f"3 <b>{self.leave_type}</b> allowed in a month <b>{month_name}</b>.", title="Exception")
 
-		conditions = f""" 
-		where 
-			docstatus=1
-			and employee = '{self.employee}'
-			and company = '{self.company}'
-			and leave_type = '{self.leave_type}'
+	# 	conditions = f""" 
+	# 	where 
+	# 		docstatus=1
+	# 		and employee = '{self.employee}'
+	# 		and company = '{self.company}'
+	# 		and leave_type = '{self.leave_type}'
+	# 	"""
+	# 	if(from_month_name == to_month_name):
+	# 		start_date =  get_first_day(self.from_date)
+	# 		end_date =  get_last_day(self.to_date)
+	# 		conditions += f" and (from_date>='{start_date}' and to_date<='{end_date}') "
+	# 		verifyLeaves(conditions, from_month_name)
+			
+	# 	else:
+	# 		# validate with from date
+	# 		start_date =  get_first_day(self.from_date)
+	# 		end_date =  get_last_day(self.from_date)
+	# 		conditions += " and (from_date>='{start_date}' and to_date<='{end_date}') "
+	# 		verifyLeaves(conditions, from_month_name)
+	# 		# validate with to date
+	# 		start_date =  get_first_day(self.to_date)
+	# 		end_date =  get_last_day(self.to_date)
+	# 		verifyLeaves(conditions, to_month_name)
+	
+	""" HR Policy for Casual, Short, and Half day leaves Implemented By Mubashir """
+	""" --------------------------------START----------------------------------- """
+	# Implemented by Mubashir 1-1-2025
+	def get_payroll_period_dates(self, date):
+		"""Returns start and end dates for payroll period containing the given date
+		
+		For dates 1-20: Period is 21st of previous month to 20th of current month
+		For dates 21-31: Period is 21st of current month to 20th of next month
 		"""
-		if(from_month_name == to_month_name):
-			start_date =  get_first_day(self.from_date)
-			end_date =  get_last_day(self.to_date)
-			conditions += f" and (from_date>='{start_date}' and to_date<='{end_date}') "
-			verifyLeaves(conditions, from_month_name)
+		date = getdate(date)
+		
+		if date.day <= 20:
+			# For dates 1-20
+			# Start: 21st of previous month
+			period_start = getdate(date).replace(day=21)
+			period_start = frappe.utils.add_months(period_start, -1)
+			
+			# End: 20th of current month
+			period_end = getdate(date).replace(day=20)
 			
 		else:
-			# validate with from date
-			start_date =  get_first_day(self.from_date)
-			end_date =  get_last_day(self.from_date)
-			conditions += " and (from_date>='{start_date}' and to_date<='{end_date}') "
-			verifyLeaves(conditions, from_month_name)
-			# validate with to date
-			start_date =  get_first_day(self.to_date)
-			end_date =  get_last_day(self.to_date)
-			verifyLeaves(conditions, to_month_name)
+			# For dates 21-31
+			# Start: 21st of current month
+			period_start = getdate(date).replace(day=21)
+			
+			# End: 20th of next month
+			period_end = getdate(date).replace(day=20)
+			period_end = frappe.utils.add_months(period_end, 1)
+		
+		# frappe.msgprint(f'Payroll Dates: {period_start} - {period_end} - {date} - {date.day}')
+			
+		return period_start, period_end
 	
+	# Implemented by Mubashir 1-1-2025
+	def get_period_name(self, start_date):
+		"""Returns a formatted name for the payroll period
+		Format: 'January 21 - February 20' for each period
+		"""
+		start_date = getdate(start_date)
+		end_date = getdate(start_date).replace(day=20)		
+		if start_date.day == 21:
+			end_date = frappe.utils.add_months(end_date, 1)		
+		period_name = f"{start_date.strftime('%B %d')} - {end_date.strftime('%B %d')}"
+		# frappe.msgprint(f"Period Name: {period_name}")		
+		return period_name
+	
+	# Implemented by Mubashir 1-1-2025
+	def verify_leave_count(self, start_date, end_date, period_name, max_leaves, leave_type):
+		"""Generic helper function to verify leave count for a date range"""
+		try:
+			# First get existing leaves in the period
+			result = frappe.db.sql("""
+				SELECT 
+					DATEDIFF(to_date, from_date) + 1 as days
+				FROM `tabLeave Application`
+				WHERE 
+					docstatus != 2
+					AND workflow_state != 'Rejected'
+					AND workflow_state != 'Rejected by the Line Manager'
+					AND workflow_state != 'Rejected by the Head of Department'
+					AND workflow_state != 'Rejected by the CEO'
+					AND employee = %s
+					AND company = %s
+					AND leave_type = %s
+					AND from_date >= %s 
+					AND to_date <= %s
+					AND name != %s
+			""", (
+				self.employee,
+				self.company,
+				leave_type,
+				start_date,
+				end_date,
+				self.name
+			), as_dict=1)
+
+			# Calculate total days from existing applications
+			existing_days = sum(r.days for r in result)
+			# Calculate days in current application
+			current_days = date_diff(self.to_date, self.from_date) + 1
+			# Total days including current application
+			total_days = existing_days + current_days
+
+			if total_days > max_leaves:
+				frappe.throw(
+					msg=f"Only {max_leaves} {leave_type} {'day' if max_leaves == 1 else 'days'} allowed in payroll period "
+						f"({period_name}). This would be {total_days} days.",
+					title=f"Maximum {leave_type} Days Exceeded"
+				)
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error checking {leave_type} for period {period_name}: {str(e)}",
+				title=f"{leave_type} Validation Error"
+			)
+			raise
+
+	# Implemented by Mubashir 1-1-2025			
+	def validate_three_casual_leaves_in_current_month(self):
+		"""Validates that an employee doesn't exceed 3 casual leaves in a payroll period"""
+		from akf_hrms.patches.skip_validations import skip
+		if skip() or self.leave_type != "Casual Leave":
+			return
+
+		try:
+			# Get payroll periods for from_date and to_date
+			from_date_period_start, from_date_period_end = self.get_payroll_period_dates(self.from_date)
+			to_date_period_start, to_date_period_end = self.get_payroll_period_dates(self.to_date)
+
+			# If leave application spans multiple payroll periods
+			if from_date_period_start != to_date_period_start:
+				self.verify_leave_count(					
+					from_date_period_start,
+					from_date_period_end,
+					self.get_period_name(from_date_period_start),
+					3,
+					"Casual Leave"
+				)
+				self.verify_leave_count(					
+					to_date_period_start,
+					to_date_period_end,
+					self.get_period_name(to_date_period_start),
+					3,
+					"Casual Leave"
+				)
+			else:
+				self.verify_leave_count(					
+					from_date_period_start,
+					from_date_period_end,
+					self.get_period_name(from_date_period_start),
+					3,
+					"Casual Leave"
+				)
+
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error in casual leave validation: {str(e)}",
+				title="Casual Leave Validation Error"
+			)
+			raise
+			# frappe.throw(
+			# 	msg="Error validating casual leaves. Please contact system administrator.",
+			# 	title="Validation Error"
+			# )
+	
+	# Implemented by Mubashir 1-1-2025
+	def short_leave_one_in_a_month(self):
+		"""Validates that an employee doesn't exceed 1 short leave in a payroll period"""
+		from akf_hrms.patches.skip_validations import skip
+		if skip() or self.leave_type != "Short Leave":
+			return
+
+		try:
+			# Ensure short leave is for single day
+			if getdate(self.from_date) != getdate(self.to_date):
+				frappe.throw(
+					msg="Short Leave must be for a single day only.",
+					title="Invalid Short Leave Duration"
+				)
+
+			# Get payroll period and verify
+			period_start, period_end = self.get_payroll_period_dates(self.from_date)
+			self.verify_leave_count(				
+				period_start,
+				period_end,
+				self.get_period_name(period_start),
+				1,
+				"Short Leave"
+			)
+
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error in short leave validation: {str(e)}",
+				title="Short Leave Validation Error"
+			)
+			raise
+			# frappe.throw(
+			# 	msg="Error validating short leaves. Please contact system administrator.",
+			# 	title="Validation Error"
+			# )
+
+	# Implemented by Mubashir 1-1-2025
+	def half_day_leave_one_in_a_month(self):
+		"""Validates that an employee doesn't exceed 1 half day leave in a payroll period"""
+		from akf_hrms.patches.skip_validations import skip
+		if skip() or self.leave_type != "Half Day Leave":
+			return
+		if self.leave_type != "Half Day Leave":
+			return
+
+		try:
+			# Ensure half day leave is for single day
+			if getdate(self.from_date) != getdate(self.to_date):
+				frappe.throw(
+					msg="Half Day Leave must be for a single day only.",
+					title="Invalid Half Day Leave Duration"
+				)
+
+			# Get payroll period and verify
+			period_start, period_end = self.get_payroll_period_dates(self.from_date)
+			self.verify_leave_count(				
+				period_start,
+				period_end,
+				self.get_period_name(period_start),
+				1,
+				"Half Day Leave"
+			)
+
+		except Exception as e:
+			frappe.log_error(
+				message=f"Error in half day leave validation: {str(e)}",
+				title="Half Day Leave Validation Error"
+			)
+			raise
+			# frappe.throw(
+			# 	msg="Error validating half day leaves. Please contact system administrator.",
+			# 	title="Validation Error"
+			# )
+
+	# Implemented by Mubashir 1-1-2025
+	def short_leave_cannot_exceed_3_hours(self):
+		"""Validates that short leave duration doesn't exceed 3 hours"""
+		if self.custom_from_time and self.custom_to_time:
+			hours = frappe.utils.time_diff_in_hours(self.custom_to_time, self.custom_from_time)
+			if self.leave_type == 'Short Leave' and hours > 3:
+				frappe.throw(
+					msg='Short Leave cannot exceed 3 hours. Please adjust the duration accordingly.',
+					title='Invalid Short Leave Duration'
+				)
+
+	# Implemented by Mubashir 1-1-2025
+	def half_day_leave_cannot_exceed_4_hours(self):
+		"""Validates that half day leave duration doesn't exceed 4 hours"""
+		if self.custom_from_time and self.custom_to_time:
+			hours = frappe.utils.time_diff_in_hours(self.custom_to_time, self.custom_from_time)
+			if self.leave_type == 'Half Day Leave' and hours > 4:
+				frappe.throw(
+					msg='Half Day Leave cannot exceed 4 hours. Please adjust the duration accordingly.',
+					title='Invalid Half Day Duration'
+				)
+
+	""" HR Policy for Casual, Short, and Half day leaves Implemented By Mubashir """
+	""" --------------------------------END------------------------------------- """
+
 	@frappe.whitelist()
 	def validate_half_day_leave(self):  	
 		from akf_hrms.utils.leave_policy import verify_half_day_leave
 		verify_half_day_leave(self)
-  
+	
+	# Nabeel Saleem, 18-12-2024
+	# @frappe.whitelist()
+	# def set_next_workflow_approver(self):
+	# 	if(not hasattr(self, 'workflow_state')): return		
+	# 	if(self.status!='Open'): return
+	# 	data = frappe.db.sql(f""" 
+	# 		Select 
+	# 			w.name, wt.state, wt.action, wt.next_state, wt.allowed, wt.allow_self_approval
+	# 		From 
+	# 			`tabWorkflow` w inner join `tabWorkflow Transition` wt on (w.name=wt.parent)
+	# 		Where 
+	# 			w.document_type='Leave Application'
+	# 			and w.is_active = 1
+	# 			and wt.action='Approve'
+	# 			and wt.state='{self.workflow_state}'
+	# 		Order by
+	# 			wt.idx asc
+	# 		limit 1
+	# 	""", as_dict=1)
+	# 	# => find approver
+	# 	def set_approver_detail(user_id, next_state):
+	# 		self.leave_approver = user_id
+	# 		self.leave_approver_name = get_fullname(user_id)
+	# 		self.custom_next_workflow_state = next_state
+
+	# 	for d in data:
+	# 		if(d.allowed == "Line Manager"):
+	# 			reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
+	# 			if(reports_to):
+	# 				user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
+	# 				if(frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Line Manager'})):
+	# 					set_approver_detail(user_id, d.next_state)
+	# 					print("user id: ", user_id, "next state: ", d.next_state)
+	# 			else:
+	# 				frappe.throw(f"Please set a `reports to` of this employee", title="Line Manager")
+						
+	# 		elif(d.allowed == "Head of Department"):
+	# 			user_id = frappe.db.get_value('Employee', {'department': self.department , 'custom_hod': 1}, 'user_id')
+	# 			if(user_id):
+	# 				set_approver_detail(user_id, d.next_state)
+	# 			else:
+	# 				frappe.throw(f"Please set a `head of department` of department {self.department}", title="Head of Department")
+			
+	# 		elif(d.allowed == 'CEO'):
+	# 			user_list = frappe.db.sql(""" 
+	# 					Select 
+	# 						u.name 
+	# 					From 
+	# 						`tabUser` u inner join `tabHas Role` h on (u.name=h.parent) 
+	# 					Where 
+	# 						h.role in ('CEO')
+	# 					Group by
+	# 						u.name 
+	# 			""")
+	# 			if(user_list):
+	# 				set_approver_detail(user_list[0][0], d.next_state)
+
+	# 			else:
+	# 				frappe.throw(f"Please set a `CEO` of {self.company}", title="CEO")
+
+	# Mubashir Bashir 13-02-2025 Start
+	@frappe.whitelist()
+	def set_next_workflow_approver(self):
+		if not hasattr(self, 'workflow_state'):
+			return        
+		if self.status != 'Open':
+			return
+
+		# Fetch workflow transitions
+		data = frappe.db.sql(f""" 
+			SELECT 
+				w.name, wt.state, wt.action, wt.next_state, wt.allowed, wt.allow_self_approval
+			FROM 
+				`tabWorkflow` w 
+			INNER JOIN 
+				`tabWorkflow Transition` wt 
+			ON 
+				(w.name = wt.parent)
+			WHERE 
+				w.document_type = 'Leave Application'
+				AND w.is_active = 1
+				AND wt.action = 'Approve'
+				AND wt.state = '{self.workflow_state}'
+			ORDER BY
+				wt.idx ASC
+			LIMIT 1
+		""", as_dict=True)
+
+		# Helper function to set approver details
+		def set_approver_detail(user_id, next_state):
+			self.leave_approver = user_id
+			self.leave_approver_name = get_fullname(user_id)
+			self.custom_next_workflow_state = next_state
+
+		# Check if employee directly reports to HOD
+		directly_reports_to_hod = frappe.db.get_value("Employee", {"name": self.employee}, "custom_directly_reports_to_hod")
+
+		for d in data:
+			if d.allowed == "Line Manager": 
+
+				reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
+				if reports_to:
+					user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
+					if frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Head of Department' if directly_reports_to_hod else 'Line Manager'}):
+						set_approver_detail(user_id, 'Approved by Head of Department' if directly_reports_to_hod else d.next_state)
+				else:
+					frappe.throw(f"Please set a `reports to` for this employee", title="Line Manager")
+
+			elif d.allowed == "Head of Department":
+				user_id = frappe.db.get_value('Employee', {'department': self.department, 'custom_hod': 1}, 'user_id')
+				if user_id:
+					set_approver_detail(user_id, d.next_state)
+				else:
+					frappe.throw(f"Please set a `head of department` for department {self.department}", title="Head of Department")
+
+			elif d.allowed == 'CEO':
+				user_list = frappe.db.sql(""" 
+					SELECT 
+						u.name 
+					FROM 
+						`tabUser` u 
+					INNER JOIN 
+						`tabHas Role` h 
+					ON 
+						(u.name = h.parent)
+					INNER JOIN
+						`tabEmployee` e
+					ON 
+						(u.name = e.user_id) 
+					WHERE 
+						h.role IN ('CEO')
+						AND e.company = %s
+					GROUP BY
+						u.name 
+				""", (self.company,), as_dict=True)
+				if user_list:
+					set_approver_detail(user_list[0]['name'], d.next_state)
+				else:
+					frappe.throw(f"Please set a `CEO` for {self.company}", title="CEO")
+	# Mubashir Bashir 13-02-2025 End
+
+
+	# Nabeel Saleem, 29-11-2024
+	def record_application_state(self):
+		if(hasattr(self, 'workflow_state')):
+			from frappe.utils import get_datetime
+			state_dict = eval(self.custom_state_data) if(self.custom_state_data) else {}
+			# if(self.workflow_state not in state_dict):
+			state_dict.update({f"{self.workflow_state}": {
+				"current_user": f"{self.workflow_state} (<b>{get_fullname(frappe.session.user)}</b>)",
+				"next_state": f"{self.custom_next_workflow_state} (<b>{self.leave_approver_name}</b>)" if(self.status=='Open') else "",
+				"modified_on": get_datetime(),
+			}})
+			self.custom_state_data =  frappe.as_json(state_dict)
+	
 	def update_attendance(self):
 		if self.status != "Approved":
 			return
@@ -347,12 +787,18 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			self.create_or_update_attendance(attendance_name, date)
 
 	def create_or_update_attendance(self, attendance_name, date):
-		status = (
+		""" status = (
 			"Half Day"
 			if self.half_day_date and getdate(date) == getdate(self.half_day_date)
 			else "On Leave"
+		) """
+		# start, nabeel saleem, [19-12-2024]
+		status = (
+			"Half Day"
+			if (self.half_day_date and getdate(date) == getdate(self.half_day_date)) or (self.leave_type in ["Short Leave", "Half Day Leave"])
+			else "On Leave"
 		)
-
+		# end, nabeel saleem, [19-12-2024]
 		if attendance_name:
 			# update existing attendance, change absent to on leave
 			doc = frappe.get_doc("Attendance", attendance_name)
@@ -1078,7 +1524,7 @@ def get_leave_allocation_records(employee, date, leave_type=None):
 	
 	return allocated_leaves
 
-# nabeel code updated.
+# nabeel saleem, 19-12-2024
 def get_leaves_pending_approval_for_period(
 	employee: str, leave_type: str, from_date: datetime.date, to_date: datetime.date
 ) -> float:
@@ -1090,7 +1536,7 @@ def get_leaves_pending_approval_for_period(
 			"from_date": ["between", (from_date, to_date)],
 			"to_date": ["between", (from_date, to_date)],
 		},
-		fields=["SUM(case when leave_type in ('Half Day Leave', 'Short Leave') then 1 else total_leave_days end) as leaves"],
+		fields=["SUM(total_leave_days) as leaves"],
 	)[0]
 	return leaves["leaves"] if leaves["leaves"] else 0.0
 
@@ -1183,6 +1629,7 @@ def get_leaves_for_period(
 			leave_days += leave_entry.leaves
 		# nabeel updated
 		elif leave_entry.transaction_type in ["Leave Application", "Salary Slip"]:
+			
 			if leave_entry.from_date < getdate(from_date):
 				leave_entry.from_date = from_date
 			if leave_entry.to_date > getdate(to_date):
@@ -1195,8 +1642,8 @@ def get_leaves_for_period(
 				half_day = 1
 				half_day_date = frappe.db.get_value(
 					"Leave Application", leave_entry.transaction_name, "half_day_date"
-				)
-
+				) if(leave_entry.transaction_type == "Leave Application") else leave_entry.from_date
+				
 			leave_days += (
 				get_number_of_leave_days(
 					employee,
@@ -1213,14 +1660,13 @@ def get_leaves_for_period(
 	
 	return leave_days
 
-# nabeel code updated.
+# nabeel saleem, [19-12-2024]
 def get_leave_entries(employee, leave_type, from_date, to_date):
 	"""Returns leave entries between from_date and to_date."""
-	_leaves = " (case when leave_type= '{0}' then 1 else 0 end) as leaves,".format(leave_type) if(leave_type in ["Half Leave", "Half Day Leave", "Short Leave"]) else "leaves,"
 	return frappe.db.sql(
 		"""
 		SELECT
-			employee, leave_type, from_date, to_date, {0} transaction_name, transaction_type, holiday_list,
+			employee, leave_type, from_date, to_date, leaves, transaction_name, transaction_type, holiday_list,
 			is_carry_forward, is_expired
 		FROM `tabLeave Ledger Entry`
 		WHERE employee=%(employee)s AND leave_type=%(leave_type)s
@@ -1230,7 +1676,7 @@ def get_leave_entries(employee, leave_type, from_date, to_date):
 			AND (from_date between %(from_date)s AND %(to_date)s
 				OR to_date between %(from_date)s AND %(to_date)s
 				OR (from_date < %(from_date)s AND to_date > %(to_date)s))
-	""".format(_leaves),
+	""",
 		{"from_date": from_date, "to_date": to_date, "employee": employee, "leave_type": leave_type},
 		as_dict=1,
 	)
@@ -1461,7 +1907,7 @@ def get_leave_approver(employee):
 	leave_approver, department = frappe.db.get_value(
 		"Employee", employee, ["leave_approver", "department"]
 	)
-
+	
 	if not leave_approver and department:
 		leave_approver = frappe.db.get_value(
 			"Department Approver",
@@ -1474,4 +1920,89 @@ def get_leave_approver(employee):
 
 def on_doctype_update():
 	frappe.db.add_index("Leave Application", ["employee", "from_date", "to_date"])
+
+# # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application._set_next_workflow_approver
+# def _set_next_workflow_approver():
+# 	from frappe.utils import get_datetime
+# 	def get_state(workflow_state):
+# 		return frappe.db.sql(f""" 
+# 				Select 
+# 					w.name, wt.state, wt.action, wt.next_state, wt.allowed, wt.allow_self_approval
+# 				From 
+# 					`tabWorkflow` w inner join `tabWorkflow Transition` wt on (w.name=wt.parent)
+# 				Where 
+# 					w.document_type='Leave Application'
+# 					and w.is_active = 1
+# 					and wt.action='Approve'
+# 					and wt.state='{workflow_state}'
+# 				Order by
+# 					wt.idx asc
+# 				limit 1
+# 			""", as_dict=1)
+	
+# 	def set_approver_detail(user_id, next_state):
+# 		self.leave_approver = user_id
+# 		self.leave_approver_name = get_fullname(user_id)
+# 		self.custom_next_workflow_state = next_state
+	
+# 	workflow_list  = ["Applied", "Approved by the Line Manager", "Approved by the Head of Department", "Approved"]
+# 	state_dict = {}
+# 	count=1
+# 	for self in frappe.db.sql("""select * from `tabLeave Application` where docstatus =1 and modified_by="Administrator" and cast(modified as date)=curdate() """, as_dict=1):
+# 		employee_name = None
+# 		for state in workflow_list:
+# 			statelist = get_state(state)
+# 			# print(f"statelist: {statelist}")
+# 			for d in statelist:
+# 				if(d.allowed == "Line Manager"):
+# 					reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
+# 					employee_name = frappe.db.get_value('Employee', reports_to, 'employee_name')
+# 					if(reports_to):
+# 						user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
+
+# 						if(frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Line Manager'})):
+# 							set_approver_detail(user_id, d.next_state)
+
+# 							state_dict.update({f"{state}": {
+# 											"current_user": f"{state} (<b>{self.employee_name}</b>)",
+# 											"next_state": f"{d.next_state} (<b>{employee_name}</b>)",
+# 											"modified_on": self.creation,
+# 										}})
+				
+# 				elif(d.allowed == "Head of Department"):
+# 						hod_data = frappe.db.get_value('Employee', {'department': self.department , 'custom_hod': 1}, ['user_id', 'employee_name'], as_dict=1)
+# 						# print(hod_data, '=========')
+# 						if(hod_data):
+# 							state_dict.update({f"{state}": {
+# 											"current_user": f"{state} (<b>{employee_name}</b>)",
+# 											"next_state": f"{d.next_state} (<b>{hod_data.employee_name}</b>)",
+# 											"modified_on": get_datetime(),
+# 										}})
+# 							employee_name = hod_data.employee_name
+# 				elif(d.allowed == 'CEO'):
+# 					user_list = frappe.db.sql(""" 
+# 							Select 
+# 								u.name , u.full_name
+# 							From 
+# 								`tabUser` u inner join `tabHas Role` h on (u.name=h.parent) 
+# 							Where 
+# 								h.role in ('CEO')
+# 							Group by
+# 								u.name 
+# 					""")
+# 					print(user_list)
+# 					if(user_list):
+# 						full_name = user_list[0][1]
+# 						state_dict.update({f"{state}": {
+# 											"current_user": f"{state} (<b>{employee_name}</b>)",
+# 											"next_state": f"{d.next_state}",
+# 											"modified_on": get_datetime(),
+# 										}})
+
+		
+# 		frappe.db.set_value("Leave Application", self.name, "workflow_state", "Approved")
+# 		frappe.db.set_value("Leave Application", self.name, "custom_state_data", frappe.as_json(state_dict))
+# 		print(f"state_dict: {state_dict}")		
+
+
 

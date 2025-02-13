@@ -23,7 +23,7 @@
 6. Any employee can adjust his late sittings in office/ In-station duties against upcoming late arrivals within a week. Late sitting should be
 """
 import frappe, math
-from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
+from frappe.utils import (flt, month_diff, add_months, getdate, get_datetime, add_to_date, get_first_day, get_last_day, date_diff)
 from datetime import datetime, timedelta
 from dateutil import relativedelta
 
@@ -37,10 +37,13 @@ def apply_policy(doc, method=None):
         'transition_name': doc.attendance_id,
         
     })
-    two_hours_three_late_comings_times_in_a_month(args)
-    above_two_and_less_four_hours_in_months(args)
-    late_entry_above_four_hours_in_months(args)
-    four_hours_or_less_early_exists_in_a_month(args)
+    out_time = frappe.db.get_value('Attendance', doc.attendance_id, 'out_time') if(doc.attendance_id) else None
+    if(not out_time):
+        two_hours_three_late_comings_times_in_a_month(args)
+        above_two_and_less_four_hours_in_months(args)
+        late_entry_above_four_hours_in_months(args)
+    elif(out_time):
+        four_hours_or_less_early_exists_in_a_month(args)
     
 # 1
 @frappe.whitelist()
@@ -66,8 +69,14 @@ def two_hours_three_late_comings_times_in_a_month(args):
     if(result):
         hours = result[0][0]
         if(hours%3==0):
-            args.update({"reason": "Consective two hours late 3 times in a month."})
-            verify_case_no(args, 1)
+            total_iterations = (hours/3)
+            args.update({
+                'case_no': 1,
+                "reason": "Consective two hours late 3 times in a month.",
+            })
+            returnVal = validate_case_no_in_DLE(args)
+            if(total_iterations>returnVal):
+                verify_case_no(args)
 
 # 2
 @frappe.whitelist()
@@ -92,10 +101,17 @@ def above_two_and_less_four_hours_in_months(args):
         having 
             hours>0
     """, args)
-
+    
     if(result): 
-        args.update({"reason": "Above two and less than 4 hours late in a month."})
-        verify_case_no(args, 2)
+        
+        args.update({
+            'case_no': 2,
+            "reason": "Above two and less than 4 hours late in a month.",
+            })
+        actualVal = result[0][0]
+        returnVal = validate_case_no_in_DLE(args)
+        if(actualVal>returnVal):
+            verify_case_no(args)
 
 # 3
 @frappe.whitelist()
@@ -120,8 +136,14 @@ def late_entry_above_four_hours_in_months(args):
     """, args)
     print(f'---------------late_entry_above_four_hours_in_months: {result}')
     if(result): 
-        args.update({"reason": "Above or equal to 4 hours late in a month."})
-        verify_case_no(args, 3)
+        args.update({
+            'case_no': 3,
+            "reason": "Above or equal to 4 hours late in a month.",
+            })
+        actualVal = result[0][0]
+        returnVal = validate_case_no_in_DLE(args)
+        if(actualVal>returnVal):
+            verify_case_no(args)
 
 # 4
 def four_hours_or_less_early_exists_in_a_month(args):
@@ -146,26 +168,48 @@ def four_hours_or_less_early_exists_in_a_month(args):
             hours>0
     """, args)
     
-    if(result): 
-        args.update({"reason": "Early exit four hours or less late in a month."})
-        verify_case_no(args, 4)
+    if(result):
+        args.update({
+            'case_no': 4,
+            "reason": "Early exit four hours or less late in a month.",
+            })
+        actualVal = result[0][0]
+        returnVal = validate_case_no_in_DLE(args)
+        if(actualVal>returnVal):
+            verify_case_no(args)
 
 # 5
 def absent_if_in_or_out_missed_or_both():
     pass
 
-""" 
+def validate_case_no_in_DLE(args):
+    
+    conditions =  """ and month(posting_date)=month(%(posting_date)s)""" if(args.case_no==1) else ""
+    conditions +=  """ and posting_date=%(posting_date)s""" if(args.case_no==2) else ""
+    conditions +=  """ and posting_date=%(posting_date)s""" if(args.case_no==3) else ""
+    conditions +=  """ and posting_date=%(posting_date)s""" if(args.case_no==4) else ""
+    res =  frappe.db.sql("""select count(name) from `tabDeduction Ledger Entry` 
+                where 
+                company=%(company)s
+                and employee=%(employee)s
+                and case_no = %(case_no)s 
+                {0}
+                """.format(conditions), args)
+    
+    if(res):
+        return res[0][0]
+    return 0     
 
-Deduction Leave Applicaion.
-        Or
+""" Deduction Leave Applicaion.
+    Or
 Additinal Salary in case of no leaves left.
-
 """
 
 @frappe.whitelist()
-def verify_case_no(args, case_no=0):
+def verify_case_no(args):
     args = get_balance(args)
-
+    
+    case_no  = args.case_no
     if(case_no == 1):
         if(args.deduction_type == "Salary"):
             args.update({
@@ -177,7 +221,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 1,
                 'reason': f"CaseNo#{case_no}, {args.reason} '{args.leave_type}' deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 2):
         if(args.deduction_type == "Salary"):
             args.update({
@@ -189,7 +232,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 0.5,
                 'reason': f"CaseNo#{case_no}, {args.reason}. Half '{args.leave_type}' deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 3):
         if(args.deduction_type == "Salary"):
             args.update({
@@ -201,7 +243,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 1,
                 'reason': f"CaseNo#{case_no}, {args.reason}. '{args.leave_type}' deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 4):
         args.update({
                 'deduction_type': 'Salary',
@@ -209,7 +250,6 @@ def verify_case_no(args, case_no=0):
                 'total_deduction': 0.5,
                 'reason': f"CaseNo#{case_no}, {args.reason} Half day salary deducted.",
             })
-        print(f"args: {args}")
     elif(case_no == 5):
         pass
 
@@ -217,7 +257,7 @@ def verify_case_no(args, case_no=0):
     if(args.total_deduction>0.0): make_attendance_deduction_ledger_entry(args)
 
 def get_balance(args):
-    from akf_hrms.overrides.leave_application import get_leave_details
+    from akf_hrms.overrides.leave_application.leave_application import get_leave_details
 
     leave_balance = get_leave_details(args.employee, args.posting_date)
     leave_allocation = leave_balance['leave_allocation']
@@ -226,16 +266,23 @@ def get_balance(args):
     leave_type = None
     deduction_type = None
 
+    isBal = False
     if('Casual Leave' in leave_allocation):
         leave_type = 'Casual Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
-    if('Medical Leave' in leave_allocation):
+        if(remaining_leaves>0.0): isBal = True
+        
+    if('Medical Leave' in leave_allocation) and (not isBal):
         leave_type = 'Medical Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
-    elif('Earned Leave' in leave_allocation):
+        if(remaining_leaves>0.0): isBal = True
+    
+    if('Earned Leave' in leave_allocation) and (not isBal):
         leave_type = 'Earned Leave'
         remaining_leaves = leave_allocation[leave_type]['remaining_leaves']
-    else:
+        if(remaining_leaves>0.0): isBal = True
+    
+    if((not isBal)):
         leave_type = "Leave Without Pay"
         
     deduction_type = 'Leave' if(remaining_leaves>0.0) else 'Salary'
@@ -263,21 +310,26 @@ def get_wage(args):
 
 def make_attendance_deduction_ledger_entry(args):
     args.update({"doctype": 'Deduction Ledger Entry'})
-    filters = args.copy()
-    
-    filters.pop("transition_type")
-    filters.pop("transition_name")
-    filters.pop("deduction_type")
-    filters.pop("leave_type")
-    filters.pop("total_deduction")
-    filters.pop("reason")
-    
-    if(not frappe.db.exists(filters)): frappe.get_doc(args).insert(ignore_permissions=True)
+    # filters = args.copy()
+    # filters.pop("transition_type")
+    # filters.pop("transition_name")
+    # filters.pop("deduction_type")
+    # filters.pop("leave_type")
+    # filters.pop("total_deduction")
+    # filters.pop("reason")
+    # frappe.throw(f"{filters}")
+    # if(not frappe.db.exists(filters)): 
+    frappe.get_doc(args).insert(ignore_permissions=True)
 
 @frappe.whitelist()
 def get_deduction_ledger(self=None):
-    from akf_hrms.overrides.leave_application import get_leave_details
+    from akf_hrms.overrides.leave_application.leave_application import get_leave_details
     leave_allocation = get_leave_details(self.employee, self.start_date)
+    
+    pre_start_date = add_to_date(self.start_date, days=-30)
+    pre_start_date = getdate(get_datetime(pre_start_date).replace(day=21))
+    pre_end_date = add_to_date(self.end_date, days=-30)
+    pre_end_date = getdate(get_datetime(pre_end_date).replace(day=20))
     
     result = frappe.db.sql(f""" 
         Select  ifnull(sum(total_deduction),0) as total,
@@ -287,7 +339,7 @@ def get_deduction_ledger(self=None):
         Where
             ifnull(leave_type, "")!=""
             and employee='{self.employee}'
-            and (posting_date between '{self.start_date}' and '{self.end_date}')
+            and (posting_date between '{pre_start_date}' and '{pre_end_date}')
         Group By
             leave_type
     """, as_dict=1)
@@ -383,7 +435,9 @@ def get_deduction_ledger(self=None):
                 
         elif(d.leave_type=="Leave Without Pay"):
             slwp += actual_balance
-            
+    
+    self.custom_deduction_start_date = pre_start_date
+    self.custom_deduction_end_date = pre_end_date
     self.custom_casual_leaves =  scl
     self.custom_medical_leaves = sml
     self.custom_earned_leaves = sel
@@ -457,10 +511,11 @@ def get_eobi_pf_social_security_details(self=None):
         delay_limit = datetime.now().date() - timedelta(days=delay_months)
         if date_of_joining < delay_limit:
             pf_employer_contribution_percent = frappe.db.get_value("AKF Payroll Settings", None, "provident_employer_contribution_percent")
-            self.custom_provident_fund_employer_contribution = (float(self.gross_pay) * float(pf_employer_contribution_percent))/100.0
+            pf_employer_contribution_percent = float(pf_employer_contribution_percent if pf_employer_contribution_percent is not None else 0)
+            self.custom_provident_fund_employer_contribution = (float(self.gross_pay or 0.0) * pf_employer_contribution_percent)/100.0
             
             pf_employee_contribution_percent = frappe.db.get_value("AKF Payroll Settings", None, "provident_employee_contribution_percent")
-            provident_fund_employee_contribution = (float(self.gross_pay) * float(pf_employee_contribution_percent))/100.0
+            provident_fund_employee_contribution = (float(self.gross_pay or 0.0) * float(pf_employee_contribution_percent))/100.0
             for d in self.deductions:
                 if d.salary_component == "Provident Fund":
                     d.amount = provident_fund_employee_contribution
@@ -470,7 +525,7 @@ def get_eobi_pf_social_security_details(self=None):
     social_security_rate = frappe.db.get_value("AKF Payroll Settings", None, "social_security_rate")		
     
     if flt(self.gross_pay) <= flt(social_security_amount):                     
-        ssa_gross_pay = frappe.db.get_value("Salary Structure Assignment", {"employee": self.employee, "docstatus":1}, "base")                    
+        ssa_gross_pay = frappe.db.get_value("Salary Structure Assignment", {"employee": self.employee, "docstatus":1}, "base")                  
         social_security_amount_deduction = flt(ssa_gross_pay) * flt(social_security_rate) 
         for d in self.deductions:
             if d.salary_component == "Social Security":
@@ -492,85 +547,135 @@ def get_set_takful_plan(self=None):
 
 """ 
 args = dict(
-					leaves=self.total_leave_days * -1,
-					from_date=self.from_date,
-					to_date=self.to_date,
-					is_lwp=lwp,
-					holiday_list=get_holiday_list_for_employee(self.employee, raise_exception=raise_exception)
-					or "",
-				)
-				create_leave_ledger_entry(self, args, submit)
-
+    leaves=self.total_leave_days * -1,
+    from_date=self.from_date,
+    to_date=self.to_date,
+    is_lwp=lwp,
+    holiday_list=get_holiday_list_for_employee(self.employee, raise_exception=raise_exception)
+    or "",
+)
+create_leave_ledger_entry(self, args, submit)
 """             
 def make_leave_ledger_entry(self=None):
-        def _create_(leave_type, leaves):
-            from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+    # def create_leave_application(leave_type, leaves, reason):
+    #     from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+    #     from akf_hrms.overrides.leave_application import get_leave_approver
+        
+    #     # dates logic
+    #     days = math.ceil(leaves)
+    #     from_date = add_to_date(self.start_date)
+    #     to_date = add_to_date(self.start_date, days=(days-1))
+    #     # frappe.throw(f" {leave_type}:  {days} {from_date} {to_date}")
+    #     if(leave_type == "Leave Without Pay"):
+    #         from_date = add_months(self.start_date, months=1)
+    #         to_date = add_to_date(from_date, days=(days-1))
+        
+    #     # setup half day logic
+    #     fractional_part, integer_part = math.modf(leaves)
+        
+    #     half_day = 0
+    #     half_day_date = None
+    #     if(fractional_part>0.0 and integer_part>0.0):
+    #         half_day = 1
+    #         half_day_date = to_date
             
-            days = math.ceil(leaves)
-            from_date = add_to_date(self.start_date)
-            to_date = add_to_date(self.start_date, days=(days-1))
-            if(leave_type == "Leave Without Pay"):
-                from_date = add_months(self.start_date, months=1)
-                to_date = add_to_date(from_date, days=(days-1))
-                
-            doc = frappe.get_doc({
-                'doctype': 'Leave Ledger Entry',
-                'employee': self.employee,
-                'leave_type': leave_type,
-                'transaction_type': 'Salary Slip',
-                'transaction_name': self.name,
-                'company': self.company,
-                'leaves': (-1 * leaves),
-                'from_date': from_date,
-                'to_date': to_date,
-                "holiday_list": get_holiday_list_for_employee(self.employee, raise_exception=False)
-            })
+    #     elif(fractional_part>0.0 and integer_part==0.0):
+    #         half_day = 1
             
-            doc.flags.ignore_permissions=1
-            doc.submit()
+    #     args = frappe._dict({
+    #         'doctype': 'Leave Application',
+    #         'employee': self.employee,
+    #         'leave_type': leave_type,
+    #         'company': self.company,
+    #         'from_date': from_date,
+    #         'to_date': to_date,
+    #         'half_day': half_day,
+    #         'half_day_date': half_day_date,
+    #         'total_leave_days':  leaves,
+    #         'leave_approver': get_leave_approver(self.employee),
+    #         'follow_via_email': 0,
+    #         'salary_slip': self.name,
+    #         'reason': reason,
+    #         'status': 'Approved'
+    #     })
+    #     doc = frappe.get_doc(args)
+    #     doc.flags.ignore_permissions=1
+    #     doc.flags.ignore_validate=1
+    #     doc.submit()
+    if(not self.custom_apply_deductions): return 
+    def _create_(leave_type, leaves):
+        from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+        from akf_hrms.overrides.leave_application import get_leave_approver
+        days = math.ceil(leaves)
+        from_date = add_to_date(self.start_date)
+        to_date = add_to_date(self.start_date, days=(days-1))
+        """ if(leave_type == "Leave Without Pay"):
+            from_date = add_months(self.start_date, months=1)
+            to_date = add_to_date(from_date, days=(days-1)) """
             
-        # def create_deduction_ledger_entry(leave_type):
-        #     response = frappe.db.sql(f""" 
-        #         Select  *
-        #         From
-        #             `tabDeduction Ledger Entry`
-        #         Where
-        #             ifnull(leave_type, "")!=""
-        #             and leave_type = '{leave_type}'
-        #             and employee='{self.employee}'
-        #             and (posting_date between '{self.start_date}' and '{self.end_date}')
-        #         """, as_dict=1)
-            
-        #     for args in response:
-        #         _create_(args)
-                    
-        # casual leave
-        leave_type = None
-        if(self.custom_casual_leaves>0.0):
-            leave_type = 'Casual Leave'
-            _create_(leave_type, self.custom_casual_leaves)
-            # create_dlle('Casual Leave', self.custom_casual_leaves)
-        # medical leave
-        if(self.custom_medical_leaves>0.0):
-            leave_type = 'Medical Leave'
-            _create_(leave_type, self.custom_medical_leaves)
-            # create_dlle('Medical Leave', self.custom_medical_leaves)
-        # earned leave
-        if(self.custom_earned_leaves>0.0):
-            leave_type = 'Earned Leave'
-            _create_(leave_type, self.custom_earned_leaves)
-            # create_dlle('Earned Leave', self.custom_earned_leaves)
-        # lwp
-        if(self.custom_leaves_without_pay>0.0): 
-            leave_type = 'Leave Without Pay'
-            _create_(leave_type, self.custom_leaves_without_pay)
-            # create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
+        doc = frappe.get_doc({
+            'doctype': 'Leave Ledger Entry',
+            'employee': self.employee,
+            'leave_type': leave_type,
+            'transaction_type': 'Salary Slip',
+            'transaction_name': self.name,
+            'company': self.company,
+            'leaves': (-1 * leaves),
+            'from_date': from_date,
+            'to_date': to_date,
+            "holiday_list": get_holiday_list_for_employee(self.employee, raise_exception=False)
+        })
+        # frappe.throw(frappe.as_json(doc))
+        doc.flags.ignore_permissions=1
+        doc.submit()
+        
+    # casual leave
+    leave_type = None
+    if(self.custom_casual_leaves>0.0):
+        leave_type = 'Casual Leave'
+        # create_leave_application(leave_type, self.custom_casual_leaves, f'{leave_type}: {self.custom_casual_leaves}, deducted through Salary Slip.')
+        _create_(leave_type, self.custom_casual_leaves)
+        # create_dlle('Casual Leave', self.custom_casual_leaves)
+    # medical leave
+    if(self.custom_medical_leaves>0.0):
+        leave_type = 'Medical Leave'
+        # create_leave_application(leave_type, self.custom_medical_leaves, f'{leave_type}: {self.custom_medical_leaves}, deducted through Salary Slip.')
+        _create_(leave_type, self.custom_medical_leaves)
+        # create_dlle('Medical Leave', self.custom_medical_leaves)
+    # earned leave
+    if(self.custom_earned_leaves>0.0):
+        leave_type = 'Earned Leave'
+        # create_leave_application(leave_type, self.custom_earned_leaves, f'{leave_type}: {self.custom_earned_leaves}, deducted through Salary Slip.')
+        _create_(leave_type, self.custom_earned_leaves)
+        # create_dlle('Earned Leave', self.custom_earned_leaves)
+    # lwp
+    if(self.custom_leaves_without_pay>0.0): 
+        leave_type = 'Leave Without Pay'
+        # create_leave_application(leave_type, self.custom_leaves_without_pay, f'{leave_type}: {self.custom_leaves_without_pay}, deducted through Salary Slip.')
+        # _create_(leave_type, self.custom_leaves_without_pay)
+        # create_dlle('Leave Without Pay', self.custom_leaves_without_pay)
 
 def cancel_leave_ledger_entry(self=None):
+    # cancel_leave_application(self)
     if(frappe.db.exists('Leave Ledger Entry', {'transaction_name': self.name})):
         frappe.db.sql(f""" 
             delete from `tabLeave Ledger Entry`
             where  transaction_name = '{self.name}'  
+        """)
+       
+def cancel_leave_application(self=None):
+    for d in frappe.db.get_list('Leave Application', 
+        filters={'docstatus': 1, 'employee': self.employee, 'salary_slip': self.name}, 
+        fields=['name']):
+        
+        frappe.db.sql(f""" 
+            delete from `tabLeave Ledger Entry`
+            where transaction_name = '{d.name}'  
+        """)
+        
+        frappe.db.sql(f""" 
+            delete from `tabLeave Application`
+            where name = '{d.name}'  
         """)
        
 @frappe.whitelist()
@@ -578,3 +683,101 @@ def get_no_attendance(self=None):
     if (frappe.db.exists('Employee', {'status': 'Active', 'name': self.employee, 'custom_no_attendance': 1})):
         return True
     return False
+
+def get_leave_without_pay_count(self=None):
+    lwp = frappe.db.sql(f""" select ifnull(sum(leaves), 0) lwp 
+                            from `tabLeave Ledger Entry`
+                            where docstatus=1
+                            and leave_type = 'Leave Without Pay'
+                            and transaction_type = 'Salary Slip'
+                            and employee = '{self.employee}'
+                            and  from_date>='{self.start_date}' and to_date<='{self.end_date}' """)
+    # and to_date<='{self.end_date}'
+    # frappe.throw(f"{lwp}")
+    if(lwp): 
+        return (-1 * lwp[0][0])
+    return 0
+
+""" 
+    > Salary Period: [21-Nov, 20-Dec]. 
+    > If salary disburse at 20-Dec. 
+    > But new employee joins at 21-Dec pay his arrears through Additional Salary. 
+"""
+def record_employee_arrears_draft_additional_salary(self=None):
+    
+    def no_salary_slip():
+        if(frappe.db.exists('Salary Slip', 
+            {'docstatus': ['<', 2], 'employee': self.employee, 'company':self.company}
+        )):
+            return False
+        return True
+            
+    def validate_date_of_joining():
+        date_of_joining = getdate(self.date_of_joining)
+        payroll_start_date = getdate(self.date_of_joining).replace(day=21)
+        
+        if(date_of_joining>=payroll_start_date):
+            create_additional_salary()
+        else:
+            remove_additional_salary()
+    
+    def get_args(): 
+        return {
+            'employee': self.employee,
+            'docstatus': 0,
+            'salary_component': "Arrears",
+            'company': self.company,
+            'overwrite_salary_structure_amount': 0,
+        }
+    
+    def get_no_of_days():
+        return date_diff(get_last_day(self.date_of_joining), self.date_of_joining) + 1
+    
+    def create_additional_salary():
+        payroll_date = get_first_day(add_to_date(self.date_of_joining, months=1))
+        args = get_args()
+        name = frappe.db.get_value('Additional Salary', args, 'name')
+        if(name):
+            doc = frappe.get_doc('Additional Salary', name)
+            doc.amount = get_no_of_days()
+            doc.flags.ignore_permissions=1
+            doc.save()
+        else:
+            args.update({
+                'doctype': 'Additional Salary',
+                'payroll_date': payroll_date,
+                'amount': get_no_of_days(),
+            })
+            doc = frappe.get_doc(args)
+            doc.flags.ignore_permissions=1
+            doc.insert()
+    
+    def remove_additional_salary():
+        args = get_args()
+        name = frappe.db.get_value('Additional Salary', args, 'name')
+        if(name):
+            frappe.delete_doc('Additional Salary', name)
+    
+    if(self.status=='Active' and no_salary_slip()): 
+        validate_date_of_joining()
+        
+
+def submit_employee_additional_salary_arrears(self=None):
+    def get_args(): 
+        return {
+            'payroll_date': [">", self.from_date],
+            'docstatus': 0,
+            'employee': self.employee,
+            'salary_component': "Arrears",
+            'company': self.company,
+            'overwrite_salary_structure_amount': 0,
+        }
+    args = get_args()
+    for d in frappe.db.get_list('Additional Salary', filters=args, fields=["*"]):
+        doc = frappe.get_doc('Additional Salary', d.name)
+        doc.amount  = doc.amount * self.custom_per_day
+        doc.flags.ignore_permissions
+        doc.save()
+        doc.submit()
+        
+        

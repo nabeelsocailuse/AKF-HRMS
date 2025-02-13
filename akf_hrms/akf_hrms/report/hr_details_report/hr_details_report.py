@@ -1,5 +1,4 @@
-# Copyright (c) 2024, Nabeel Saleem and contributors
-# For license information, please see license.txt
+# Mubashir Bashir
 
 import frappe
 from frappe import _
@@ -77,8 +76,9 @@ def get_data(filters):
 	return data
 
 def get_conditions(filters):
-    conditions = " and e.company = %(company)s " if(filters.company) else ""
-    conditions = " and e.branch = %(branch)s " if(filters.branch) else ""
+    conditions = ""
+    conditions += " and e.company = %(company)s " if(filters.company) else ""
+    conditions += " and e.branch = %(branch)s " if(filters.branch) else ""
     conditions += " and e.name = %(employee_id)s " if(filters.employee_id) else ""
     conditions += " and e.status = %(employee_status)s " if(filters.employee_status) else ""
 

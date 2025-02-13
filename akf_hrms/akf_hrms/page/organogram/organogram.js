@@ -132,7 +132,7 @@ server = {
       },
       callback: function (r) {
         let data = r.message;
-        console.log(data);
+        // console.log(data);
         /* let raw = [
           { name: 'Saad Saeed', id: 'AKFP-PK-CO-00068', parentId: '', branch: 'Central Office' },
           { name: 'Sheikh Ahsan Farid', id: 'AKFP-PK-CO-00072', parentId: 'AKFP-PK-CO-00068', branch: 'Central Office' },
@@ -183,7 +183,7 @@ function loadOrgChart(data) {
       return `
         <div style="font-family: 'Inter', sans-serif;background-color:${color}; position:absolute;margin-top:-1px; margin-left:-1px;width:${d.width}px;height:${d.height}px;border-radius:10px;border: 1px solid #E4E2E9">
          <div style="background-color:${color};position:absolute;margin-top:-25px;margin-left:${15}px;border-radius:100px;width:50px;height:50px;" ></div>
-         <img src="${d.data.img==undefined?"/assets/akf_hrms/images/blank-img.png": d.data.img}" style="object-fit:cover;position:absolute;margin-top:-20px;margin-left:${20}px;border-radius:100px;width:40px;height:40px;" crossorigin="anonymous" />
+         <img src="${d.data.img}" style="object-fit:cover;position:absolute;margin-top:-20px;margin-left:${20}px;border-radius:100px;width:40px;height:40px;" crossorigin="anonymous" />
          
         <div style="color:#08011E;position:absolute;right:20px;top:17px;font-size:10px;">${d.data.id
         }</div>
@@ -237,7 +237,7 @@ async function export_chart() {
     .then(function (canvas) {
       let dataURL;
       dataURL = canvas.toDataURL("image/gif");
-      console.log(dataURL);
+      // console.log(dataURL);
       // download the image
       let a = document.createElement("a");
       a.href = dataURL;

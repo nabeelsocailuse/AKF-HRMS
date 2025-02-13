@@ -1,7 +1,7 @@
 # service path /usr/lib/systemd/system/itc_logistics_in.service
 from zk import ZK
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# import urllib3
+# urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Vriables
 conn = None
 device_ip = "10.0.7.201"

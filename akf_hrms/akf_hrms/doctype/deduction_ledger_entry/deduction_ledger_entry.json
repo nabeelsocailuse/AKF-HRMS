@@ -14,6 +14,7 @@
   "deduction_type",
   "leave_type",
   "total_deduction",
+  "case_no",
   "why_deduct_section",
   "reason"
  ],
@@ -87,11 +88,16 @@
    "fieldname": "transition_name",
    "fieldtype": "Data",
    "label": "Transition Name"
+  },
+  {
+   "fieldname": "case_no",
+   "fieldtype": "Int",
+   "label": "case_no"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-21 18:06:02.707085",
+ "modified": "2025-01-24 13:01:29.238059",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Deduction Ledger Entry",

@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-23 17:55:32.474854",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "designation",
+  "services_in_years",
+  "column_break_jcjj",
+  "loan_entitlement",
+  "repayment_period"
+ ],
+ "fields": [
+  {
+   "fieldname": "column_break_jcjj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0.0",
+   "fieldname": "repayment_period",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Repayment Period (Months)"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "services_in_years",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Services In (Years)"
+  },
+  {
+   "fieldname": "loan_entitlement",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Loan Entitlement",
+   "options": "Vehicle Loan\nBike Loan"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-01-15 16:48:55.287948",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Grade Entitlement",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,55 +1,89 @@
 <style>
-    .table{
+    .table {
         margin: 0;
     }
+
     .table thead th {
         vertical-align: middle;
         border: 1px solid var(--border-color);
         text-align: center;
     }
-    .table td{
-        border: 1px solid var(--border-color) ;
-    } 
-    .card-body{
+
+    .table td {
+        border: 1px solid var(--border-color);
+    }
+
+    .card-body {
         padding: 16px;
     }
-    .image{
+
+    .image {
         height: 191px;
     }
-    .image img{
+
+    .image img {
         height: 100%;
         width: 100%;
-    } 
+    }
+
     @media only print {
         body {
             margin: 0 !important;
             padding: 0 !important;
         }
-        .container , .container-fluid , .col-md-12{
+
+        .container,
+        .container-fluid,
+        .col-md-12 {
             padding: 0 !important;
         }
-        .employee .card-body{
+
+        .employee .card-body {
             padding: 0;
         }
-        .employee .card{
+
+        .employee .card {
             border: 0;
             margin-bottom: 20px;
         }
-        .employee .card-body .table{ 
-            width: 100% ;
+
+        .employee .card-body .table {
+            width: 100%;
         }
-        .employee .emply_history .card-body .table{ 
+
+        .employee .emply_history .card-body .table {
             min-height: 231px;
         }
+
         .emply_history .col-md-5 {
             width: 39%;
-        } 
+        }
+
         .emply_history .col-md-2 {
             width: 20%;
-        } 
+        }
+
         .emply_history .image {
             height: 231px;
         }
+    }
+
+    [data-route="employment-history"] .container {
+        max-width: 1600px;
+        width: 100%;
+    }
+
+    .employment_history th {
+        min-width: 100px;
+    }
+
+    .employment_history th:first-child {
+        min-width: 30px;
+    }
+
+    .employment_history td {
+        font-size: 12px;
+        text-align: center;
     }
 </style>
 <div class="container-fluid employee">
@@ -128,9 +162,10 @@
                 <div class="card-body">
                     <div class="image">
                         {% if (detail.image_url) %}
-                            <img src="{{detail.image_url}}" alt="Employee Image">
+                        <img src="{{detail.image_url}}" alt="Employee Image">
                         {% else %}
-                            <img src="https://static.vecteezy.com/system/resources/thumbnails/020/765/399/small/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg" alt="">
+                        <img src="https://static.vecteezy.com/system/resources/thumbnails/020/765/399/small/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg"
+                            alt="">
                         {% endif %}
                     </div>
                 </div>
@@ -142,7 +177,7 @@
             <div class="card">
                 <div class="card-body">
                     <h2 class="text-center">Employment History</h2>
-                    <table class="table table-sm">
+                    <table class="table table-sm employment_history">
                         <thead>
                             <tr>
                                 <th>Sr. #</th>
@@ -183,6 +218,6 @@
                 </div>
             </div>
         </div>
-    </div> 
+    </div>
     {% endif %}
 </div>

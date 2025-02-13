@@ -40,23 +40,86 @@ frappe.ui.form.on('Expense Claim', {
     },
     employee: function (frm) {
 
-        if (!frm.doc.custom_grade) {
+        if (!frm.doc.grade) {
             frappe.throw(__('Grade is not set. Please provide a valid grade to proceed with the validation.'));
             return;
         }
-    }
+    },
+    // nabeel saleem, 19-12-2024 > start
+    ownership: function(frm){
+        if(!frm.doc.ownership){
+            frm.set_value('vehicle', null);
+            frm.set_value('expense_rate', 0);
+            frm.set_value('kilometers', 0);
+
+            // Mubashir Bashir 24-12-2024 Start    
+            // Remove Vehicle Expense row from child expense if any         
+            const rows_to_remove = frm.doc.expenses.filter(row => row.expense_type === 'Vehicle Expense');
+            rows_to_remove.forEach(row => {frm.get_field('expenses').grid.grid_rows_by_docname[row.name].remove();});
+            frm.refresh_field('expenses');
+            // Mubashir Bashir 24-12-2024 End
+        }
+    },
+    // nabeel saleem, 19-12-2024 > end
+
+    // Mubashir Bashir 24-12-2024 Start
+    kilometers: function (frm) {
+        if (frm.doc.kilometers) {            
+            const expense_rate = frm.doc.expense_rate || 0;
+            const kilometers = frm.doc.kilometers;
+            const amount = expense_rate * kilometers;
+
+            // Remove empty rows or Vehicle Expense rows
+            if (frm.doc.expenses && frm.doc.expenses.length) {
+                // Get all rows that need to be removed
+                let rows_to_remove = frm.doc.expenses.filter(row => 
+                    !row.expense_type || row.expense_type === 'Vehicle Expense'
+                );                
+                for (let i = frm.doc.expenses.length - 1; i >= 0; i--) {
+                    if (!frm.doc.expenses[i].expense_type || 
+                        frm.doc.expenses[i].expense_type === 'Vehicle Expense') {
+                        frm.get_field('expenses').grid.grid_rows[i].remove();
+                    }
+                }                
+                frm.refresh_field('expenses');
+            }
+            // Add a row to the 'expenses' child table
+            const row = frm.add_child('expenses', {
+                expense_date: frappe.datetime.get_today(), 
+                expense_type: 'Vehicle Expense',         
+                amount: amount,
+                sanctioned_amount: amount                        
+            });
+            frm.refresh_field('expenses');
+        }
+    },
+    // Mubashir Bashir 24-12-2024 End
 }
 );
 
+// nabeel saleem, 19-12-2024
+function set_query_vehicle_expense(frm) {
+    frm.fields_dict['expenses'].grid.get_field('expense_type').get_query = function (doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        let ffilters = frm.doc.ownership === 0
+            ? {name: ["!=", "Vehicle Expense"]}: {}
+
+        return {
+            filters: ffilters
+        };
+    };
+}
 
 frappe.ui.form.on('Expense Claim Detail', {
     expense_type: function (frm, cdt, cdn) {
-
+        // nabeel saleem, 19-12-2024
         if (!frm.doc.employee && !frm.doc.expense_approver) {
             frappe.throw(__('Please select Employee and Approver first'));
             return;
         }
         var d = locals[cdt][cdn];
+        d.sanctioned_amount = 0;    // Mubashir Bashir 28-01-2025
+        d.amount = 0;    // Mubashir Bashir 28-01-2025
         if (d.expense_type === "Daily Allowance") {
             frm.toggle_reqd("travel_request", true);
             frm.set_df_property("travel_request", "read_only", 0);
@@ -78,38 +141,43 @@ frappe.ui.form.on('Expense Claim Detail', {
             return;
         }
 
-
-        frappe.call({
-            method: "akf_hrms.overrides.expense_claim.get_travel_expense_amount",
-
-            args: {
-                "expense_type": d.expense_type,
-                "custom_grade": frm.doc.custom_grade
-            },
-            callback: function (r) {
-                if (r.message) {
+        if(d.expense_type=="Vehicle Expense"){
+            frm.call('validate_and_set_vehicle_expense');
+        }else{
+            frm.call('get_travel_expense_amount', { "expense_type": d.expense_type }).then(r => {
+                console.log(r.message)
+                if (r.message.amount) {
                     d.amount = r.message.amount || 0;
                     d.sanctioned_amount = r.message.amount || 0;
                     frm.refresh_field('expenses');
                 } else {
                     frappe.msgprint(__("No amount defined for the selected expense type."));
+                    frm.refresh_field('expenses');
                 }
-            }
-        });
+            });
+
+            frm.call('validate_expenses_table').then(r => {
+            });
+
+            return frappe.call({
+                method: "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center",
+                args: {
+                    "expense_claim_type": d.expense_type,
+                    "company": frm.doc.company
+                },
+                callback: function (r) {
+                    if (r.message) {
+                        d.default_account = r.message.account;
+                        d.cost_center = r.message.cost_center;
+                    }
+                }
+            });
+        }
 
 
-        return frappe.call({
-            method: "hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center",
-            args: {
-                "expense_claim_type": d.expense_type,
-                "company": frm.doc.company
-            },
-            callback: function (r) {
-                if (r.message) {
-                    d.default_account = r.message.account;
-                    d.cost_center = r.message.cost_center;
-                }
-            }
+    },
+    expense_date: function (frm, cdt, cdn) {
+        frm.call('validate_expenses_table').then(r => {
         });
     }
 });
@@ -286,6 +354,8 @@ frappe.ui.form.on("Expense Claim", {
             frm.add_custom_button(__('Payment'),
                 function () { frm.events.make_payment_entry(frm); }, __('Create'));
         }
+        // nabeel saleem, 19-12-2024
+        set_query_vehicle_expense(frm);
     },
 
     calculate_grand_total: function (frm) {
@@ -399,10 +469,23 @@ frappe.ui.form.on("Expense Claim", {
 });
 
 frappe.ui.form.on("Expense Claim Detail", {
-    amount: function (frm, cdt, cdn) {
-        var child = locals[cdt][cdn];
-        frappe.model.set_value(cdt, cdn, 'sanctioned_amount', child.amount);
-    },
+    // Mubashir Bashir 14-01-2025 Start
+    
+    // 80% sanctioned amount in case of medical expense 100% in other cases. 
+    // Make sanctioned amount field readonly in case of medical expnese.
+    // amount: function (frm, cdt, cdn) {
+    //     var child = locals[cdt][cdn];
+    //     if (child.expense_type == 'Medical'){
+    //         // 80% sanctioned amount in case of medical expense
+    //         frappe.model.set_value(cdt, cdn, 'sanctioned_amount', child.amount*0.8);
+    //         frm.get_field('expenses').grid.grid_rows_by_docname[cdn].toggle_editable('sanctioned_amount', false);
+    //     }
+    //     else {
+    //         frappe.model.set_value(cdt, cdn, 'sanctioned_amount', child.amount);
+    //         frm.get_field('expenses').grid.grid_rows_by_docname[cdn].toggle_editable('sanctioned_amount', true);
+    //     }
+    // },
+    // Mubashir Bashir 14-01-2025 End
 
     sanctioned_amount: function (frm, cdt, cdn) {
         cur_frm.cscript.calculate_total(frm.doc, cdt, cdn);

@@ -117,7 +117,20 @@ def get_data(filters):
 				check_in_time = str(status_data[1])
 				check_out_time = str(status_data[2])
 				hours_worked = str(status_data[3])
-				# frappe.throw(frappe.as_json(hours_worked))
+    
+				# Mubashir Bashir Start 28-11-2024
+				late_entry = status_data[4]
+				early_exit = status_data[5]
+				custom_total_working_hours = str(status_data[6])
+				if hours_worked < custom_total_working_hours:
+					hours_worked = f"<span style='background-color: red; color: white;'>{hours_worked}</span>"
+				if late_entry:
+					check_in_time = f"<span style='background-color: red; color: white;'>{check_in_time}</span>"
+				if early_exit:
+					check_out_time = f"<span style='background-color: red; color: white;'>{check_out_time}</span>"
+				# Mubashir Bashir End 28-11-2024
+    
+    			# frappe.throw(frappe.as_json(hours_worked))
 				if status == "Present":
 					# inlist += [check_in_time[0] + ":" + check_in_time[1] if (check_in_time) else ""]
 					# outlist += [check_out_time[0] + ":" + check_out_time[1] if (check_out_time) else ""]
@@ -155,13 +168,16 @@ def get_data(filters):
 	
 	return data
 
+
 def get_attendance_list(filters):
 	conditions =  get_conditions(filters)
 	# attendance_list = frappe.db.sql("""select employee, day(attendance_date) as day_of_month,
 	attendance_list = frappe.db.sql("""select employee, attendance_date as day_of_month,
 		status, ifnull(in_time, "0:00:00") as check_in_time, 
 		ifnull(out_time ,  "0:00:00") as check_out_time,
-		(case when (custom_hours_worked="" or custom_hours_worked is null) then "0:00:00" else  custom_hours_worked end) as hours_worked
+		(case when (custom_hours_worked="" or custom_hours_worked is null) then "0:00:00" else  custom_hours_worked end) as hours_worked,
+		-- Mubashir Bashir 28-11-2024
+		late_entry, early_exit, custom_total_working_hours
 		from tabAttendance 
 		where docstatus = 1 %s order by employee, attendance_date""" % conditions, filters, as_dict=1)
 	att_map = {}
@@ -171,8 +187,12 @@ def get_attendance_list(filters):
 		# hours_worked = time_diff(d.out_time, d.in_time)
 		# hours_worked = str(hours_worked).split(".")[0]
 		
-		att_map[d.employee][str(d.day_of_month)] = [d.status, get_times_split(d.check_in_time), get_times_split(d.check_out_time), d.hours_worked]
+		# att_map[d.employee][str(d.day_of_month)] = [d.status, get_times_split(d.check_in_time), get_times_split(d.check_out_time), d.hours_worked]		
+		# Mubashir Bashir 28-11-2024
+		att_map[d.employee][str(d.day_of_month)] = [d.status, get_times_split(d.check_in_time), get_times_split(d.check_out_time), d.hours_worked, d.late_entry, d.early_exit, d.custom_total_working_hours]
+
 	return att_map
+
 
 def get_conditions(filters, is_employee=False):
 	conditions = ""

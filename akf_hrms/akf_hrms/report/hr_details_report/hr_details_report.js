@@ -1,6 +1,4 @@
-// Copyright (c) 2024, Nabeel Saleem and contributors
-// For license information, please see license.txt
-/* eslint-disable */
+//  Mubashir Bashir
 
 frappe.query_reports["HR Details Report"] = {
 	"filters": [		

@@ -15,6 +15,7 @@
   "shift",
   "device_detail_section",
   "device_ip",
+  "attendance_id",
   "column_break_hxba",
   "device_port",
   "log_detail_section",
@@ -118,11 +119,17 @@
    "fieldtype": "Select",
    "label": "Log From",
    "options": "\nLive\nCron\nZK Tool"
+  },
+  {
+   "fieldname": "attendance_id",
+   "fieldtype": "Small Text",
+   "label": "Attendance ID",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-26 16:38:14.633307",
+ "modified": "2025-01-07 14:50:59.405908",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Log",

@@ -45,7 +45,7 @@ doctype_js = {
     # "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js",
     "Staffing Plan": "public/js/staffing_plan.js",
     "Loan": "public/js/loan.js",
-    "Loan Application": "public/js/loan_application.js",
+    # "Loan Application": "public/js/loan_application.js",
     "Employee Separation": "public/js/employee_separation.js",
     "Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
     "Employee" : [
@@ -56,7 +56,10 @@ doctype_js = {
     "Training Request": "public/js/custom_doctype_js/training_request_modifications.js",
     "Salary Slip": [
         "public/js/custom_doctype_js/salary_slip/akf_payroll_settings.js",
-        ],
+    ],
+    "Company": [
+        "public/js/custom_doctype_js/company/company.js",
+    ],
     # "Attendance Request": "public/js/attendance_request.js",
     # "Expense Claim": [
     #     "public/js/custom_doctype_js/expense_claim/expense_claim.js"
@@ -162,7 +165,7 @@ doctype_js = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 override_doctype_class = {
-    "Employee": "akf_hrms.extends.employee.XEmployee",
+    "Employee": "akf_hrms.extends.employee.Employee",
     "Shift Type": "akf_hrms.extends.shift_type.XShiftType",
     "Employee Onboarding": "akf_hrms.overrides.employee_onboarding.EmployeeOnboarding",
     "Employee Separation": "akf_hrms.overrides.employee_separation.EmployeeSeparation",
@@ -199,6 +202,9 @@ doc_events = {
     # "Expense Claim": {
     #     "on_submit": "akf_hrms.doc_events.expense_claim.create_additional_salary_for_expense_claim"
     # },
+    "Attendance Log": {
+        "after_insert": "akf_hrms.utils.hr_policy.apply_policy"
+    },
 }
 
 # Scheduled Tasks
@@ -222,9 +228,9 @@ scheduler_events = {
     # 	"all": [
     # 		"akf_hrms.tasks.all"
     # 	],
-    # 	"daily": [
-    # 		"akf_hrms.tasks.daily"
-    # 	],
+    	"daily": [
+    		"akf_hrms.utils.hr_crons.notify_managers_for_contract_probation_interns"
+    	],
     # 	"hourly": [
     # 		"akf_hrms.tasks.hourly"
     # 	],

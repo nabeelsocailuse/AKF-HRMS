@@ -196,7 +196,7 @@ position:relative;
             transition: all 0.5s;
         }
 		.img-settings{
-			height: 80px;
+			height: 150px;
 		}
 		.text-format{
 			color: lightgray;
@@ -221,7 +221,7 @@ position:relative;
 						<div id="${sort_order}" class="panel-collapse collapse">
                             <br>
                             <div style="text-align:center;">
-                                <img class="img-settings" src="/files/alkhidmat-logo.png" alt="AKFP Header" >  
+                                <img class="img-settings" src="/files/Logo_001.png" alt="AKFP Header" >  
                             </div>
                             <br>
 							<div class="panel-body"> 
@@ -270,9 +270,9 @@ position:relative;
 		$(".panel").click(function(){
 			const temp_sort = $(this).attr("sort-order");
 			let isCollapse = $(`#${temp_sort}`).hasClass("collapse");
-			console.log("isCollapse: ", isCollapse);
-			console.log("temp_sort: ", temp_sort);
-			console.log("pre_sort: ", pre_sort);
+			// console.log("isCollapse: ", isCollapse);
+			// console.log("temp_sort: ", temp_sort);
+			// console.log("pre_sort: ", pre_sort);
 			if(isCollapse){
 				$(`#${temp_sort}`).removeClass("collapse");
 				if(pre_sort!=temp_sort){

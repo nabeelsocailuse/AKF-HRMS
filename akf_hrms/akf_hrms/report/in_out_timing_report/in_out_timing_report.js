@@ -67,7 +67,18 @@ frappe.query_reports["In Out Timing Report"] = {
 			"fieldname":"department",
 			"label": __("Department"),
 			"fieldtype": "Link",
-			"options": "Department"
+			"options": "Department",
+			"get_query": function() {
+				var company = frappe.query_report.get_filter_value('company');
+				return {
+					"doctype": "Department",
+					"filters": {
+						"is_group": 0,
+						"disabled": 0,
+						"company": company,
+					}
+				}
+			}
 		},
 		{
 			"fieldname":"designation",

@@ -38,50 +38,30 @@ def get_hr_counts(filters):
         "department_list": get_department_list(filters),
     }
 
-# def get_head_counts(filters):
-#     query = """ 
-#         Select count(name) 
-#         From `tabEmployee`
-#         Where 
-#             status="Active"
-#             and (ifnull(relieving_date, "")="" || relieving_date>=curdate())
-#      """
-#     # query += " AND relieving_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
-#     query += " and company = %(company)s " if(filters.get("company")) else ""
-#     query += " and branch = %(branch)s " if(filters.get("branch")) else ""
-#     r = frappe.db.sql(query, filters)
-#     return r[0][0] if(r) else 0
-
 def get_head_counts(filters):
+    if filters.get("to_date"):
+        pass
+    else:
+        frappe.throw(f"Please select To Date")
+
+    if filters.get("from_date"):
+        pass
+    else:
+        frappe.throw(f"Please select From Date")
+        
+
     query = """ 
         SELECT count(name) 
         FROM `tabEmployee`
         WHERE 
             status="Active"
-            AND (ifnull(relieving_date, "") = "" OR relieving_date > %(to_date)s)
      """
+    query += " AND relieving_date > %(to_date)s"
     query += " AND company = %(company)s" if filters.get("company") else ""
     query += " AND branch = %(branch)s" if filters.get("branch") else ""
     
     r = frappe.db.sql(query, filters)
     return r[0][0] if r else 0
-
-
-# def total_present(filters):
-#     query = """ 
-#             SELECT count(att.name)
-#             FROM `tabAttendance` as att 
-#             INNER JOIN `tabEmployee` as e ON att.employee = e.name
-#             WHERE att.status IN ("Present", "Work From Home")
-#             AND att.docstatus = 1
-#             AND (ifnull(e.relieving_date, "") = "" OR e.relieving_date >= curdate())
-#         """
-#     query += " AND att.company = %(company)s" if filters.get("company") else ""
-#     query += " AND att.custom_branch = %(branch)s" if filters.get("branch") else ""
-#     query += " AND att.attendance_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
-    
-#     r = frappe.db.sql(query, filters)
-#     return r[0][0] if r else 0
 
 
 def total_present(filters):
@@ -114,7 +94,9 @@ def total_absent_count(filters):
     query += " AND att.company = %(company)s" if filters.get("company") else ""
     query += " AND att.custom_branch = %(branch)s" if filters.get("branch") else ""
     query += " AND att.attendance_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
+    # frappe.msgprint(f"absent query: {query}")
     r = frappe.db.sql(query, filters)
+    # frappe.msgprint(f"absent result: {r}")
     return r[0][0] if(r) else 0
 
 def get_late_comings_count(filters):
@@ -135,50 +117,26 @@ def get_late_comings_count(filters):
     r = frappe.db.sql(query, filters)
     return r[0][0] if r else 0
 
-# def get_in_station_leaves(filters):
-#     query = """ 
-#         SELECT count(name)
-#         FROM `tabLeave Application`
-#         WHERE leave_type = 'Official Duty (In-Station)'
-#         and custom_approval_status = 'Approved'
-#         and docstatus = 1
-#     """
-#     print("Station Leavesss")
-    
-#     if filters.get("company"):
-#         query += " AND company = %(company)s"
-#     if filters.get("branch"):
-#         query += " AND custom_branch = %(branch)s"
-#     if filters.get('from_date') and filters.get('to_date'):
-#         query += " AND posting_date BETWEEN %(from_date)s AND %(to_date)s"
-        
-#     r = frappe.db.sql(query, filters)
-#     print(r)
-#     return r[0][0] if r else 0
-
 
 def get_in_station_leaves(filters):
     query = """ 
         SELECT count(name)
         FROM `tabLeave Application`
         WHERE leave_type = 'Official Duty (In-Station)'
-        AND custom_approval_status = 'Approved'
+        AND status = 'Approved'
         AND docstatus = 1
     """
-    print("Station Leaves")
 
     if filters.get("company"):
         query += " AND company = %(company)s"
     if filters.get("branch"):
         query += " AND custom_branch = %(branch)s"
     if filters.get('from_date') and filters.get('to_date'):
-        query += " AND (from_date <= %(to_date)s AND to_date >= %(from_date)s)"
-
-    print("Query:", query)
-    print("Filters:", filters)
+        query += " AND (from_date >= %(from_date)s AND to_date <= %(to_date)s)"
     
     r = frappe.db.sql(query, filters)
-    print("Result:", r)
+    # frappe.throw(f"out station: {r[0][0]}")
+
     return r[0][0] if r else 0
 
 def get_out_station_leaves(filters):
@@ -186,21 +144,20 @@ def get_out_station_leaves(filters):
         SELECT count(name)
         FROM `tabLeave Application`
         WHERE leave_type = 'Official Duty (Out-Station)'
-        and custom_approval_status = 'Approved'
+        and status = 'Approved'
     """
-    print("Station Leavesss")
-    print(query)
     
     if filters.get("company"):
         query += " AND company = %(company)s"
     if filters.get("branch"):
         query += " AND custom_branch = %(branch)s"
     if filters.get('from_date') and filters.get('to_date'):
-        query += " AND (from_date <= %(to_date)s AND to_date >= %(from_date)s)"
+        query += " AND (from_date >= %(from_date)s AND to_date <= %(to_date)s)"
         
     r = frappe.db.sql(query, filters)
-    print(r)
-    return r[0][0] if r else 0
+    # frappe.throw(f"out station: {r[0][0]}")
+
+    return r[0][0]
 
 def get_in_time_count(filters):
     query = """ 
@@ -218,12 +175,13 @@ def get_in_time_count(filters):
         query += " AND attendance_date BETWEEN %(from_date)s AND %(to_date)s"
         
     r = frappe.db.sql(query, filters)
+
     return r[0][0] if r else 0
 
 def get_absents_and_absenteeism(filters, head_count, presents):
     total_head_count = head_count * (date_diff(filters.get("to_date"), filters.get("from_date")) + 1)
     total_holidays = head_count * get_holidays(filters)
-    # 
+    
     total_absents = total_absent_count(filters)
     average = 0
 
@@ -255,11 +213,8 @@ def get_average_late_coming(filters):
     query += " AND att.custom_branch = %(branch)s" if filters.get("branch") else ""
     query += " AND att.attendance_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
     
-    # print("Averageee Late Cominggg!")
-    # print("Query:", query)  # Debug print
     
     r = frappe.db.sql(query, filters, as_dict=1)
-    # print("Result:", r)  # Debug print
     
     if r:
         data = r[0]
@@ -297,12 +252,14 @@ def get_short_unapproved_leaves(filters):
     query += " and la.company = %(company)s " if(filters.get("company")) else ""
     query += " and e.branch = %(branch)s " if(filters.get("branch")) else ""
     query += "and (la.from_date>=%(from_date)s and la.to_date<=%(to_date)s) " if(filters.get('from_date') and filters.get('to_date')) else ""
+    
     r = frappe.db.sql(query, filters, as_dict=1)
+
     return r[0] if(r) else {}
 
 
-def get_in_staitons_and_out_station(filters):
-    pass
+# def get_in_staitons_and_out_station(filters):
+#     pass
 
 def get_contract_completion(filters):
     query = """ 
@@ -316,7 +273,9 @@ def get_contract_completion(filters):
     query += " and company = %(company)s " if(filters.get("company")) else ""
     query += " and branch = %(branch)s " if(filters.get("branch")) else ""
     query += "and (contract_end_date>=%(from_date)s and contract_end_date<=%(to_date)s) " if(filters.get('from_date') and filters.get('to_date')) else ""
+    
     r = frappe.db.sql(query, filters)
+
     return r[0][0] if(r) else 0
 
 def get_probation_completion(filters):
@@ -368,7 +327,8 @@ def get_hr_charts(filters):
         "employee_check_in_and_late_entry": employee_check_in_and_late_entry(filters)
     }
 
-""" HR Charts API """
+                #  """ HR Charts API """
+
 # 1- HR Dashboard Chart
 def get_employee_count_by_department(filters):
     query = """ 
@@ -385,6 +345,7 @@ def get_employee_count_by_department(filters):
     query += " ORDER BY y"
     r = frappe.db.sql(query, filters, as_dict=1)
     return r
+
 # 2- HR Dashboard Chart
 def get_employee_count_by_salary_range(filters):
     query = """ 
@@ -432,6 +393,7 @@ def get_employee_count_by_salary_range(filters):
             })
     
     return salary_ranges
+
 # 3- HR Dashboard Chart
 def employee_check_in_and_late_entry(filters):
     query = """
@@ -491,6 +453,7 @@ def count_by_employment_type(filters):
     return data
 
 """ HR Recruitment Dashboard Counts"""
+
 @frappe.whitelist()
 def get_recruitement_counts(filters):
     filters = ast.literal_eval(filters)
@@ -611,6 +574,7 @@ def get_recruitement_charts(filters):
         "open_position_by_dept": open_position_by_dept(filters),
         "applications_received_by_source": applications_received_by_source(filters),
     }
+
 # 1- Recruitment Dashboard Chart
 def open_position_by_dept(filters):
     query = """
@@ -631,6 +595,7 @@ def open_position_by_dept(filters):
     data = [{'name': d['name'], 'y': d['count']} for d in r]
     
     return data
+
 # 2- Recruitment Dashboard Chart
 def applications_received_by_source(filters):
     query = """

@@ -3,9 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import time_diff, getdate, get_datetime, time_diff_in_hours
-
-
+from frappe.utils import time_diff, getdate, get_datetime, time_diff_in_hours, get_time
 class AttendanceLog(Document):
 	def validate(self):
 		self.set_employee_and_shift_type()
@@ -47,6 +45,7 @@ class AttendanceLog(Document):
 		
 		if(attendance.status!="Present"): return
 		frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
+		frappe.db.set_value("Attendance", attendance.name, "custom_out_times", get_time(self.log))
 		hours_worked = self.cal_hours_worked(attendance.in_time)
 		
 		frappe.db.set_value("Attendance", attendance.name, "custom_hours_worked", hours_worked)
@@ -65,6 +64,8 @@ class AttendanceLog(Document):
 				"status": "Present",
 				"shift": self.shift,
 				"in_time": self.log,
+				"custom_in_times": get_time(self.log),
+				"custom_out_times": "",
 				"late_entry": self.late_entry(),
 				# "custom_2_hours_late": self.get_2_hours_late()
 			}

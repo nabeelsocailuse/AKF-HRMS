@@ -11,9 +11,9 @@ frappe.pages['hr-dashboard'].on_page_load = async function (wrapper) {
 }
 
 filters = {
-    add: function(page){
-        
-        company = page.add_field({ 
+    add: function (page) {
+
+        let company = page.add_field({
             fieldname: "company",
             label: __("Company"),
             fieldtype: "Link",
@@ -28,7 +28,7 @@ filters = {
                 }
             },
         });
-    
+
         let branch = page.add_field({
             fieldname: "branch",
             label: __("Branch"),
@@ -44,7 +44,7 @@ filters = {
         let fromDateChanged = false;
         let toDateChanged = false;
 
-        let today = new Date(); 
+        let today = new Date();
         let lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 21);
         let fromDate = frappe.datetime.obj_to_str(lastMonth);
         let thisMonth = new Date(today.getFullYear(), today.getMonth(), 20);
@@ -56,7 +56,7 @@ filters = {
             fieldtype: "Date",
             options: "",
             default: fromDate,
-            reqd: 0,
+            reqd: 1,
             change: (e) => {
                 if (new Date(from_date.get_value()) > new Date(to_date.get_value())) {
                     if (!fromDateChanged) {
@@ -78,7 +78,7 @@ filters = {
             fieldtype: "Date",
             options: "",
             default: toDate,
-            reqd: 0,
+            reqd: 1,
             change: (e) => {
                 if (new Date(to_date.get_value()) < new Date(from_date.get_value())) {
                     if (!toDateChanged) {
@@ -96,7 +96,7 @@ filters = {
 
 
         function fetchDashboardData(page) {
-            
+
             filters = {
                 "company": company.get_value(),
                 "branch": branch.get_value(),
@@ -130,57 +130,53 @@ filters = {
         });
 
         fetchDashboardData(page);
-        
+
     }
 }
 serverCall = {
-    hr_counts: function(page, filters){
+    hr_counts: function (page, filters) {
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_hr_counts",
-            async: false,
             args: {
                 filters: filters
-            }, 
-            callback: function(r){
+            },
+            callback: function (r) {
                 let data = r.message;
                 design.set_hr_cards(page, data);
             }
         })
     },
-    hr_charts: function(filters){
+    hr_charts: function (filters) {
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_hr_charts",
-            async: false,
             args: {
                 filters: filters
-            }, 
-            callback: function(r){
+            },
+            callback: function (r) {
                 let data = r.message;
                 design.set_hr_charts(data);
             }
         })
     },
-    recruiment_counts: function(filters){
+    recruiment_counts: function (filters) {
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_recruitement_counts",
-            async: false,
             args: {
                 filters: filters
-            }, 
-            callback: function(r){
+            },
+            callback: function (r) {
                 let data = r.message;
                 design.set_recruitment_cards(data);
             }
         })
     },
-    recruitment_charts: function(filters){
+    recruitment_charts: function (filters) {
         frappe.call({
             method: "akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.get_recruitement_charts",
-            async: false,
             args: {
                 filters: filters
-            }, 
-            callback: function(r){
+            },
+            callback: function (r) {
                 let data = r.message;
                 design.set_recruitment_charts(data);
             }
@@ -196,7 +192,7 @@ design = {
         design.set_update_department_list(data.department_list);
         _triggers_.search();
     },
-    set_hr_charts: function(data){
+    set_hr_charts: function (data) {
         chartsFunc.employee_count_by_status(data.count_by_employment_type);
         chartsFunc.employee_count_by_department(data.department_wise);
         chartsFunc.employee_count_by_salary_range(data.salary_range);
@@ -205,16 +201,16 @@ design = {
     set_recruitment_cards: function (data) {
         design.set_recruitment_totals(data);
     },
-    set_recruitment_charts: function(data){
+    set_recruitment_charts: function (data) {
         chartsFunc.open_position_by_dept(data.open_position_by_dept);
         chartsFunc.applications_received_by_source(data.applications_received_by_source);
     },
-    set_update_department_list: function(values){
+    set_update_department_list: function (values) {
         $("#departments").empty();
-		$("#departments").html(values);
+        $("#departments").html(values);
         search_departments();
     },
-    set_recruitment_totals: function(data){
+    set_recruitment_totals: function (data) {
         $("#total_applicants").empty();
         $("#total_applicants").html(data.total_applicants);
 
@@ -233,15 +229,15 @@ design = {
 }
 
 _triggers_ = {
-    search: function(){
-        $("#department").on('change', function() {
+    search: function () {
+        $("#department").on('change', function () {
             var department = $(this).val();
             filters["department"] = department;
             setTimeout(() => {
-                serverCall.recruiment_counts(filters);   
+                serverCall.recruiment_counts(filters);
             }, 100);
             setTimeout(() => {
-                serverCall.recruitment_charts(filters);   
+                serverCall.recruitment_charts(filters);
             }, 400);
         });
     }
@@ -249,7 +245,7 @@ _triggers_ = {
 
 chartsFunc = {
     employee_count_by_status: function (data) {
-        CountEmploymentType(data); 
+        CountEmploymentType(data);
     },
     employee_count_by_department: function (data) {
         barChart(data);
@@ -257,22 +253,22 @@ chartsFunc = {
     employee_count_by_salary_range: function (data) {
         pieChart(data);
     },
-    open_position_by_dept: function(data){
+    open_position_by_dept: function (data) {
         OpenPositionChart(data);
     },
 
-	applications_received_by_source: function(data){
-		ApplicationBySource(data);
-	},
+    applications_received_by_source: function (data) {
+        ApplicationBySource(data);
+    },
 
-	employee_check_in_and_late_entry: function(data){
-		EmployeeCheckInOut(data);
-	},
+    employee_check_in_and_late_entry: function (data) {
+        EmployeeCheckInOut(data);
+    },
 
-	get_department_list: function(values){
-		$("#browsers").empty();
-		$("#browsers").html(values);
-	},	
+    get_department_list: function (values) {
+        $("#browsers").empty();
+        $("#browsers").html(values);
+    },
 }
 // function EmployeeCheckInOut(data) {
 //     Highcharts.chart('employee_by_time', {
@@ -330,12 +326,12 @@ chartsFunc = {
 function EmployeeCheckInOut(data) {
     // Prepare data for the pie chart
     let chartData = [];
-    
+
     // Loop through data and populate chartData with required format
     data.forEach(item => {
         chartData.push({ name: item.entry_status, y: item.entry_status === 'Late' ? item.late_count : item.on_time_count });
     });
-    
+
     // Generate the Highcharts pie chart
     Highcharts.chart('employee_by_time', {
         chart: {
@@ -389,175 +385,175 @@ function EmployeeCheckInOut(data) {
 }
 
 function CountEmploymentType(data) {
-	Highcharts.chart('employee_by_status', {
-		colors: ['#01BAF2', 'rgb(75, 208, 139)', '#FAA74B', '#B37CD2'],
-		chart: {
-			type: 'pie',
-		},
-		title: {
-			text: 'Employee count by employment type', 
-			align: 'left',
-			style: {
-				fontSize: '18px', 
-				fontWeight: '600',
-				fontFamily: '"Inter", sans-serif'
-			}
-		},
-		tooltip: {
-			// valueSuffix: '%'
-			pointFormat: '<b>{point.name}</b><br>{point.percentage:.1f}%'
-		},
-		plotOptions: {
-			pie: {
-				allowPointSelect: true,
-				cursor: 'pointer',
-				dataLabels: {
-					enabled: true,
-					format: '{point.name}: {y} '
-				},
-				showInLegend: true
-			}
-		},
-		legend: {
-			align: 'left',
-			verticalAlign: 'bottom',
-			layout: 'horizontal',
-			labelFormat: '<b>{name}</b>',
-			itemWidth: 150 
-		},
-		series: [{
-			name: 'Percentage',
-			colorByPoint: true,
-			innerSize: '80%',
-			data: data
-		}],
-		credits: {
-			enabled: false 
-		}
-	});
+    Highcharts.chart('employee_by_status', {
+        colors: ['#01BAF2', 'rgb(75, 208, 139)', '#FAA74B', '#B37CD2'],
+        chart: {
+            type: 'pie',
+        },
+        title: {
+            text: 'Employee count by employment type',
+            align: 'left',
+            style: {
+                fontSize: '18px',
+                fontWeight: '600',
+                fontFamily: '"Inter", sans-serif'
+            }
+        },
+        tooltip: {
+            // valueSuffix: '%'
+            pointFormat: '<b>{point.name}</b><br>{point.percentage:.1f}%'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.name}: {y} '
+                },
+                showInLegend: true
+            }
+        },
+        legend: {
+            align: 'left',
+            verticalAlign: 'bottom',
+            layout: 'horizontal',
+            labelFormat: '<b>{name}</b>',
+            itemWidth: 150
+        },
+        series: [{
+            name: 'Percentage',
+            colorByPoint: true,
+            innerSize: '80%',
+            data: data
+        }],
+        credits: {
+            enabled: false
+        }
+    });
 }
 function OpenPositionChart(data) {
-	Highcharts.chart('open_position', {
-		colors: ['#01BAF2', 'rgb(75, 208, 139)', '#FAA74B', '#B37CD2'],
-		chart: {
-			type: 'pie',
-		},
-		title: {
-			text: 'Open Position By Department',
-			align: 'left',
-			style: {
-				fontSize: '18px', 
-				fontWeight: '600',
-				fontFamily: '"Inter", sans-serif'
-			}
-		},
-		tooltip: {
-			 pointFormat: '<b>{point.name}</b><br>{point.percentage:.1f}%'
-			// valueSuffix: '%'
-		},
-		plotOptions: {
-			pie: {
-				allowPointSelect: true,
-				cursor: 'pointer',
-				dataLabels: {
-					enabled: true,
-					// format: '{point.name}: {y} %'
-					format: '{point.name}: {y}'
-				},
-				showInLegend: true
-			}
-		},
-		legend: {
-			align: 'left',
-			verticalAlign: 'bottom',
-			layout: 'horizontal',
-			labelFormat: '<b>{name}</b>',
-			itemWidth: 150 
-		},
-		series: [{
-			name: 'Percentage',
-			colorByPoint: true,
-			innerSize: '80%',
-			data: data
-		}],
-		credits: {
-			enabled: false 
-		}
-	});
+    Highcharts.chart('open_position', {
+        colors: ['#01BAF2', 'rgb(75, 208, 139)', '#FAA74B', '#B37CD2'],
+        chart: {
+            type: 'pie',
+        },
+        title: {
+            text: 'Open Position By Department',
+            align: 'left',
+            style: {
+                fontSize: '18px',
+                fontWeight: '600',
+                fontFamily: '"Inter", sans-serif'
+            }
+        },
+        tooltip: {
+            pointFormat: '<b>{point.name}</b><br>{point.percentage:.1f}%'
+            // valueSuffix: '%'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    // format: '{point.name}: {y} %'
+                    format: '{point.name}: {y}'
+                },
+                showInLegend: true
+            }
+        },
+        legend: {
+            align: 'left',
+            verticalAlign: 'bottom',
+            layout: 'horizontal',
+            labelFormat: '<b>{name}</b>',
+            itemWidth: 150
+        },
+        series: [{
+            name: 'Percentage',
+            colorByPoint: true,
+            innerSize: '80%',
+            data: data
+        }],
+        credits: {
+            enabled: false
+        }
+    });
 }
 function barChart(data) {
-	Highcharts.chart('employee_count', {
-		chart: {
-			type: 'column'
-		}, 
-		title: {
-			text: 'Employee count By department',
-			align: 'left',
-			style: {
-				fontSize: '18px', 
-				fontWeight: '600',    
-				fontFamily: '"Inter", sans-serif'
-			}
-		},
-		subtitle: {
-			align: 'left',
-			text: ''
-		},
-		exporting: {
-			enabled: false,
-		},
-		credits: {
-			enabled: false
-		},
-		accessibility: {
-			announceNewData: {
-				enabled: true
-			}
-		},
-		xAxis: {
-			type: 'category'
-		},
-		yAxis: {
-			title: {
-				text: ''
-			}
-		},
-		legend: {
-			enabled: false
-		},
-		plotOptions: {
-			series: {
-				borderWidth: 0,
-				dataLabels: {
-					enabled: true,
-					format: '{point.y}'
-				}
-			}
-		},
-		tooltip: {
-			headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
-			pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
-				'<b>{point.y}</b> of total<br/>'
-		},
-		series: [{
-			name: 'Employees',
-			colorByPoint: true,
-			data: data
-		
-		}]
-	});
+    Highcharts.chart('employee_count', {
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Employee count By department',
+            align: 'left',
+            style: {
+                fontSize: '18px',
+                fontWeight: '600',
+                fontFamily: '"Inter", sans-serif'
+            }
+        },
+        subtitle: {
+            align: 'left',
+            text: ''
+        },
+        exporting: {
+            enabled: false,
+        },
+        credits: {
+            enabled: false
+        },
+        accessibility: {
+            announceNewData: {
+                enabled: true
+            }
+        },
+        xAxis: {
+            type: 'category'
+        },
+        yAxis: {
+            title: {
+                text: ''
+            }
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            series: {
+                borderWidth: 0,
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.y}'
+                }
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+            pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
+                '<b>{point.y}</b> of total<br/>'
+        },
+        series: [{
+            name: 'Employees',
+            colorByPoint: true,
+            data: data
+
+        }]
+    });
 }
 function ApplicationBySource(data) {
     Highcharts.chart('application_received', {
         chart: {
             type: 'column'
-        }, 
+        },
         title: {
             text: 'Application Received By Source',
             align: 'left',
             style: {
-                fontSize: '18px', 
-                fontWeight: '600',    
+                fontSize: '18px',
+                fontWeight: '600',
                 fontFamily: '"Inter", sans-serif'
             }
         },
@@ -585,7 +581,7 @@ function ApplicationBySource(data) {
             },
             allowDecimals: false, // This will disable decimal values on y-axis
             labels: {
-                formatter: function() {
+                formatter: function () {
                     return Math.floor(this.value); // Ensures only whole numbers are displayed
                 }
             }
@@ -612,69 +608,69 @@ function ApplicationBySource(data) {
             colorByPoint: true,
             data: data
         }]
-    
+
     });
 }
 function pieChart(data) {
-	Highcharts.chart('salary_range', {
-		chart: {
-			type: 'pie'
-		}, 
-		title: {
-			text: 'Employee count By salary range',
-			align: 'left',
-			style: {
-				fontSize: '18px', 
-				fontWeight: '600',
-				fontFamily: '"Inter", sans-serif'
-			}
-		},
-		subtitle: {
-			text: ''
-		},
-		exporting: {
-			enabled: false,
-		},
-		credits: {
-			enabled: false
-		},
-		plotOptions: {
-			series: {
-				showInLegend: true,
-				allowPointSelect: true,
-				cursor: 'pointer',
-				dataLabels: [{
-					enabled: false,
-					distance: 20
-				}, {
-					enabled: true,
-					distance: -40,
-					format: '{point.y}',
-					style: {
-						fontSize: '1.2em',
-						textOutline: 'none',
-						opacity: 0.7
-					},
-					filter: {
-						operator: '>',
-						property: 'percentage',
-						value: 10
-					}
-				}]
-			}
-		},
-		series: [{
-			name: 'Employees',
-			colorByPoint: true,
-			data: data
-		}]
-	});
+    Highcharts.chart('salary_range', {
+        chart: {
+            type: 'pie'
+        },
+        title: {
+            text: 'Employee count By salary range',
+            align: 'left',
+            style: {
+                fontSize: '18px',
+                fontWeight: '600',
+                fontFamily: '"Inter", sans-serif'
+            }
+        },
+        subtitle: {
+            text: ''
+        },
+        exporting: {
+            enabled: false,
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            series: {
+                showInLegend: true,
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: [{
+                    enabled: false,
+                    distance: 20
+                }, {
+                    enabled: true,
+                    distance: -40,
+                    format: '{point.y}',
+                    style: {
+                        fontSize: '1.2em',
+                        textOutline: 'none',
+                        opacity: 0.7
+                    },
+                    filter: {
+                        operator: '>',
+                        property: 'percentage',
+                        value: 10
+                    }
+                }]
+            }
+        },
+        series: [{
+            name: 'Employees',
+            colorByPoint: true,
+            data: data
+        }]
+    });
 }
 
 // HR Recruitment Dashboard
 function search_departments() {
-    $("#department").on('change', function() {
-        // console.log(company)
+    $("#department").on('change', function () {
+        console.log(company)
         var selectedValue = $(this).val();
         // updateTotalCandidates(selectedValue);
         // updateShortlistedCandidates(selectedValue);
@@ -684,7 +680,7 @@ function search_departments() {
     });
 }
 function updateTotalCandidates(department, company) {
- 
+
     frappe.call({
         method: 'akf_hrms.akf_hrms.page.hr_dashboard.hr_dashboard.department_wise_count',
         args: {
@@ -693,12 +689,12 @@ function updateTotalCandidates(department, company) {
                 "company": company
             }
         },
-        callback: function(r) {
+        callback: function (r) {
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching Total candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    // console.log("Shortlisted candidates count:", r.message);
+                    console.log("Shortlisted candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
                     const data = r.message.total;
                     const t1 = document.getElementById('total_applicants');
@@ -714,7 +710,7 @@ function updateTotalCandidates(department, company) {
                 console.error("Error fetching Total candidates:", r.exc);
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error occurred while fetching Total candidates:", error);
         }
     });
@@ -725,18 +721,18 @@ function updateShortlistedCandidates(department) {
         args: {
             filters: { "department": department }
         },
-        callback: function(r) {
+        callback: function (r) {
             console.log(r.message)
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching shortlisted candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    // console.log("Shortlisted candidates count:", r.message);
+                    console.log("Shortlisted candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
                     const data = r.message.total
                     t1 = document.getElementById('shortlisted')
                     if (t1) {
-                        t1.textContent = ''; 
+                        t1.textContent = '';
                         t1.append(data);
                     } else {
                         console.error("Element with ID 'shortlisted' not found.");
@@ -750,7 +746,7 @@ function updateShortlistedCandidates(department) {
                 console.error("Error fetching shortlisted candidates:", r.exc);
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error occurred while fetching shortlisted candidates:", error);
         }
     });
@@ -761,18 +757,18 @@ function updateHiredCandidates(department) {
         args: {
             filters: { "department": department }
         },
-        callback: function(r) {
-            // console.log(r.message)
+        callback: function (r) {
+            console.log(r.message)
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching hired candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    // console.log("Hired candidates count:", r.message);
+                    console.log("Hired candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
                     const data = r.message.total;
                     const t1 = document.getElementById('hired');
                     if (t1) {
-                        t1.textContent = ''; 
+                        t1.textContent = '';
                         t1.append(data);
                     } else {
                         console.error("Element with ID 'hired' not found.");
@@ -784,7 +780,7 @@ function updateHiredCandidates(department) {
                 console.error("Error fetching hired candidates:", r.exc);
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error occurred while fetching hired candidates:", error);
         }
     });
@@ -795,19 +791,19 @@ function updateRejectedCandidates(department) {
         args: {
             filters: { "department": department }
         },
-        callback: function(r) {
-            // console.log(r.message)
+        callback: function (r) {
+            console.log(r.message)
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching rejected candidates:", r.message.error);
                 } else if (r.message.total !== undefined) {
-                    // console.log("Rejected candidates count:", r.message);
+                    console.log("Rejected candidates count:", r.message);
                     document.querySelector('.card .applicant_count').textContent = r.message.total;
 
                     const data = r.message.total;
                     const t1 = document.getElementById('rejected');
                     if (t1) {
-                        t1.textContent = ''; 
+                        t1.textContent = '';
                         t1.append(data);
                     } else {
                         t1.append(data);
@@ -819,7 +815,7 @@ function updateRejectedCandidates(department) {
                 console.error("Error fetching rejected candidates:", r.exc);
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error occurred while fetching rejected candidates:", error);
         }
     });
@@ -830,20 +826,20 @@ function updateTimetoFill(department) {
         args: {
             filters: { "department": department }
         },
-        callback: function(r) {
-            // console.log(r.message);
+        callback: function (r) {
+            console.log(r.message);
             if (r.message) {
                 if (r.message.error) {
                     console.error("Error fetching average time to fill:", r.message.error);
                 } else {
-                    // console.log("Average time to fill:", r.message);
+                    console.log("Average time to fill:", r.message);
                     const avgTime = r.message;
                     document.querySelector('.card .applicant_count').textContent = r.message;
 
                     const data = r.message.total;
                     const t1 = document.getElementById('time_to_fill');
                     if (t1) {
-                        t1.textContent = ''; 
+                        t1.textContent = '';
                         t1.append(data);
                     } else {
                         t1.append(data);
@@ -853,7 +849,7 @@ function updateTimetoFill(department) {
                 console.error("Error fetching average time to fill:", r.exc);
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error occurred while fetching average time to fill:", error);
         }
     });

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"yCBK0YJSlQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Self Service Dashboard\",\"col\":12}},{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"nJJs2f5Ufu\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"zn2N0061BM\",\"type\":\"card\",\"data\":{\"card_name\":\"Employee Leave Balance Report\",\"col\":4}},{\"id\":\"y4Ebr3XjZd\",\"type\":\"card\",\"data\":{\"card_name\":\"Absent Days Report\",\"col\":4}}]",
+ "content": "[{\"id\":\"yCBK0YJSlQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Self Service Dashboard\",\"col\":12}},{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"nJJs2f5Ufu\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"zn2N0061BM\",\"type\":\"card\",\"data\":{\"card_name\":\"Leaves\",\"col\":4}},{\"id\":\"y4Ebr3XjZd\",\"type\":\"card\",\"data\":{\"card_name\":\"Absent Days Report\",\"col\":4}},{\"id\":\"tx9pdL4iep\",\"type\":\"card\",\"data\":{\"card_name\":\"Material Request\",\"col\":4}}]",
  "creation": "2024-10-17 11:28:57.774003",
  "custom_blocks": [
   {
@@ -97,7 +97,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Employee Leave Balance Report",
+   "label": "Material Request",
    "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
@@ -105,16 +105,45 @@
   },
   {
    "hidden": 0,
+   "is_query_report": 0,
+   "label": "Material Request",
+   "link_count": 0,
+   "link_to": "Material Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leaves",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
    "is_query_report": 1,
-   "label": "Employee Leave Balance",
+   "label": "Employee Leave Balance Report",
    "link_count": 0,
    "link_to": "Employee Leave Balance",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Encashment List",
+   "link_count": 0,
+   "link_to": "Leave Encashment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2024-11-12 11:16:36.219723",
+ "modified": "2024-12-31 20:23:09.572230",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Self Service",

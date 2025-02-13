@@ -19,7 +19,10 @@ frappe.ui.form.on("Leave Application", {
 	onload: function(frm) {
 		// Ignore cancellation of doctype on cancel all.
 		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry", "Attendance"];
-
+		
+		// Start, Nabeel Saleem, 02-12-2024
+		frm.trigger("populateEmployeeIdBasedOnSelfService");
+		// End, Nabeel Saleem, 02-12-2024
 		if (!frm.doc.posting_date) {
 			frm.set_value("posting_date", frappe.datetime.get_today());
 		}
@@ -66,7 +69,9 @@ frappe.ui.form.on("Leave Application", {
 					if (!r.exc && r.message["leave_allocation"]) {
 						leave_details = r.message["leave_allocation"];
 					}
-					if (!r.exc && r.message["leave_approver"]) {
+					// Nabeel Saleem, 18-12-2024
+					// if (!r.exc && r.message["leave_approver"]) {}
+					if (!r.exc && r.message["leave_approver"] && !("workflow_state" in frm.doc)) {
 						frm.set_value("leave_approver", r.message["leave_approver"]);
 					}
 					lwps = r.message["lwps"];
@@ -98,8 +103,16 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	refresh: function(frm) {
+		// start, nabeel saleem, 18-12-2024
+		if("workflow_state" in frm.doc){
+			frm.set_df_property('leave_approver', 'read_only', 1);
+		}
+		// end, nabeel saleem, 18-12-2024
+
 		if (frm.is_new()) {
 			frm.trigger("calculate_total_days");
+			// nabeel saleem, 18-12-2024
+			frm.set_value('custom_state_data', null);
 		}
 
 		frm.set_intro("");
@@ -108,6 +121,7 @@ frappe.ui.form.on("Leave Application", {
 		}
 
 		frm.trigger("set_employee");
+		frm.trigger("showWorkFlowState"); // Nabeel Saleem, 29-11-2024
 	},
 
 	async set_employee(frm) {
@@ -122,7 +136,15 @@ frappe.ui.form.on("Leave Application", {
 	employee: function(frm) {
 		frm.trigger("make_dashboard");
 		frm.trigger("get_leave_balance");
-		frm.trigger("set_leave_approver");
+		//start, Nabeel Saleem, 29-11-2024
+		if("workflow_state" in frm.doc){
+			setTimeout(() => {
+				frm.call("set_next_workflow_approver");
+			}, 100);
+		//end, Nabeel Saleem, 29-11-2024
+		}else{
+			frm.trigger("set_leave_approver");
+		}
 	},
 
 	leave_approver: function(frm) {
@@ -150,14 +172,14 @@ frappe.ui.form.on("Leave Application", {
 
 	from_date: function(frm) {
 		frm.trigger("make_dashboard");
-		frm.trigger("half_day_datepicker");
-		frm.trigger("calculate_total_days");
+		// frm.trigger("half_day_datepicker");
+		// frm.trigger("calculate_total_days");
 	},
 
 	to_date: function(frm) {
 		frm.trigger("make_dashboard");
-		frm.trigger("half_day_datepicker");
-		frm.trigger("calculate_total_days");
+		// frm.trigger("half_day_datepicker");
+		// frm.trigger("calculate_total_days");
 	},
 
 	half_day_date(frm) {
@@ -189,11 +211,6 @@ frappe.ui.form.on("Leave Application", {
 						frm.set_value("leave_balance", r.message);
 					} else {
 						frm.set_value("leave_balance", "0");
-					}
-					if(frm.doc.leave_type=="Half Leave" || frm.doc.leave_type=="Half Day Leave" || frm.doc.leave_type=="Short Leave"){
-						frm.set_value("half_day", 1);
-					}else{
-						frm.set_value("half_day", 0);
 					}
 				}
 			});
@@ -245,7 +262,85 @@ frappe.ui.form.on("Leave Application", {
 				}
 			});
 		}
+	},
+	// Start, Mubashir Bashir, 11-02-2025
+	showWorkFlowState: function(frm){
+		if(frm.doc.custom_state_data==undefined) {
+			frm.set_df_property('custom_state_html', 'options', '<p></p>')
+		}else{
+			const stateObj = JSON.parse(frm.doc.custom_state_data)
+			
+			const desiredOrder = [
+				"Applied",
+				"Recommended by the Line Manager",
+				"Approved by the Head of Department",
+				"Approved by the CEO"
+			];
+
+			// Filter and sort states based on the desired order
+			const orderedStates = desiredOrder
+				.filter(state => stateObj.hasOwnProperty(state)) // Keep only existing states
+				.map(state => ({ key: state, ...stateObj[state] })); // Convert to array for iteration
+			
+
+			let rows = ``;
+			let idx = 1
+			for (const data of orderedStates) {
+				const dt = moment(data.modified_on).format("DD-MM-YYYY hh:mm:ss a");
+
+				rows += `
+				<tr>
+					<th scope="row">${idx}</th>	
+					<td scope="row">${data.current_user}</td>
+					<td class="">${data.next_state}</td>
+					<td class="">${dt}</td>
+				</tr>`;
+				idx += 1;
+			}
+			let _html_ = `
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+					<th scope="col">#</th>
+					<th class="text-left" scope="col">Current State (User)</th>
+					<th class="text-left" scope="col">Next State (User)</th>
+					<th scope="col">DateTime</th>
+					</tr>
+				</thead>
+				<tbody>
+					${rows}
+				</tbody>
+			</table>`;
+			frm.set_df_property('custom_state_html', 'options', _html_)
+		}
+	},
+	// End, Mubashir Bashir, 11-02-2025
+	// Start, Nabeel Saleem, 02-12-2024
+	populateEmployeeIdBasedOnSelfService: function(frm){
+		if (frappe.user.has_role("Employee") && frm.doc.employee == undefined) {
+			frappe.call({
+				method: "frappe.client.get_value",
+				args: {
+					doctype: "Employee",
+					fieldname: "name",
+					filters: { user_id: frappe.session.user }
+				},
+				callback: function (response) {
+					if (response && response.message) {
+						const employee_id = response.message.name;
+						frm.set_value("employee", employee_id);
+						console.log("Employee field populated with ID:", employee_id);
+
+						// After setting employee, check for shift assignment
+						// frm.trigger("check_shift_assignment");
+					} else {
+						console.log("No employee found for the current user.");
+					}
+				}
+			});
+		}
 	}
+	// End, Nabeel Saleem, 02-12-2024
 });
 
 frappe.tour["Leave Application"] = [

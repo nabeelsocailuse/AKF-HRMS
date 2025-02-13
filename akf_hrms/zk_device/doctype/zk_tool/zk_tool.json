@@ -15,6 +15,8 @@
   "column_break_cssv",
   "device_port",
   "other_filters_section",
+  "branch",
+  "column_break_eeqt",
   "department",
   "column_break_bwfi",
   "designation",
@@ -191,13 +193,23 @@
    "fieldname": "mark_attendance",
    "fieldtype": "Button",
    "label": "Mark Attendance"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "column_break_eeqt",
+   "fieldtype": "Column Break"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-23 13:05:02.004943",
+ "modified": "2024-11-19 13:56:33.329622",
  "modified_by": "Administrator",
  "module": "ZK Device",
  "name": "ZK Tool",

@@ -33,7 +33,8 @@ class ZKTool(Document):
 	@frappe.whitelist()
 	def get_employees(self):
 		def get_conditions():
-			conditions = f" and department='{self.department}'" if(self.department) else ""
+			conditions = f" and branch='{self.branch}'" if(self.branch) else ""
+			conditions += f" and department='{self.department}'" if(self.department) else ""
 			conditions += f" and designation='{self.designation}'" if(self.designation) else ""
 			conditions += f" and employee='{self.employee}'" if(self.employee) else ""
 			return conditions
@@ -90,41 +91,45 @@ class ZKTool(Document):
 
 	@frappe.whitelist()
 	def	mark_attendance(self, employees, logs):
-		marked = False
-		split_date = (self.from_date).split("-")
-		year_month = f"{split_date[0]}-{split_date[1]}"
-		for row in employees:
-			row = frappe._dict(row)
-			employee_log = logs[row.attendance_device_id]
-			# logs.pop(row.attendance_device_id)
-			if(employee_log):
-				
-				if(year_month in employee_log):
-					mlogs = sorted(employee_log[year_month])
-					filtered_dates  = []
-					for date in get_dates_list(self.from_date, self.to_date):
-						filtered_dates += [log for log in mlogs if(date in log)]
-					for flog in sorted(filtered_dates):
-						args = frappe._dict({
-							"company": self.company,
-							"employee": row.employee,
-							"device_id": row.attendance_device_id,
-							"device_ip": self.device_ip,
-							"device_port": "4370",
-							"attendance_date": getdate(flog),
-							"log": flog,
-						})
-						if(frappe.db.exists("Attendance Log", args)):
-							pass
-						else:
-							args.update({
-           						"doctype": "Attendance Log",
-                 				"log_type": self.log_type,
-								"log_from": "ZK Tool",
-        					})
-							frappe.get_doc(args).insert(ignore_permissions=True)
-							marked = True
-		return {"marked": marked}
+		try:
+			marked = False
+			split_date = (self.from_date).split("-")
+			year_month = f"{split_date[0]}-{split_date[1]}"
+			for row in employees:
+				row = frappe._dict(row)
+				employee_log = logs[row.attendance_device_id]
+				# logs.pop(row.attendance_device_id)
+				if(employee_log):
+					
+					if(year_month in employee_log):
+						mlogs = sorted(employee_log[year_month])
+						filtered_dates  = []
+						for date in get_dates_list(self.from_date, self.to_date):
+							filtered_dates += [log for log in mlogs if(date in log)]
+						for flog in sorted(filtered_dates):
+							args = frappe._dict({
+								"company": self.company,
+								"employee": row.employee,
+								"device_id": row.attendance_device_id,
+								"device_ip": self.device_ip,
+								"device_port": "4370",
+								"attendance_date": getdate(flog),
+								"log": flog,
+							})
+							if(frappe.db.exists("Attendance Log", args)):
+								pass
+							else:
+								args.update({
+									"doctype": "Attendance Log",
+									"log_type": self.log_type,
+									"log_from": "ZK Tool",
+								})
+								doc = frappe.get_doc(args)
+								doc.insert(ignore_permissions=True)
+								marked = True
+			return {"marked": marked}
+		except Exception as e:
+			frappe.msgprint(f"{e}")
 	
 def get_dates_list(from_date, to_date):
 	days = date_diff(to_date, from_date) + 1

@@ -101,7 +101,7 @@ function set_queries(frm) {
 	frm.set_query('branch', function () {
 		return {
 			filters: {
-				'company': frm.doc.company,
+				// 'company': frm.doc.company,
 			}
 		}
 	});

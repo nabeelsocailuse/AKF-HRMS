@@ -1,8 +1,4 @@
-// Copyright (c) 2016, Frappe Technologies Pvt. Ltd. and contributors
-// For license information, please see license.txt
-/* eslint-disable */
-
-// Mubashir Bashir
+// Developer Mubashir Bashir
 
 frappe.query_reports["Attendance Report"] = {
 	"filters": [
@@ -61,10 +57,8 @@ frappe.query_reports["Attendance Report"] = {
 			"options": ["Absentees", "Late Arrival", "Early Leavers", "Check In/Out Missing" ,"Pending Attendance Requests", "Pending Leaves", "Approved Leaves"],
 			// "options": ["Absentees", "Late Arrival", "Early Leavers", "Check In/Out Missing" ,"Pending Attendance Requests", "Pending Leaves", "Approved Leaves", "Pending Comp Off Requests", "Approved Comp Off" ],
 			"reqd": 0,
-		}	
-
-	],
-	
+		}
+	],	
 	
 	onload: function(report) {
 		if (frappe.user.has_role("Employee")) {
@@ -130,4 +124,13 @@ function get_default_to_date() {
 
 	console.log("Calculated to_date:", to_date);
 	return to_date;
+}
+
+function redirect_to_leave_application(absent_date) {
+    frappe.new_doc("Leave Application", {}, function(doc) {
+        frappe.model.set_value(doc.doctype, doc.name, "from_date", absent_date);
+        frappe.model.set_value(doc.doctype, doc.name, "to_date", absent_date);
+        cur_frm.refresh_field("from_date");
+        cur_frm.refresh_field("to_date");
+    });
 }

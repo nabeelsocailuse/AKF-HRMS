@@ -3,7 +3,9 @@ from frappe.utils import formatdate, fmt_money, getdate, date_diff, time_diff_in
 @frappe.whitelist()
 def get_information(filters):
     filters = json.loads(filters)
-
+    # start, Nabeel Saleem, 19-12-2024
+    verify_doc_permissions(filters)
+    # end, Nabeel Saleem, 19-12-2024
     employee_detail = get_employee_details(filters)
     employee_history = get_employee_history(filters)
     hasEmployee = bool(employee_detail)
@@ -16,6 +18,13 @@ def get_information(filters):
 
     return data
 
+def verify_doc_permissions(filters):
+    employee = filters.get('employee')
+    doc = frappe.get_doc('Employee', employee)
+    has_permission = frappe.has_permission('Employee', doc=doc , user=frappe.session.user)
+    if(not has_permission): 
+        frappe.throw(f"You don't have access to employee <b>{employee}</b>")
+    
 def get_employee_details(filters):
     result = frappe.db.sql("""
         SELECT
@@ -56,7 +65,6 @@ def calculate_work_experience(date_of_joining):
     days = remaining_days % 30
     return f"{years} year(s) {months} month(s) {days} day(s)"
 
-    
 def get_employee_history(filters):
     result = frappe.db.sql("""
         SELECT
@@ -64,15 +72,24 @@ def get_employee_history(filters):
             COALESCE(NULLIF(history.custom_description, ''), '-') as description,
             COALESCE(NULLIF(history.from_date, ''), '-') as effective_date,
             COALESCE(NULLIF(history.designation, ''), '-') as designation,
-            COALESCE(NULLIF(ROUND(history.custom_probation, 0), ''), '-') as probation,
-            COALESCE(NULLIF(ROUND(history.custom_annual, 0), ''), '-') as annual,
-            COALESCE(NULLIF(ROUND(history.custom_promotion, 0), ''), '-') as promotion,
-            COALESCE(NULLIF(history.custom_special, ''), '-') as special,
-            COALESCE(NULLIF(history.custom_self_devp, ''), '-') as self_devp,
-            COALESCE(NULLIF(history.custom_disparity, ''), '-') as disparity,
-            COALESCE(NULLIF(history.custom_salary_slab_adjustment, ''), '-') as salary_slab_adjustment,
-            COALESCE(NULLIF(history.custom_confirmation, ''), '-') as confirmation,
-            COALESCE(NULLIF(ROUND(history.custom_salary, 0), ''), '-') as salary
+            (case when ifnull(history.custom_probation, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_probation, 0)) end) as probation,
+            (case when ifnull(history.custom_annual, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_annual, 0)) end) as annual,
+            (case when ifnull(history.custom_promotion, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_promotion, 0)) end) as promotion,
+            (case when ifnull(history.custom_special, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_special, 0)) end) as special,
+            (case when ifnull(history.custom_self_devp_copy, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_self_devp_copy, 0)) end) as self_devp,
+            (case when ifnull(history.custom_disparity_c, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_disparity_c, 0)) end) as disparity,
+            (case when ifnull(history.custom_salary_slab_adjustment_c, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_salary_slab_adjustment_c, 0)) end) as salary_slab_adjustment,
+            (case when ifnull(history.custom_confirmation_cy, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_confirmation_cy, 0)) end) as confirmation,
+            (case when ifnull(history.custom_salary, 0)=0 then "-" else CONCAT('Rs ', FORMAT(history.custom_salary, 0)) end) as salary
+            -- ifnull(history.custom_probation, 0) as probation,
+            -- ifnull(history.custom_annual, 0) as annual,
+            -- ifnull(history.custom_promotion, 0) as promotion,
+            -- ifnull(history.custom_special, 0) as special,
+            -- ifnull(history.custom_self_devp_copy, 0) as self_devp,
+            -- ifnull(history.custom_disparity_c, 0) as disparity,
+            -- ifnull(history.custom_salary_slab_adjustment_c, 0) as salary_slab_adjustment,
+            -- ifnull(history.custom_confirmation_c, 0) as confirmation,
+            -- ifnull(history.custom_salary, 0) as salary
         FROM
             `tabEmployee Internal Work History` history
         WHERE
@@ -83,9 +100,11 @@ def get_employee_history(filters):
     i = 0
     for d in result:
         result[i]['effective_date'] = formatdate(result[i]['effective_date'])
-        result[i]['promotion'] = fmt_money(result[i]['promotion'], precision=0, currency="PKR")
-        result[i]['special'] = fmt_money(result[i]['special'], precision=0, currency="PKR")
-        result[i]['salary'] = fmt_money(result[i]['salary'], precision=0, currency="PKR")
+        # result[i]['probation'] = fmt_money(result[i]['probation'], precision=0, currency="PKR") if(result[i]['probation']!="-") else "-"
+        # result[i]['annual'] = fmt_money(result[i]['annual'], precision=0, currency="PKR") if(result[i]['annual']!="-") else "-"
+        # result[i]['promotion'] = fmt_money(result[i]['promotion'], precision=0, currency="PKR") if(result[i]['promotion']!="-") else "-"
+        # result[i]['special'] = fmt_money(result[i]['special'], precision=0, currency="PKR") if(result[i]['special']!="-") else "-"
+        # result[i]['salary'] = fmt_money(result[i]['salary'], precision=0, currency="PKR") if(result[i]['salary']!="-") else "-"
         i = i + 1
     return result
 

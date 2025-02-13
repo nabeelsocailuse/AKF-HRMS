@@ -21,7 +21,7 @@ def get_columns():
         _("Employment Type") + ":Link/Employment Type:150",
         _("Grade") + "::150",
         _("Region") + "::150",
-        _("Absent Days") + "::250"
+        _("Absent Days") + ":HTML:250"
     ]
 
 def get_data(filters):
@@ -29,14 +29,19 @@ def get_data(filters):
     conditions, filters = get_conditions(filters)
 
     get_employee = frappe.db.sql(f"""
-        SELECT name, employee_name, department, designation, branch, employment_type, grade, custom_region, holiday_list
+        SELECT name, employee_name, department, designation, branch, employment_type, grade, custom_region, holiday_list, date_of_joining
         FROM `tabEmployee`
         WHERE custom_no_attendance = 0
         AND status = 'Active'
         {conditions}
     """, filters, as_dict=1)
 
+    from_date = frappe.utils.getdate(filters.get("from_date"))
+    to_date = frappe.utils.getdate(filters.get("to_date"))
+
     for emp in get_employee:
+        if emp.date_of_joining and emp.date_of_joining > from_date:
+            from_date = emp.date_of_joining
         
         attendance_dates = frappe.db.sql(f"""
             SELECT attendance_date 
@@ -44,12 +49,13 @@ def get_data(filters):
             WHERE employee = %(employee)s 
             AND attendance_date BETWEEN %(from_date)s AND %(to_date)s
             AND docstatus = 1
-        """, {"employee": emp.get("name"), "from_date": filters.get("from_date"), "to_date": filters.get("to_date")}, as_dict=1)
+        """, {"employee": emp.get("name"), "from_date": from_date, "to_date": to_date}, as_dict=1)
+        # """, {"employee": emp.get("name"), "from_date": filters.get("from_date"), "to_date": filters.get("to_date")}, as_dict=1)
 
         attendance_dates_set = {d['attendance_date'].strftime('%Y-%m-%d') for d in attendance_dates}
 
-        from_date = frappe.utils.getdate(filters.get("from_date"))
-        to_date = frappe.utils.getdate(filters.get("to_date"))
+        # from_date = frappe.utils.getdate(filters.get("from_date"))
+        # to_date = frappe.utils.getdate(filters.get("to_date"))
         
         all_dates = []
         current_date = from_date
@@ -82,14 +88,12 @@ def get_data(filters):
                 emp.get("employment_type"),
                 emp.get("grade"),
                 emp.get("custom_region"),
-                missing_dates[0].strftime('%d-%m-%Y') 
+                create_button(missing_dates[0]) 
             ]
             return_list.append(first_row)
 
             for missing_date in missing_dates[1:]:
-                return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', missing_date.strftime('%d-%m-%Y')])
-    # frappe.msgprint('return_list')
-    # frappe.msgprint(frappe.as_json(return_list))
+                return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', create_button(missing_date)])
 
     return return_list
 
@@ -105,3 +109,21 @@ def get_conditions(filters):
         conditions += " AND department = %(department)s"
 
     return conditions, filters
+
+def create_button(date):
+    date_str = date.strftime('%Y-%m-%d')
+    return f"""
+        <button 
+        onclick="redirect_to_leave_application('{date_str}')"
+        style="
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        "
+    >
+        {date.strftime('%d-%m-%Y')}
+    </button>
+    """
