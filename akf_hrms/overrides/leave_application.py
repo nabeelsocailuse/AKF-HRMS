@@ -107,12 +107,6 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
 		self.record_application_state() # Nabeel Saleem, 29-11-2024
 
-		frappe.msgprint("Mubashir Testing...")
-
-		if(frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 0}) and "Employee" in (frappe.get_roles(frappe.session.user)) and not any(role in (frappe.get_roles(frappe.session.user) or []) for role in ["Line Manager", "Head of Department", "CEO"])):
-			frappe.msgprint("Mubashir Testing 3")
-
-
 
 	def on_update(self):
 		if self.status == "Open" and self.docstatus < 1:
