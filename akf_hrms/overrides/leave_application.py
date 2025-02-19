@@ -107,6 +107,13 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
 		self.record_application_state() # Nabeel Saleem, 29-11-2024
 
+		frappe.msgprint("Mubashir Testing...")
+
+		if(frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 0}) and "Employee" in (frappe.get_roles(frappe.session.user)) and not any(role in (frappe.get_roles(frappe.session.user) or []) for role in ["Line Manager", "Head of Department", "CEO"])):
+			frappe.msgprint("Mubashir Testing 3")
+
+
+
 	def on_update(self):
 		if self.status == "Open" and self.docstatus < 1:
 			# notify leave approver about creation
@@ -1250,6 +1257,63 @@ def get_allocation_expiry_for_cf_leaves(
 	return expiry[0][0] if expiry else ""
 
 
+# def get_permission_query_conditions(user):
+#     frappe.msgprint(f"get_permission_query_conditions {user}")
+
+#     if not user:
+#         return ""
+
+#     if "CEO" in frappe.get_roles(user):
+#         frappe.msgprint("has role ceo")
+#         return f"(`workflow_state` = 'Pending' AND `leave_approver` = '{user}')"
+    
+#     return ""
+
+
+
+
+@frappe.whitelist()
+def get_leave_applications():
+    user = frappe.session.user
+    filters = {}
+
+    if "CEO" in frappe.get_roles(user):
+        filters["workflow_state"] = "Applied"
+        filters["leave_approver"] = user
+
+    return frappe.get_all("Leave Application", filters=filters)
+
+# @frappe.whitelist()
+# def get_list(doctype, **kwargs):
+#     user = frappe.session.user
+#     filters = kwargs.pop("filters", {})  # Ensure filters is a dict, not a list
+
+#     if not isinstance(filters, dict):  
+#         filters = {}  # Reset if filters is not a dictionary
+
+#     frappe.msgprint(f"Applying filters for {user}")
+
+#     if "CEO" in frappe.get_roles(user):
+#         frappe.msgprint("CEO role detected, applying filters")
+#         filters["workflow_state"] = "Pending"
+#         filters["leave_approver"] = user
+
+#     # Debug the filters
+#     frappe.msgprint(f"Filters: {filters}")
+
+#     # Remove 'cmd' if present
+#     kwargs.pop("cmd", None)
+
+#     # Call frappe.get_all() with updated kwargs
+#     return frappe.get_all(doctype, filters=filters, **kwargs)
+
+
+
+
+
+
+
+
 @frappe.whitelist()
 def get_number_of_leave_days(
 	employee: str,
@@ -1834,6 +1898,3 @@ def get_leave_approver(employee):
 
 def on_doctype_update():
 	frappe.db.add_index("Leave Application", ["employee", "from_date", "to_date"])
-
-
-
