@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "autoname": "format:{department} - {####}",
+ "creation": "2018-04-13 18:07:21.582747",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "department",
+  "company",
+  "column_break_3",
+  "from_date",
+  "to_date",
+  "staffing_plan_details",
+  "get_job_requisitions",
+  "staffing_details",
+  "section_break_8",
+  "total_estimated_budget",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Department",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "staffing_plan_details",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "get_job_requisitions",
+   "fieldtype": "Button",
+   "label": "Get Job Requisitions"
+  },
+  {
+   "fieldname": "staffing_details",
+   "fieldtype": "Table",
+   "label": "Staffing Details",
+   "options": "Staffing Plan Detail",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_8",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0.00",
+   "fieldname": "total_estimated_budget",
+   "fieldtype": "Currency",
+   "label": "Total Estimated Annual Budget",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Staffing Plan",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Job Opening",
+   "link_fieldname": "staffing_plan"
+  }
+ ],
+ "modified": "2025-02-28 15:23:02.009383",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Staffing Plan",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
