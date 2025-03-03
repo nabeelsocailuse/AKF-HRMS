@@ -124,3 +124,4 @@ def get_applicant_to_hire_percentage():
 		"value": flt(total_hired) / flt(total_applicants) * 100 if total_applicants else 0,
 		"fieldtype": "Percent",
 	}
+

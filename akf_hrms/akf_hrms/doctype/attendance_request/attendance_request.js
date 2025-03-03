@@ -45,6 +45,28 @@ frappe.ui.form.on("Attendance Request", {
                 },
             };
         });
+
+        // Mubashir Bashir 27-12-2024 Start
+        if (frm.doc.reason === "Check In/Out Miss") {
+            frm.set_df_property('from_date', 'read_only', 0);
+            frm.set_df_property('to_date', 'read_only', 0);
+        } else {
+            // Check if the user has one of the special roles
+            if (!(frappe.user.has_role("Line Manager") || frappe.user.has_role("Head of Department") || frappe.user.has_role("CEO"))) {
+                frm.set_df_property('from_date', 'read_only', 1);
+                frm.set_df_property('to_date', 'read_only', 1);
+            } else {
+                frm.set_df_property('from_date', 'read_only', 0);
+                frm.set_df_property('to_date', 'read_only', 0);
+            }
+        }
+        frm.refresh_field('from_date');
+        frm.refresh_field('to_date');
+
+        // Print all roles of the current user
+        console.log("User Roles:", frappe.user.roles);
+
+        
     },
 
     refresh: function(frm) {

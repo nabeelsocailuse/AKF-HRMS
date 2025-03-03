@@ -155,6 +155,7 @@ frappe.ui.form.on('Loan Application', {
                 },
                 callback: function (r) {
                     console.log(r.message);
+                    console.log(r.message);
                     if (r.message[0]) {
                         frm.set_value("custom_maximum_allowed_loan", r.message[0].base / 2);
                         frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
@@ -182,7 +183,7 @@ frappe.ui.form.on('Loan Application', {
 
             get_latest_vehicle_loan_limit(frm, frm.doc.loan_product)
                 .then(latest_limit => {
-                    console.log(latest_limit);
+                    console.log("latest_limit: ", latest_limit);
                     if (latest_limit) {
                         frm.set_value("custom_maximum_allowed_loan", latest_limit);
                         frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);

@@ -104,7 +104,8 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.short_leave_cannot_exceed_3_hours() # Mubashir Bashir 1-1-2025
 		self.half_day_leave_cannot_exceed_4_hours() # Mubashir Bashir 1-1-2025
 		self.validate_half_day_leave()
-		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
+		# self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
+		self.set_next_workflow_state() # Mubashir Bashir 19-02-2025
 		self.record_application_state() # Nabeel Saleem, 29-11-2024
 
 
@@ -605,6 +606,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 	# Nabeel Saleem, 18-12-2024
 	@frappe.whitelist()
 	def set_next_workflow_approver(self):
+		return # by Mubashir Bashir
 		if(not hasattr(self, 'workflow_state')): return		
 		if(self.status!='Open'): return
 		data = frappe.db.sql(f""" 
@@ -659,7 +661,59 @@ class LeaveApplication(Document, PWANotificationsMixin):
 					set_approver_detail(user_list[0][0], d.next_state)
 				else:
 					frappe.throw(f"Please set a `CEO` of {self.company}", title="CEO")
+
+	# Mubashir Bashir 19-02-2025 Start
+	def set_next_workflow_state(self):
+		employee_user_id = frappe.db.get_value("Employee", self.employee, "user_id")
+
+		if not employee_user_id: return
+
+		employee_roles = frappe.get_roles(employee_user_id)
+
+		if (frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 0}) and 
+			"Employee" in employee_roles and 
+			not any(role in employee_roles for role in ["Line Manager", "Head of Department", "CEO"])):
+			if (self.custom_next_workflow_state == 'Recommended by Line Manager'):
+				self.custom_next_workflow_state = 'Approved by Head of Department'
+				self.custom_workflow_indication = 'EMP - Line Manager to Head of Department'
+				# frappe.msgprint('(self.custom_next_workflow_state == Recommended by Line Manager)')
+			elif (self.custom_next_workflow_state == 'Approved by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'EMP - Head of Department to CEO'
+				# frappe.msgprint('(self.custom_next_workflow_state == Approved by Head of Department)')
+			else:
+				self.custom_next_workflow_state = 'Recommended by Line Manager'
+				self.custom_workflow_indication = 'Emp - Applied to Line Manager'
+				# frappe.msgprint('else')
+
+
+		elif (frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 1}) and 
+			"Employee" in employee_roles and 
+			not any(role in employee_roles for role in ["Line Manager", "Head of Department", "CEO"])):
+			if (self.custom_next_workflow_state == 'Approved by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'Emp - Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Approved by Head of Department'
+				self.custom_workflow_indication = 'Applied to HOD'
+
+
+		elif "Line Manager" in employee_roles and not any(role in employee_roles for role in ["Head of Department", "CEO"]):
+			if (self.custom_next_workflow_state == 'Approved by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'LM - Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Approved by Head of Department'
+				self.custom_workflow_indication = 'Applied to HOD'
+				
+
+		elif "Head of Department" in employee_roles and "CEO" not in employee_roles:
+			self.custom_next_workflow_state = 'Approved'
+			self.custom_workflow_indication = 'HOD - Applied to CEO'
 		
+		self.leave_approver_name = get_fullname(self.leave_approver)
+
+
 	# Nabeel Saleem, 29-11-2024
 	def record_application_state(self):
 		if(hasattr(self, 'workflow_state')):
@@ -1892,3 +1946,5 @@ def get_leave_approver(employee):
 
 def on_doctype_update():
 	frappe.db.add_index("Leave Application", ["employee", "from_date", "to_date"])
+
+

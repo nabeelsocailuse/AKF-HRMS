@@ -130,6 +130,15 @@ frappe.ui.form.on("Leave Application", {
 
 		frm.trigger("set_employee");
 		frm.trigger("showWorkFlowState"); // Nabeel Saleem, 29-11-2024
+
+		frm.add_custom_button(__("Get Leave Applications"), function() {
+            frappe.call({
+                method: "akf_hrms.overrides.leave_application.get_leave_applications",
+                callback: function(response) {
+                    console.log(response.message); // Process the response
+                }
+            });
+        });
 	},
 
 	async set_employee(frm) {
@@ -272,16 +281,69 @@ frappe.ui.form.on("Leave Application", {
 			});
 		}
 	},
-	// Start, Nabeel Saleem, 29-11-2024
+	// // Start, Nabeel Saleem, 29-11-2024
+	// showWorkFlowState: function(frm){
+	// 	if(frm.doc.custom_state_data==undefined) {
+	// 		frm.set_df_property('custom_state_html', 'options', '<p></p>')
+	// 	}else{
+	// 		const stateObj = JSON.parse(frm.doc.custom_state_data) 
+	// 		let rows = ``;
+	// 		let idx = 1
+	// 		for(key in stateObj){
+	// 			const data = stateObj[key];
+	// 			const dt = moment(data.modified_on).format("DD-MM-YYYY hh:mm:ss a");
+
+	// 			rows += `
+	// 			<tr>
+	// 				<th scope="row">${idx}</th>	
+	// 				<td scope="row">${data.current_user}</td>
+	// 				<td class="">${data.next_state}</td>
+	// 				<td class="">${dt}</td>
+	// 			</tr>`;
+	// 			idx += 1;
+	// 		}
+	// 		let _html_ = `
+	// 		<table class="table">
+	// 			<thead class="thead-dark">
+	// 				<tr>
+	// 				<th scope="col">#</th>
+	// 				<th class="text-left" scope="col">Current State (User)</th>
+	// 				<th class="text-left" scope="col">Next State (User)</th>
+	// 				<th scope="col">DateTime</th>
+	// 				</tr>
+	// 			</thead>
+	// 			<tbody>
+	// 				${rows}
+	// 			</tbody>
+	// 		</table>`;
+	// 		frm.set_df_property('custom_state_html', 'options', _html_)
+	// 	}
+	// },
+	// // End, Nabeel Saleem, 29-11-2024
+
+// Start, Mubashir Bashir, 11-02-2025
 	showWorkFlowState: function(frm){
 		if(frm.doc.custom_state_data==undefined) {
 			frm.set_df_property('custom_state_html', 'options', '<p></p>')
 		}else{
-			const stateObj = JSON.parse(frm.doc.custom_state_data) 
+			const stateObj = JSON.parse(frm.doc.custom_state_data)
+			
+			const desiredOrder = [
+				"Pending",
+				"Recommended by the Line Manager",
+				"Approved by the Head of Department",
+				"Approved by the CEO"
+			];
+	
+			// Filter and sort states based on the desired order
+			const orderedStates = desiredOrder
+				.filter(state => stateObj.hasOwnProperty(state)) // Keep only existing states
+				.map(state => ({ key: state, ...stateObj[state] })); // Convert to array for iteration
+			
+
 			let rows = ``;
 			let idx = 1
-			for(key in stateObj){
-				const data = stateObj[key];
+			for (const data of orderedStates) {
 				const dt = moment(data.modified_on).format("DD-MM-YYYY hh:mm:ss a");
 
 				rows += `
@@ -310,7 +372,9 @@ frappe.ui.form.on("Leave Application", {
 			frm.set_df_property('custom_state_html', 'options', _html_)
 		}
 	},
-	// End, Nabeel Saleem, 29-11-2024
+	// End, Mubashir Bashir, 11-02-2025
+
+
 	// Start, Nabeel Saleem, 02-12-2024
 	populateEmployeeIdBasedOnSelfService: function(frm){
 		if (frappe.user.has_role("Employee") && frm.doc.employee == undefined) {

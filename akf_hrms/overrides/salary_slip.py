@@ -796,7 +796,8 @@ class SalarySlip(TransactionBase):
 				joining_date=self.joining_date,
 				relieving_date=self.relieving_date,
 			)[1]
-
+			# Nabeel Saleem, 28-02-2025
+			self.custom_remaining_periods = self.remaining_sub_periods
 		self.gross_pay = self.get_component_totals("earnings", depends_on_payment_days=1)
 		self.base_gross_pay = flt(
 			flt(self.gross_pay) * flt(self.exchange_rate), self.precision("base_gross_pay")
@@ -1693,7 +1694,7 @@ class SalarySlip(TransactionBase):
 				if earning.is_flexible_benefit:
 					flexi_benefits += amount
 				else:
-					amount = get_salary_percent_taxable_amount(self.company, earning.salary_component, amount) # Nabeel Saleem, 11-02-2025
+					amount = get_salary_percent_taxable_amount(self, earning.salary_component, amount) # Nabeel Saleem, 11-02-2025
 					taxable_earnings += amount - additional_amount
 					additional_income += additional_amount
 					# Get additional amount based on future recurring additional salary
@@ -1715,12 +1716,12 @@ class SalarySlip(TransactionBase):
 					taxable_earnings -= flt(amount - additional_amount)
 					additional_income -= additional_amount
 					amount_exempted_from_income_tax = flt(amount - additional_amount)
-
+					
 					if additional_amount and ded.is_recurring_additional_salary:
 						additional_income -= self.get_future_recurring_additional_amount(
 							ded.additional_salary, ded.additional_amount
 						)  # Used ded.additional_amount to consider the amount for the full month
-
+		
 		return frappe._dict(
 			{
 				"taxable_earnings": taxable_earnings,
@@ -2184,6 +2185,7 @@ def calculate_tax_by_tax_slab(
 	tax_amount = 0
 	for slab in tax_slab.slabs:
 		cond = cstr(slab.condition).strip()
+		frappe.msgprint(f"{cond}")
 		if cond and not eval_tax_slab_condition(cond, eval_globals, eval_locals):
 			continue
 
@@ -2205,7 +2207,7 @@ def calculate_tax_by_tax_slab(
 			continue
 
 		tax_amount += tax_amount * flt(d.percent) / 100
-
+	
 	return tax_amount
 	
 
@@ -2220,6 +2222,7 @@ def eval_tax_slab_condition(condition, eval_globals=None, eval_locals=None):
 			"date": date,
 			"getdate": getdate,
 		}
+  
 
 	try:
 		condition = condition.strip()

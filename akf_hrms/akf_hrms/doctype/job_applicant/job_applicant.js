@@ -117,3 +117,6 @@ frappe.ui.form.on("Job Applicant", {
         }
     },
 });
+
+
+

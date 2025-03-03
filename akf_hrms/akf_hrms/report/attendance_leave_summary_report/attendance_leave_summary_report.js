@@ -35,8 +35,8 @@ frappe.query_reports["Attendance Leave Summary Report"] = {
 			"options": "Employee"
 		},
 		{
-			"fieldname":"status",
-			"label": __("Status"),
+			"fieldname":"employment_type",
+			"label": __("Employment Type"),
 			"fieldtype": "Link",
 			"options": "Employment Type"
 		},
@@ -111,7 +111,7 @@ frappe.query_reports["Attendance Leave Summary Report"] = {
 							report.set_filter_value("branch", branch);
 						}
 						if (employment_type) {
-							report.set_filter_value("status", employment_type);
+							report.set_filter_value("employment_type", employment_type);
 						}
 					}
 				}

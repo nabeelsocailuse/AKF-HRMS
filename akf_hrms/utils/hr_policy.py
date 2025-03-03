@@ -709,8 +709,8 @@ def record_employee_arrears_draft_additional_salary(self=None):
         if(frappe.db.exists('Salary Slip', 
             {'docstatus': ['<', 2], 'employee': self.employee, 'company':self.company}
         )):
-            return False
-        return True
+            return True
+        return False
             
     def validate_date_of_joining():
         date_of_joining = getdate(self.date_of_joining)
@@ -750,6 +750,7 @@ def record_employee_arrears_draft_additional_salary(self=None):
             })
             doc = frappe.get_doc(args)
             doc.flags.ignore_permissions=1
+            doc.flags.ignore_validate=1
             doc.insert()
     
     def remove_additional_salary():
@@ -758,7 +759,7 @@ def record_employee_arrears_draft_additional_salary(self=None):
         if(name):
             frappe.delete_doc('Additional Salary', name)
     
-    if(self.status=='Active' and no_salary_slip()): 
+    if(self.status=='Active' and (not no_salary_slip())): 
         validate_date_of_joining()
         
 

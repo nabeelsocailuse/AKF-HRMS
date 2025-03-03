@@ -24,7 +24,8 @@ class OvertimeClaimForm(Document):
 		self.update_attendance()
 
 	def create_additional_salary(self):
-		payroll_date = f"{self.year}-{MONTHSLIST.index(self.month)}-21"
+		month = MONTHSLIST.index(self.month) + 1
+		payroll_date = f"{self.year}-{month}-21"
 		doc = frappe.get_doc({
 			"doctype": "Additional Salary",
 			"employee": self.employee,

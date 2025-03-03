@@ -1,24 +1,27 @@
 {
  "add_total_row": 0,
  "columns": [],
- "creation": "2013-02-22 15:29:34",
+ "creation": "2025-02-24 15:48:49.447796",
  "disabled": 0,
  "docstatus": 0,
  "doctype": "Report",
  "filters": [],
- "idx": 30,
+ "idx": 0,
  "is_standard": "Yes",
  "letterhead": null,
- "modified": "2024-12-26 11:00:10.123060",
+ "modified": "2025-02-24 15:48:49.447796",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
- "name": "Employee Leave Balance",
+ "name": "Non Taxable Earnings",
  "owner": "Administrator",
  "prepared_report": 0,
- "ref_doctype": "Employee",
- "report_name": "Employee Leave Balance",
+ "ref_doctype": "Salary Slip",
+ "report_name": "Non Taxable Earnings",
  "report_type": "Script Report",
  "roles": [
+  {
+   "role": "Employee"
+  },
   {
    "role": "HR User"
   },
@@ -26,7 +29,7 @@
    "role": "HR Manager"
   },
   {
-   "role": "Employee"
+   "role": "Employee Self Service"
   }
  ]
 }

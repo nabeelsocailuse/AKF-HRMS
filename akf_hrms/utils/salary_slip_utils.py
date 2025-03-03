@@ -10,12 +10,13 @@ def get_taxable_salary_percentage(company):
 		)
 
 # Nabeel Saleem, 11-02-2025
-def get_salary_percent_taxable_amount(company, salary_component, amount):
-    if(salary_component=="Basic"):
-        taxable_salary_percentage = get_taxable_salary_percentage(company)
+def get_salary_percent_taxable_amount(self, salary_component, amount):
+    if (salary_component=="Basic"):
+        taxable_salary_percentage = get_taxable_salary_percentage(self.company)
         if (taxable_salary_percentage):
             if (taxable_salary_percentage>0.0):
-                    return (amount * (taxable_salary_percentage/100))
+                    amount = self._salary_structure_assignment.base * (taxable_salary_percentage/100)
+                    return amount
     return amount
 
 # Nabeel Saleem, 12-02-2025
