@@ -262,22 +262,20 @@
    "fieldname": "from_time",
    "fieldtype": "Time",
    "label": "From Time",
-   "mandatory_depends_on": "// eval: doc.reason==\"Check In/Out Miss\";",
-   "read_only_depends_on": "// eval: doc.reason!=\"Check In/Out Miss\";",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.reason==\"Check In/Out Miss\";",
+   "read_only_depends_on": "eval: doc.reason!=\"Check In/Out Miss\";"
   },
   {
    "fieldname": "to_time",
    "fieldtype": "Time",
    "label": "To Time",
-   "mandatory_depends_on": "// eval: doc.reason==\"Check In/Out Miss\";",
-   "read_only_depends_on": "// eval: doc.reason!=\"Check In/Out Miss\";",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.reason==\"Check In/Out Miss\";",
+   "read_only_depends_on": "eval: doc.reason!=\"Check In/Out Miss\";"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-04 11:57:44.145633",
+ "modified": "2025-02-04 12:19:13.165158",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Request",
