@@ -2184,7 +2184,6 @@ def calculate_tax_by_tax_slab(
 	tax_amount = 0
 	for slab in tax_slab.slabs:
 		cond = cstr(slab.condition).strip()
-		frappe.msgprint(f"{cond}")
 		if cond and not eval_tax_slab_condition(cond, eval_globals, eval_locals):
 			continue
 
