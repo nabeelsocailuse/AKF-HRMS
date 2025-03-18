@@ -21,8 +21,7 @@ def get_salary_percent_taxable_amount(self, salary_component, amount):
 
 # Nabeel Saleem, 12-02-2025
 def get_pre_salary_percent_taxable_amount(
-    company,
-    employee,
+    self,
     start_date,
     end_date,
     parentfield,
@@ -48,16 +47,14 @@ def get_pre_salary_percent_taxable_amount(
         .where(sd.parentfield == parentfield)
         .where(sd.is_flexible_benefit == is_flexible_benefit)
         .where(ss.docstatus == 1)
-        .where(ss.employee == employee)
+        .where(ss.employee == self.employee)
         .where(ss.start_date.between(start_date, end_date))
         .where(ss.end_date.between(start_date, end_date))
     )
     result = query.run(as_dict=True)
     pre_taxable_earnings = 0.0
     for d in result:
-        pre_taxable_earnings += get_salary_percent_taxable_amount(company, d.salary_component, d.amount)
-        print(f"---pre_taxable_earnings: {pre_taxable_earnings}")
-        print(f"d: {d}")
+        pre_taxable_earnings += get_salary_percent_taxable_amount(self, d.salary_component, d.amount)
     return pre_taxable_earnings
 
 # Nabeel Saleem, 11-02-2025

@@ -1611,8 +1611,7 @@ class SalarySlip(TransactionBase):
 	):
 		if(parentfield == "earnings"): 
 			return get_pre_salary_percent_taxable_amount(
-						self.company,
-						self.employee,
+						self,
 						start_date,
 						end_date,
 						parentfield,
