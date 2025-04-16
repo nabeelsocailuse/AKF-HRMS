@@ -174,7 +174,7 @@ override_doctype_class = {
     # "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
     "Salary Slip": "akf_hrms.overrides.salary_slip.SalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
-    "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
+    # "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
     "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
     "Job Requisition": "akf_hrms.extends.job_requisition_wf.job_requisition_wf.XJobRequisition",
     "Project": "akf_accounts.customizations.extends.project_override.XProject",
@@ -259,9 +259,9 @@ advance_payment_doctypes = ["Gratuity", "Employee Advance"]
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "akf_hrms.task.get_dashboard_data"
-# }
+override_doctype_dashboards = {
+	"Loan": "akf_hrms.dashboards.loan_dashboard.get_data"
+}
 
 # exempt linked doctypes from being automatically cancelled
 #
