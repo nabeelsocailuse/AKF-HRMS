@@ -102,12 +102,12 @@ class CompensatoryLeaveRequest(Document):
 		company = frappe.db.get_value("Employee", self.employee, "company")
 		holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
 		compensatory_off=frappe.db.sql(f"""
-									SELECT custom_compensatory_leave
+									SELECT compensatory_leave
 									FROM `tabHoliday`
 								 	WHERE parent='{holiday_list}' and holiday_date BETWEEN '{self.work_from_date}' AND '{self.work_end_date}'""",as_dict=1)
 		
 		if(self.against == "Work on Holiday"):
-			date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off[0].custom_compensatory_leave
+			date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off[0].compensatory_leave
 		else:
 			date_difference = date_diff(self.work_end_date, self.work_from_date) + 1
 
@@ -150,10 +150,10 @@ class CompensatoryLeaveRequest(Document):
 			if(self.against == "Work on Holiday"):
 				holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
 				compensatory_off=frappe.db.sql(f"""
-									SELECT custom_compensatory_leave
+									SELECT compensatory_leave
 									FROM `tabHoliday`
 								 	WHERE parent='{holiday_list}' and holiday_date BETWEEN '{self.work_from_date}' AND '{self.work_end_date}'""",as_dict=1)
-				date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off[0].custom_compensatory_leave
+				date_difference = date_diff(self.work_end_date, self.work_from_date) + compensatory_off[0].compensatory_leave
 			else:
 				date_difference = date_diff(self.work_end_date, self.work_from_date) + 1
 
