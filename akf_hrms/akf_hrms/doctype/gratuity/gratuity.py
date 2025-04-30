@@ -30,10 +30,10 @@ class Gratuity(AccountsController):
 			current_work_experience = (
 				calculate_work_experience(self.employee, self.gratuity_rule) or 0
 			)
-
+		
 		gratuity_amount = (
 			calculate_gratuity_amount(
-				self.employee, self.gratuity_rule, current_work_experience
+				self.employee, self.employee_name, self.gratuity_rule, current_work_experience
 			)
 			or 0
 		)
@@ -248,7 +248,7 @@ def get_non_working_days(employee, relieving_date, status):
 	return record[0].total_lwp if len(record) else 0
 
 
-def calculate_gratuity_amount(employee, gratuity_rule, experience):
+def calculate_gratuity_amount(employee, employee_name, gratuity_rule, experience):
 	
 	applicable_earnings_component = get_applicable_components(gratuity_rule)
 	total_applicable_components_amount = get_total_applicable_component_amount(
@@ -262,7 +262,6 @@ def calculate_gratuity_amount(employee, gratuity_rule, experience):
 	slabs = get_gratuity_rule_slabs(gratuity_rule)
 	slab_found = False
 	year_left = experience
-
 	for slab in slabs:
 		if calculate_gratuity_amount_based_on == "Current Slab":
 			slab_found, gratuity_amount = calculate_amount_based_on_current_slab(
@@ -274,7 +273,8 @@ def calculate_gratuity_amount(employee, gratuity_rule, experience):
 			)
 			if slab_found:
 				break
-
+			
+				
 		elif calculate_gratuity_amount_based_on == "Sum of all previous slabs":
 			if slab.to_year == 0 and slab.from_year == 0:
 				gratuity_amount += (
@@ -310,9 +310,15 @@ def calculate_gratuity_amount(employee, gratuity_rule, experience):
 	if not slab_found:
 		frappe.throw(
 			_(
-				"No Suitable Slab found for Calculation of gratuity amount in Gratuity Rule: {0}"
-			).format(bold(gratuity_rule))
+				"In Gratuity Rule; <b> {0}, ({1} years)</b> work experience not found."
+			).format(employee_name, bold(experience)), title=f"Alert (Action Required)"
 		)
+	# if not slab_found:
+	# 	frappe.throw(
+	# 		_(
+	# 			"No Suitable Slab found for Calculation of gratuity amount in Gratuity Rule: {0}"
+	# 		).format(bold(gratuity_rule))
+	# 	)
 	return gratuity_amount
 
 
@@ -379,7 +385,7 @@ def calculate_amount_based_on_current_slab(
 		)
 		if fraction_of_applicable_earnings:
 			slab_found = True
-
+	
 	return slab_found, gratuity_amount
 
 
