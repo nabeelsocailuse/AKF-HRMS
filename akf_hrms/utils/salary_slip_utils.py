@@ -77,4 +77,4 @@ def get_income_tax_additional_salary(eval_locals):
 # 05-05-2025
 def set_salary_structure_assignment(self):
 	self.custom_salary_structure_assignment = self._salary_structure_assignment.name
-	self.custom_gross = self._salary_structure_assignment.base
+	self.custom_gross_salary = self._salary_structure_assignment.base
