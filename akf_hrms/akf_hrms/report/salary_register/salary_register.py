@@ -5,42 +5,58 @@
 import frappe
 from frappe import _
 from frappe.utils import flt
+import json
 
 import erpnext
 
+
+
 salary_slip = frappe.qb.DocType("Salary Slip")
 salary_detail = frappe.qb.DocType("Salary Detail")
+
+# print("This is my salary  detail",salary_detail)
+
 salary_component = frappe.qb.DocType("Salary Component")
 
 
 def execute(filters=None):
+	
 	if not filters:
 		filters = {}
+  
 
 	currency = None
 	if filters.get("currency"):
 		currency = filters.get("currency")
 	company_currency = erpnext.get_company_currency(filters.get("company"))
+ 
+	
 
 	salary_slips = get_salary_slips(filters, company_currency)
+	
+ 
+	# print ("getting salary Slips detail", salary_slips)
+ 
 	if not salary_slips:
 		return [], []
 
-	earning_types, ded_types = get_earning_and_deduction_types(salary_slips)
+	earning_types, ded_types = get_earning_and_deduction_types(salary_slips, filters)
 	columns = get_columns(earning_types, ded_types)
 
-	ss_earning_map = get_salary_slip_details(salary_slips, currency, company_currency, "earnings")
-	ss_ded_map = get_salary_slip_details(salary_slips, currency, company_currency, "deductions")
-
+	ss_earning_map = get_salary_slip_details(salary_slips, currency, company_currency, "earnings", filters)
+	# print("This is my earning detail that are getting from salary slip.",ss_earning_map)
+ 
+	ss_ded_map = get_salary_slip_details(salary_slips, currency, company_currency, "deductions", filters)		
 	doj_map = get_employee_doj_map()
-
+	
+ 
 	data = []
+	
 	for ss in salary_slips:
 		row = {
 			"salary_slip_id": ss.name,
 			"employee": ss.employee,
-			"employee_name": ss.employee_name,		#---------------------------------------
-			"custom_cnic": ss.custom_cnic,
+			"employee_name": ss.employee_name,
 			"data_of_joining": doj_map.get(ss.employee),
 			"branch": ss.branch,
 			"department": ss.department,
@@ -50,11 +66,13 @@ def execute(filters=None):
 			"end_date": ss.end_date,
 			"leave_without_pay": ss.leave_without_pay,
 			"payment_days": ss.payment_days,
+			"gross_salary": ss.custom_gross_salary,
 			"currency": currency or company_currency,
 			"total_loan_repayment": ss.total_loan_repayment,
 		}
 
 		update_column_width(ss, columns)
+		
 
 		for e in earning_types:
 			row.update({frappe.scrub(e): ss_earning_map.get(ss.name, {}).get(e)})
@@ -80,16 +98,40 @@ def execute(filters=None):
 
 	return columns, data
 
-
-def get_earning_and_deduction_types(salary_slips):
+def get_earning_and_deduction_types(salary_slips, filters):
 	salary_component_and_type = {_("Earning"): [], _("Deduction"): []}
+	for salary_component in get_salary_components(salary_slips):
+		if(filters.get("non_taxable_component")): # Nabeel Saleem, 07-03-2025
+			if(salary_component.custom_non_taxable_component):
+				pass
+			else:
+				component_type = get_salary_component_type(salary_component.salary_component)
+				salary_component_and_type[_(component_type)].append(salary_component.salary_component)
+		else:
+			component_type = get_salary_component_type(salary_component.salary_component)
+			salary_component_and_type[_(component_type)].append(salary_component.salary_component)
 
-	for salary_compoent in get_salary_components(salary_slips):
-		component_type = get_salary_component_type(salary_compoent)
-		salary_component_and_type[_(component_type)].append(salary_compoent)
+	return sorted(salary_component_and_type[_("Earning")]), sorted(
+		salary_component_and_type[_("Deduction")]
+	)
 
-	return sorted(salary_component_and_type[_("Earning")]), sorted(salary_component_and_type[_("Deduction")])
+def getting_salary_components(salary_slips):
+	frappe.throw("Hellow how are you")
+	
+	query = (
+		frappe.qb.from_(salary_detail)
+		
+		.where(
+			(salary_detail.amount != 0)
+			& (salary_detail.parent.isin([e.name for e in salary_slips]))
+			# &(salary_detail.custom_non_taxable_component == 1)  
+			& (salary_detail.parentfield == "earnings")
+		)
+		.select(salary_detail.salary_component)
+		.distinct()
+	)
 
+	return [row[0] for row in query.run(as_dict=False)]  
 
 def update_column_width(ss, columns):
 	if ss.branch is not None:
@@ -118,15 +160,9 @@ def get_columns(earning_types, ded_types):
 			"options": "Employee",
 			"width": 120,
 		},
-		{		#-------------------------------------
+		{
 			"label": _("Employee Name"),
 			"fieldname": "employee_name",
-			"fieldtype": "Data",
-			"width": 140,
-		},
-		{
-			"label": _("CNIC"),
-			"fieldname": "custom_cnic",
 			"fieldtype": "Data",
 			"width": 140,
 		},
@@ -188,6 +224,13 @@ def get_columns(earning_types, ded_types):
 			"fieldtype": "Float",
 			"width": 120,
 		},
+		{
+			"label": _("Gross Salary"),
+			"fieldname": "gross_salary",
+			"fieldtype": "Currency",
+			"width": 120,
+		},
+
 	]
 
 	for earning in earning_types:
@@ -261,9 +304,11 @@ def get_salary_components(salary_slips):
 	return (
 		frappe.qb.from_(salary_detail)
 		.where((salary_detail.amount != 0) & (salary_detail.parent.isin([d.name for d in salary_slips])))
-		.select(salary_detail.salary_component)
+		.select(salary_detail.salary_component, salary_detail.custom_non_taxable_component)
 		.distinct()
-	).run(pluck=True)
+	).run(as_dict=True)	
+	# ).run(pluck=True)
+
 
 
 def get_salary_component_type(salary_component):
@@ -271,6 +316,8 @@ def get_salary_component_type(salary_component):
 
 
 def get_salary_slips(filters, company_currency):
+	from frappe.query_builder.custom import ConstantColumn
+
 	doc_status = {"Draft": 0, "Submitted": 1, "Cancelled": 2}
 
 	query = frappe.qb.from_(salary_slip).select(salary_slip.star)
@@ -284,20 +331,32 @@ def get_salary_slips(filters, company_currency):
 	if filters.get("to_date"):
 		query = query.where(salary_slip.end_date <= filters.get("to_date"))
 
+  
 	if filters.get("company"):
 		query = query.where(salary_slip.company == filters.get("company"))
-		
+
 	if filters.get("branch"):
 		query = query.where(salary_slip.branch == filters.get("branch"))
-
+	
+	if filters.get("department"):
+		query = query.where(salary_slip.department == filters.get("department"))
+	
+	if filters.get("designation"):
+		query = query.where(salary_slip.designation == filters.get("designation"))
+	
 	if filters.get("employee"):
 		query = query.where(salary_slip.employee == filters.get("employee"))
-
+	
+	# if filters.get("non_taxable_component"): 
+	# 	query = query.where(salary_detail.custom_non_taxable_component == 1) 
+			   
+		
 	if filters.get("currency") and filters.get("currency") != company_currency:
 		query = query.where(salary_slip.currency == filters.get("currency"))
-
+  
+	
 	salary_slips = query.run(as_dict=1)
-
+	
 	return salary_slips or []
 
 
@@ -308,10 +367,9 @@ def get_employee_doj_map():
 
 	return frappe._dict(result)
 
-
-def get_salary_slip_details(salary_slips, currency, company_currency, component_type):
+def get_salary_slip_details(salary_slips, currency, company_currency, component_type, filters):
 	salary_slips = [ss.name for ss in salary_slips]
-
+ 
 	result = (
 		frappe.qb.from_(salary_slip)
 		.join(salary_detail)
@@ -322,18 +380,22 @@ def get_salary_slip_details(salary_slips, currency, company_currency, component_
 			salary_detail.salary_component,
 			salary_detail.amount,
 			salary_slip.exchange_rate,
+			salary_detail.custom_non_taxable_component
 		)
 	).run(as_dict=1)
 
 	ss_map = {}
-
+	non_taxable_component = filters.get("non_taxable_component")
 	for d in result:
-		ss_map.setdefault(d.parent, frappe._dict()).setdefault(d.salary_component, 0.0)
-		if currency == company_currency:
-			ss_map[d.parent][d.salary_component] += flt(d.amount) * flt(
-				d.exchange_rate if d.exchange_rate else 1
-			)
+		if(d.custom_non_taxable_component ==non_taxable_component): # Nabeel Saleem, 07-03-2025
+			continue
 		else:
-			ss_map[d.parent][d.salary_component] += flt(d.amount)
+			ss_map.setdefault(d.parent, frappe._dict()).setdefault(d.salary_component, 0.0)
+			if currency == company_currency:
+				ss_map[d.parent][d.salary_component] += flt(d.amount) * flt(
+					d.exchange_rate if d.exchange_rate else 1
+				)
+			else:
+				ss_map[d.parent][d.salary_component] += flt(d.amount)
 
 	return ss_map

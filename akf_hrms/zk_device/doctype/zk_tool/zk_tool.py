@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 import socket
 from akf_hrms.zk_device.zk_detail.base import ZK, ZK_helper
@@ -52,7 +53,6 @@ class ZKTool(Document):
 		for e in  employees:
 			self.append("employee_list", 
 				{'employee': e.name, 'employee_name': e.employee_name, 'attendance_device_id': e.attendance_device_id})
-		
 
 	@frappe.whitelist()
 	def fetch_attendance(self):
@@ -91,46 +91,66 @@ class ZKTool(Document):
 
 	@frappe.whitelist()
 	def	mark_attendance(self, employees, logs):
-		try:
-			marked = False
-			split_date = (self.from_date).split("-")
-			year_month = f"{split_date[0]}-{split_date[1]}"
-			for row in employees:
-				row = frappe._dict(row)
-				employee_log = logs[row.attendance_device_id]
-				# logs.pop(row.attendance_device_id)
-				if(employee_log):
-					
-					if(year_month in employee_log):
-						mlogs = sorted(employee_log[year_month])
-						filtered_dates  = []
-						for date in get_dates_list(self.from_date, self.to_date):
-							filtered_dates += [log for log in mlogs if(date in log)]
-						for flog in sorted(filtered_dates):
-							args = frappe._dict({
-								"company": self.company,
-								"employee": row.employee,
-								"device_id": row.attendance_device_id,
-								"device_ip": self.device_ip,
-								"device_port": "4370",
-								"attendance_date": getdate(flog),
-								"log": flog,
+		frappe.enqueue(
+			mark_attendance_for_employees,
+			timeout=3000,
+			self = self,
+			employees=employees,
+			logs=logs,
+			publish_progress=False,
+		)
+		frappe.msgprint(
+			_("Mark attendance creation is queued. It may take a few minutes"),
+			alert=True,
+			indicator="blue",
+		)
+
+def mark_attendance_for_employees(self, employees, logs, publish_progress=True):
+	marked = False
+	try:
+		split_date = (self.from_date).split("-")
+		year_month = f"{split_date[0]}-{split_date[1]}"
+		for row in employees:
+			row = frappe._dict(row)
+			employee_log = logs[row.attendance_device_id]
+			# logs.pop(row.attendance_device_id)
+			if(employee_log):
+				
+				if(year_month in employee_log):
+					mlogs = sorted(employee_log[year_month])
+					filtered_dates  = []
+					for date in get_dates_list(self.from_date, self.to_date):
+						filtered_dates += [log for log in mlogs if(date in log)]
+					for flog in sorted(filtered_dates):
+						args = frappe._dict({
+							"company": self.company,
+							"employee": row.employee,
+							"device_id": row.attendance_device_id,
+							"device_ip": self.device_ip,
+							"device_port": "4370",
+							"attendance_date": getdate(flog),
+							"log": flog,
+						})
+						if(frappe.db.exists("Attendance Log", args)):
+							pass
+						else:
+							args.update({
+								"doctype": "Attendance Log",
+								"log_type": self.log_type,
+								"log_from": "ZK Tool",
 							})
-							if(frappe.db.exists("Attendance Log", args)):
-								pass
-							else:
-								args.update({
-									"doctype": "Attendance Log",
-									"log_type": self.log_type,
-									"log_from": "ZK Tool",
-								})
-								doc = frappe.get_doc(args)
-								doc.insert(ignore_permissions=True)
-								marked = True
-			return {"marked": marked}
-		except Exception as e:
-			frappe.msgprint(f"{e}")
-	
+							doc = frappe.get_doc(args)
+							doc.insert(ignore_permissions=True)
+							frappe.db.commit()
+							marked = True
+		return {"marked": marked}
+	except Exception as e:
+		frappe.msgprint(f"{e}")
+	finally:
+		frappe.db.commit()  # nosemgrep
+		# frappe.publish_realtime("attendance_marked_successfully", message={"marked": "marked"}, user=frappe.session.user)
+
+
 def get_dates_list(from_date, to_date):
 	days = date_diff(to_date, from_date) + 1
 	dates_list = []

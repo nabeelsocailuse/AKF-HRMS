@@ -4,6 +4,7 @@ from zk import ZK
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Vriables
 conn = None
+# 103.27.22.130
 device_ip = "10.0.7.201"
 device_port=4370
 #########
@@ -16,7 +17,7 @@ try:
 		if attendance is None:
 			print("empty")
 		else:
-			# print (attendance) # Attendance object
+			print (attendance) # Attendance object
 			attendanceSplit = str(attendance).split()
 			device_id = attendanceSplit[1]
 			device_date = str(attendanceSplit[3])

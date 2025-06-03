@@ -104,15 +104,23 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.short_leave_cannot_exceed_3_hours() # Mubashir Bashir 1-1-2025
 		self.half_day_leave_cannot_exceed_4_hours() # Mubashir Bashir 1-1-2025
 		self.validate_half_day_leave()
-		self.set_next_workflow_approver() # Nabeel Saleem, 16-12-2024
-		self.record_application_state() # Nabeel Saleem, 29-11-2024
+		# self.set_next_workflow_state() # Mubashir Bashir 19-02-2025
+		# self.set_next_workflow_approver() # Mubashir Bashir 03-03-2025
+		setter_next_workflow_approver(self)
+		record_workflow_approver_states(self)
+		# self.record_application_state() # Nabeel Saleem, 29-11-2024
 
 	def on_update(self):
+		# frappe.throw(self.status)
 		if self.status == "Open" and self.docstatus < 1:
 			# notify leave approver about creation
 			if frappe.db.get_single_value("HR Settings", "send_leave_notification"):
 				self.notify_leave_approver()
-
+		# Nabeel Saleem, 13-05-2025
+		if(hasattr(self, "workflow_state")):
+			if(self.docstatus==1):
+				self.status="Approved"
+				
 		share_doc_with_approver(self, self.leave_approver)
 		self.publish_update()
 		self.notify_approval_status()
@@ -155,13 +163,14 @@ class LeaveApplication(Document, PWANotificationsMixin):
 	def update_status(self):
 		if(not hasattr(self, "workflow_state")): return
 		frappe.db.set_value('Leave Application', self.name, 'status', 'Cancelled')
+		frappe.db.set_value('Leave Application', self.name, 'workflow_state', 'Cancelled')
 		self.reload()
 
 	# Leave Type applicable after working days commented by Mubashir on 14-01-2025 requested by AKFP HR in error sheet		
 	# def validate_applicable_after(self):
-	# 	from akf_hrms.patches.skip_validations import skip
-	# 	if(skip()): 
-	# 		return
+		# from akf_hrms.patches.skip_validations import skip
+		# if(skip()): 
+		# 	return
 	# 	if self.leave_type:
 	# 		leave_type = frappe.get_doc("Leave Type", self.leave_type)
 	# 		if leave_type.applicable_after > 0:
@@ -413,9 +422,9 @@ class LeaveApplication(Document, PWANotificationsMixin):
 				WHERE 
 					docstatus != 2
 					AND workflow_state != 'Rejected'
-					AND workflow_state != 'Rejected by the Line Manager'
-					AND workflow_state != 'Rejected by the Head of Department'
-					AND workflow_state != 'Rejected by the CEO'
+					AND workflow_state != 'Rejected by Line Manager'
+					AND workflow_state != 'Rejected by Head of Department'
+					AND workflow_state != 'Rejected by Chief Executive Officer'
 					AND employee = %s
 					AND company = %s
 					AND leave_type = %s
@@ -635,7 +644,6 @@ class LeaveApplication(Document, PWANotificationsMixin):
 	# 				user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
 	# 				if(frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Line Manager'})):
 	# 					set_approver_detail(user_id, d.next_state)
-	# 					print("user id: ", user_id, "next state: ", d.next_state)
 	# 			else:
 	# 				frappe.throw(f"Please set a `reports to` of this employee", title="Line Manager")
 						
@@ -659,90 +667,102 @@ class LeaveApplication(Document, PWANotificationsMixin):
 	# 			""")
 	# 			if(user_list):
 	# 				set_approver_detail(user_list[0][0], d.next_state)
-
 	# 			else:
 	# 				frappe.throw(f"Please set a `CEO` of {self.company}", title="CEO")
 
-	# Mubashir Bashir 13-02-2025 Start
+	# Mubashir Bashir 03-03-2025 Start
 	@frappe.whitelist()
 	def set_next_workflow_approver(self):
-		if not hasattr(self, 'workflow_state'):
-			return        
-		if self.status != 'Open':
-			return
+		if(not hasattr(self, 'workflow_state')): return		
+		if(self.status!='Open'): return
 
-		# Fetch workflow transitions
-		data = frappe.db.sql(f""" 
-			SELECT 
-				w.name, wt.state, wt.action, wt.next_state, wt.allowed, wt.allow_self_approval
-			FROM 
-				`tabWorkflow` w 
-			INNER JOIN 
-				`tabWorkflow Transition` wt 
-			ON 
-				(w.name = wt.parent)
-			WHERE 
-				w.document_type = 'Leave Application'
-				AND w.is_active = 1
-				AND wt.action = 'Approve'
-				AND wt.state = '{self.workflow_state}'
-			ORDER BY
-				wt.idx ASC
-			LIMIT 1
-		""", as_dict=True)
-
-		# Helper function to set approver details
-		def set_approver_detail(user_id, next_state):
+		# => find approver
+		def set_approver_detail(user_id):
 			self.leave_approver = user_id
 			self.leave_approver_name = get_fullname(user_id)
-			self.custom_next_workflow_state = next_state
 
-		# Check if employee directly reports to HOD
-		directly_reports_to_hod = frappe.db.get_value("Employee", {"name": self.employee}, "custom_directly_reports_to_hod")
-
-		for d in data:
-			if d.allowed == "Line Manager": 
-
-				reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
-				if reports_to:
-					user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
-					if frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Head of Department' if directly_reports_to_hod else 'Line Manager'}):
-						set_approver_detail(user_id, 'Approved by Head of Department' if directly_reports_to_hod else d.next_state)
-				else:
-					frappe.throw(f"Please set a `reports to` for this employee", title="Line Manager")
-
-			elif d.allowed == "Head of Department":
-				user_id = frappe.db.get_value('Employee', {'department': self.department, 'custom_hod': 1}, 'user_id')
-				if user_id:
-					set_approver_detail(user_id, d.next_state)
-				else:
-					frappe.throw(f"Please set a `head of department` for department {self.department}", title="Head of Department")
-
-			elif d.allowed == 'CEO':
-				user_list = frappe.db.sql(""" 
-					SELECT 
+		if (self.custom_next_workflow_state == 'Recommended by Line Manager'):
+			reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
+			if(reports_to):
+				user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
+				if(frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Line Manager'})):
+					set_approver_detail(user_id)
+			else:
+				frappe.throw(f"Please set a `reports to` of this employee", title="Line Manager")
+					
+		elif(self.custom_next_workflow_state == 'Recommended by Head of Department'):
+			user_id = frappe.db.get_value('Employee', {'department': self.department , 'custom_hod': 1}, 'user_id')
+			if(user_id):
+				set_approver_detail(user_id)
+			else:
+				frappe.throw(f"Please set a `head of department` of department {self.department}", title="Head of Department")
+		
+		elif(self.custom_next_workflow_state == 'Approved'):
+			user_list = frappe.db.sql(""" 
+					Select 
 						u.name 
-					FROM 
-						`tabUser` u 
-					INNER JOIN 
-						`tabHas Role` h 
-					ON 
-						(u.name = h.parent)
-					INNER JOIN
-						`tabEmployee` e
-					ON 
-						(u.name = e.user_id) 
-					WHERE 
-						h.role IN ('CEO')
-						AND e.company = %s
-					GROUP BY
+					From 
+						`tabUser` u inner join `tabHas Role` h on (u.name=h.parent) 
+					Where 
+						h.role in ('CEO')
+					Group by
 						u.name 
-				""", (self.company,), as_dict=True)
-				if user_list:
-					set_approver_detail(user_list[0]['name'], d.next_state)
-				else:
-					frappe.throw(f"Please set a `CEO` for {self.company}", title="CEO")
-	# Mubashir Bashir 13-02-2025 End
+			""")
+			if(user_list):
+				set_approver_detail(user_list[0][0])
+			else:
+				frappe.throw(f"Please set a `Chief Executive Officer` of {self.company}", title="Chief Executive Officer")
+	# Mubashir Bashir 03-03-2025 End
+
+
+	# Mubashir Bashir 19-02-2025 Start
+	def set_next_workflow_state(self):
+		employee_user_id = frappe.db.get_value("Employee", self.employee, "user_id")
+
+		if not employee_user_id: return
+
+		employee_roles = frappe.get_roles(employee_user_id)
+
+		if (frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 0}) and 
+			"Employee" in employee_roles and 
+			not any(role in employee_roles for role in ["Line Manager", "Head of Department", "CEO"])):
+			if (self.custom_next_workflow_state == 'Recommended by Line Manager'):
+				self.custom_next_workflow_state = 'Recommended by Head of Department'
+				self.custom_workflow_indication = 'Line Manager to Head of Department'
+			elif (self.custom_next_workflow_state == 'Recommended by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Recommended by Line Manager'
+				self.custom_workflow_indication = 'Applied to Line Manager'
+
+
+		elif (frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 1}) and 
+			"Employee" in employee_roles and 
+			not any(role in employee_roles for role in ["Line Manager", "Head of Department", "CEO"])):
+			if (self.custom_next_workflow_state == 'Recommended by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Recommended by Head of Department'
+				self.custom_workflow_indication = 'Applied to HOD'
+
+
+		elif "Line Manager" in employee_roles and not any(role in employee_roles for role in ["Head of Department", "CEO"]):
+			if (self.custom_next_workflow_state == 'Recommended by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Recommended by Head of Department'
+				self.custom_workflow_indication = 'Applied to HOD'
+				
+
+		elif "Head of Department" in employee_roles and "CEO" not in employee_roles:
+			self.custom_next_workflow_state = 'Approved'
+			self.custom_workflow_indication = 'Applied to CEO'
+		
+		# self.leave_approver_name = get_fullname(self.leave_approver)
+	# Mubashir Bashir 19-02-2025 End
 
 
 	# Nabeel Saleem, 29-11-2024
@@ -1921,6 +1941,43 @@ def get_leave_approver(employee):
 def on_doctype_update():
 	frappe.db.add_index("Leave Application", ["employee", "from_date", "to_date"])
 
+
+def setter_next_workflow_approver(self):
+	if(self.custom_next_workflow_approver in ["", None]) or (self.is_new()):
+		self.custom_next_workflow_approver = self.employee
+
+def record_workflow_approver_states(self):
+	if(hasattr(self, 'workflow_state')):
+		from frappe.utils import get_datetime
+		
+		# if(self.docstatus==1): return
+
+		approversList = eval(self.custom_state_data) if(self.custom_state_data) else {}
+
+		if(self.workflow_state in approversList): return
+		# if(self.employee != self.custom_next_workflow_approver): return 
+		prev = frappe.db.get_value("Employee", self.custom_next_workflow_approver, ["name", "reports_to", "employee_name", "designation"], as_dict=1)
+		
+		if(prev):
+			if(not prev.reports_to):
+				_link_ = get_link_to_form('Employee', prev.name, prev.employee_name)
+				frappe.throw(f"`Reports to` is not set for {_link_}", title="Missing Info")
+
+		nxt = frappe.db.get_value("Employee", prev.reports_to, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
+		if(self.custom_directly_reports_to_hod) and (self.workflow_state=="Applied"):
+			nxt = frappe.db.get_value("Employee", {"custom_hod": 1,"department": self.department}, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
+		
+		self.custom_next_workflow_approver = prev.reports_to
+		
+		approversList.update({
+			f"{self.workflow_state}": {
+				"employee_name": prev.employee_name,
+				"current_state": self.workflow_state,
+				"modified_on": get_datetime(),				
+				"next_state": f"{nxt.employee_name}, (<b>{nxt.custom_current_role}</b>)" if((self.docstatus==0) and ("Rejected" not in self.workflow_state)) else "",
+			}
+		})
+		self.custom_state_data =  frappe.as_json(approversList)
 # # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application._set_next_workflow_approver
 # def _set_next_workflow_approver():
 # 	from frappe.utils import get_datetime
@@ -2003,6 +2060,5 @@ def on_doctype_update():
 # 		frappe.db.set_value("Leave Application", self.name, "workflow_state", "Approved")
 # 		frappe.db.set_value("Leave Application", self.name, "custom_state_data", frappe.as_json(state_dict))
 # 		print(f"state_dict: {state_dict}")		
-
 
 

@@ -51,7 +51,7 @@ def get_data(filters):
 	holiday_map = get_holiday(employee_map, filters)
 	default_holiday_list = frappe.db.get_value("Company", filters.get("company"), "default_holiday_list")
 
-
+	
 	""" dictionary of status """
 	status_map = {
 		"On Leave": "<font color='blue'><center><b>L</b></center></font>", 
@@ -155,6 +155,7 @@ def get_data(filters):
 				outlist += [status]
 				hwlist += [status]
 			if status == status_map["Holiday"]:
+				# frappe.msgprint(f"{day}: {status}")
 				total_holidays += 1
 		# Init 3 rows for employee {in, out, hours work}
 		working_hours = get_total_hours_worked(hours_worked_time_list)
@@ -242,6 +243,7 @@ def get_holiday(emp_map, filters):
 			# holiday_map.setdefault(d, frappe.db.sql_list('''select day(holiday_date) from `tabHoliday`
 			holiday_map.setdefault(d, frappe.db.sql_list('''select holiday_date from `tabHoliday`
 				where parent=%s and holiday_date between %s and %s''', (d, filters.get("from_date"), filters.get("to_date"))))
+	
 	return holiday_map
 
 
@@ -257,14 +259,37 @@ def get_days_in_month(filters):
 		days_list.append(split_day)
 	return days_list
 
+# Mubashir Bashir 28-02-2025 Start
 def get_total_hours_worked(hours_worked_time_list):
-	total_h_worked= '0'	
-	hours_worked_ = 0
-	for tm in hours_worked_time_list:
-		timeParts = [int(s) for s in str(tm).split(':')]
-		hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
-	hours_worked_, sec = divmod(hours_worked_, 60)
-	hr, min_ = divmod(hours_worked_, 60)
-	total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))
+    total_seconds = 0
+    
+    for tm in hours_worked_time_list:
+        tm = str(tm)
+
+        if ':' in tm:  
+            # If time is in "HH:MM:SS" format, split and convert
+            time_parts = [float(s) for s in tm.split(':')]
+            total_seconds += (time_parts[0] * 3600) + (time_parts[1] * 60) + (time_parts[2])
+        else:  
+            # If it's a decimal hour value, convert to seconds directly
+            total_seconds += float(tm) * 3600
+
+    # Convert total seconds back to HH:MM format
+    total_minutes, sec = divmod(total_seconds, 60)
+    hr, min_ = divmod(total_minutes, 60)
+    
+    return f"{int(hr)}:{str(int(min_)).zfill(2)}"
+# Mubashir Bashir 28-02-2025 End
+
+# def get_total_hours_worked(hours_worked_time_list):
+# 	total_h_worked= '0'	
+# 	hours_worked_ = 0
+# 	for tm in hours_worked_time_list:
+# 		timeParts = [int(s) for s in str(tm).split(':')]
+# 		hours_worked_ += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
+# 	hours_worked_, sec = divmod(hours_worked_, 60)
+# 	hr, min_ = divmod(hours_worked_, 60)
+# 	total_h_worked = '{}:{}'.format(int(hr), str(str(int(min_)).zfill(2)))
 	
-	return total_h_worked
+# 	return total_h_worked
+

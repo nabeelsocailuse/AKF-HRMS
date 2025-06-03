@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-03-03 15:35:34.991255",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "asset",
+  "sim_number",
+  "issue_date",
+  "return_date",
+  "balance_on_issue",
+  "balance_on_return"
+ ],
+ "fields": [
+  {
+   "fieldname": "asset",
+   "fieldtype": "Select",
+   "label": "Asset",
+   "options": "Sim"
+  },
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "fieldname": "return_date",
+   "fieldtype": "Date",
+   "label": "Return Date"
+  },
+  {
+   "fieldname": "balance_on_issue",
+   "fieldtype": "Data",
+   "label": "Balance on Issue"
+  },
+  {
+   "fieldname": "balance_on_return",
+   "fieldtype": "Data",
+   "label": "Balance on Return"
+  },
+  {
+   "fieldname": "sim_number",
+   "fieldtype": "Data",
+   "label": "Sim Number"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-03-03 15:40:25.261096",
+ "modified_by": "Administrator",
+ "module": "Akf Hrms",
+ "name": "Asset History",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

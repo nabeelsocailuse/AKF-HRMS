@@ -9,6 +9,8 @@
   "applicant_type",
   "applicant",
   "applicant_name",
+  "department",
+  "directly_reports_to_hod",
   "column_break_2",
   "company",
   "posting_date",
@@ -36,10 +38,12 @@
  ],
  "fields": [
   {
+   "default": "Employee",
    "fieldname": "applicant_type",
    "fieldtype": "Select",
    "label": "Applicant Type",
    "options": "Employee\nMember\nCustomer",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -56,6 +60,7 @@
    "fieldname": "applicant_name",
    "fieldtype": "Data",
    "in_global_search": 1,
+   "in_list_view": 1,
    "label": "Applicant Name",
    "read_only": 1
   },
@@ -84,7 +89,8 @@
    "label": "Status",
    "no_copy": 1,
    "options": "Open\nApproved\nRejected",
-   "permlevel": 1
+   "permlevel": 1,
+   "read_only_depends_on": "eval: (doc.workflow_state!=undefined || doc.workflow_state!=\"\")"
   },
   {
    "fieldname": "section_break_4",
@@ -125,6 +131,7 @@
    "fetch_from": "loan_product.rate_of_interest",
    "fieldname": "rate_of_interest",
    "fieldtype": "Percent",
+   "hidden": 1,
    "label": "Rate of Interest",
    "read_only": 1
   },
@@ -216,12 +223,28 @@
    "fieldname": "custom_maximum_allowed_loan",
    "fieldtype": "Currency",
    "label": "Maximum Allowed Loan"
+  },
+  {
+   "depends_on": "eval:doc.applicant_type==\"Employee\";",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.applicant_type==\"Employee\";",
+   "fieldname": "directly_reports_to_hod",
+   "fieldtype": "Check",
+   "label": "Directly Reports to HOD",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-23 11:24:27.102635",
+ "modified": "2025-05-30 16:38:33.696232",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Loan Application",

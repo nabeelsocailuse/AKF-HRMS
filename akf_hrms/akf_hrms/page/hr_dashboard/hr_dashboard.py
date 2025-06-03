@@ -9,6 +9,7 @@ def get_hr_counts(filters):
     # 
     head_count = get_head_counts(filters)
     presents = total_present(filters)
+    exempted = total_exempted(filters)  # Mubashir Bashir 25-Apr-2025
     total_absent = total_absent_count(filters)
     absenteesim = get_absents_and_absenteeism(filters, head_count, presents)
     late_comings = get_late_comings_count(filters)
@@ -24,6 +25,7 @@ def get_hr_counts(filters):
     return {
         "head_count": head_count,
         "presents": presents,
+        "exempted": exempted,
         "total_absent": total_absent,
         "absenteesim": absenteesim,
         "late_comings": late_comings,
@@ -39,14 +41,10 @@ def get_hr_counts(filters):
     }
 
 def get_head_counts(filters):
-    if filters.get("to_date"):
-        pass
-    else:
+    if not filters.get("to_date"):
         frappe.throw(f"Please select To Date")
 
-    if filters.get("from_date"):
-        pass
-    else:
+    if not filters.get("from_date"):
         frappe.throw(f"Please select From Date")
         
 
@@ -56,7 +54,7 @@ def get_head_counts(filters):
         WHERE 
             status="Active"
      """
-    query += " AND relieving_date > %(to_date)s"
+    # query += " AND relieving_date > %(to_date)s"
     query += " AND company = %(company)s" if filters.get("company") else ""
     query += " AND branch = %(branch)s" if filters.get("branch") else ""
     
@@ -66,13 +64,13 @@ def get_head_counts(filters):
 
 def total_present(filters):
     query = """ 
-            SELECT count(att.name)
+            SELECT count(e.name)
             FROM `tabAttendance` as att 
             INNER JOIN `tabEmployee` as e ON att.employee = e.name
             WHERE att.status IN ("Present", "Work From Home")
             AND att.docstatus = 1
-            AND (ifnull(e.relieving_date, "") = "" OR e.relieving_date >= %(to_date)s)
         """
+            # AND (ifnull(e.relieving_date, "") = "" OR e.relieving_date >= %(to_date)s)
     query += " AND att.company = %(company)s" if filters.get("company") else ""
     query += " AND att.custom_branch = %(branch)s" if filters.get("branch") else ""
     query += " AND att.attendance_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
@@ -80,24 +78,50 @@ def total_present(filters):
     r = frappe.db.sql(query, filters)
     return r[0][0] if r else 0
 
+def total_exempted(filters):  # Mubashir Bashir 25-Apr-2025
+    query = """ 
+            SELECT count(e.name)
+            FROM `tabEmployee` as e
+            WHERE e.custom_no_attendance = 1 AND e.status = 'Active'
+        """
+            # AND (ifnull(e.relieving_date, "") = "" OR e.relieving_date >= %(to_date)s)
+    query += " AND e.company = %(company)s" if filters.get("company") else ""
+    query += " AND e.branch = %(branch)s" if filters.get("branch") else ""
+    query += " AND e.date_of_joining <= %(to_date)s" if (filters.get('to_date')) else ""
+    
+    r = frappe.db.sql(query, filters)
+    return r[0][0] if r else 0
+
 
 def total_absent_count(filters):
-    query = """ 
-            SELECT count(att.name)
-            FROM `tabAttendance` as att 
-            INNER JOIN `tabEmployee` as e ON att.employee = e.name
-            WHERE att.status = 'Absent'
-            AND att.docstatus = 1
-            AND (ifnull(e.relieving_date, "") = "" OR e.relieving_date > %(to_date)s)
+    if not filters.get("to_date") or not filters.get("from_date"):
+        frappe.throw("Please select From Date and To Date")
 
-        """
-    query += " AND att.company = %(company)s" if filters.get("company") else ""
-    query += " AND att.custom_branch = %(branch)s" if filters.get("branch") else ""
-    query += " AND att.attendance_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
-    # frappe.msgprint(f"absent query: {query}")
+    query = """ 
+        SELECT COUNT(e.name) 
+        FROM `tabEmployee` e 
+        WHERE e.status = 'Active'
+    """
+        # AND (e.relieving_date IS NULL OR e.relieving_date > %(to_date)s)
+
+    # Apply dynamic filters first
+    if filters.get("company"):
+        query += " AND e.company = %(company)s"
+    if filters.get("branch"):
+        query += " AND e.branch = %(branch)s"
+
+    # Then check for employees with no attendance records
+    query += """ 
+        AND e.name NOT IN (
+            SELECT att.employee FROM `tabAttendance` att
+            WHERE att.attendance_date BETWEEN %(from_date)s AND %(to_date)s
+            AND att.docstatus = 1
+        )
+    """
+
     r = frappe.db.sql(query, filters)
-    # frappe.msgprint(f"absent result: {r}")
-    return r[0][0] if(r) else 0
+    return r[0][0] if r else 0
+
 
 def get_late_comings_count(filters):
     query = """ 
@@ -120,19 +144,20 @@ def get_late_comings_count(filters):
 
 def get_in_station_leaves(filters):
     query = """ 
-        SELECT count(name)
-        FROM `tabLeave Application`
-        WHERE leave_type = 'Official Duty (In-Station)'
-        AND status = 'Approved'
-        AND docstatus = 1
+        SELECT count(at.name)
+        FROM `tabAttendance Request` at
+        INNER JOIN `tabEmployee` e ON at.employee = e.name 
+        WHERE at.reason = 'In-Station'
+        AND at.docstatus = 1
+        AND e.status = 'Active'
     """
 
     if filters.get("company"):
-        query += " AND company = %(company)s"
+        query += " AND at.company = %(company)s"
     if filters.get("branch"):
-        query += " AND custom_branch = %(branch)s"
+        query += " AND at.branch = %(branch)s"
     if filters.get('from_date') and filters.get('to_date'):
-        query += " AND (from_date >= %(from_date)s AND to_date <= %(to_date)s)"
+        query += " AND (at.from_date >= %(from_date)s AND at.to_date <= %(to_date)s)"
     
     r = frappe.db.sql(query, filters)
     # frappe.throw(f"out station: {r[0][0]}")
@@ -141,18 +166,20 @@ def get_in_station_leaves(filters):
 
 def get_out_station_leaves(filters):
     query = """ 
-        SELECT count(name)
-        FROM `tabLeave Application`
-        WHERE leave_type = 'Official Duty (Out-Station)'
-        and status = 'Approved'
+        SELECT count(at.name)
+        FROM `tabAttendance Request` at
+        INNER JOIN `tabEmployee` e ON at.employee = e.name 
+        WHERE at.reason = 'Out-Station'
+        AND at.docstatus = 1
+        AND e.status = 'Active'
     """
-    
+
     if filters.get("company"):
-        query += " AND company = %(company)s"
+        query += " AND at.company = %(company)s"
     if filters.get("branch"):
-        query += " AND custom_branch = %(branch)s"
+        query += " AND at.branch = %(branch)s"
     if filters.get('from_date') and filters.get('to_date'):
-        query += " AND (from_date >= %(from_date)s AND to_date <= %(to_date)s)"
+        query += " AND (at.from_date >= %(from_date)s AND at.to_date <= %(to_date)s)"
         
     r = frappe.db.sql(query, filters)
     # frappe.throw(f"out station: {r[0][0]}")
@@ -207,8 +234,9 @@ def get_average_late_coming(filters):
             IFNULL(SUM(CASE WHEN late_entry = 1 THEN 1 ELSE 0 END), 0) AS late_comings
         FROM `tabAttendance` att INNER JOIN `tabEmployee` e ON (att.employee=e.name)
         WHERE att.docstatus = 1
-        AND att.status IN ("Present", "Work From Home")
-        AND (IFNULL(e.relieving_date, "") = "" OR e.relieving_date >= CURDATE())"""
+        AND e.status = 'Active'
+        AND att.status IN ("Present", "Work From Home") """
+        # AND (IFNULL(e.relieving_date, "") = "" OR e.relieving_date >= CURDATE())"""
     query += " AND att.company = %(company)s" if filters.get("company") else ""
     query += " AND att.custom_branch = %(branch)s" if filters.get("branch") else ""
     query += " AND att.attendance_date BETWEEN %(from_date)s AND %(to_date)s" if (filters.get('from_date') and filters.get('to_date')) else ""
@@ -228,8 +256,9 @@ def get_holidays(filters):
     query = """
         Select count(h.name) as total_holidays
         From `tabHoliday` h Inner Join `tabEmployee` e ON (h.parent = e.holiday_list)
-        Where e.status="Active" and (ifnull(e.relieving_date, "")="" || e.relieving_date>=CURRENT_DATE())
+        Where e.status='Active'
     """
+    # and (ifnull(e.relieving_date, "")="" || e.relieving_date>=CURRENT_DATE())
     query += " and e.company = %(company)s " if(filters.get("company")) else ""
     query += " and e.branch = %(branch)s " if(filters.get("branch")) else ""
     query += "and h.holiday_date between %(from_date)s and %(to_date)s " if(filters.get('from_date') and filters.get('to_date')) else ""
@@ -238,17 +267,17 @@ def get_holidays(filters):
     return r[0][0] if(r) else 0
 
 def get_short_unapproved_leaves(filters):
+            # ifnull(sum(case when (la.docstatus<2 and la.half_day=1) then 1 else 0 end),0) as short_leaves,
     query = """ 
         Select 
-            ifnull(sum(case when (la.docstatus<2 and la.half_day=1) then 1 else 0 end),0) as short_leaves,
+            ifnull(sum(case when (la.docstatus<2 and la.leave_type='Short Leave') then 1 else 0 end),0) as short_leaves,
             ifnull(sum(case when (la.docstatus<2 and la.status in ("Open")) then 1 else 0 end),0) as unapproved_leaves
 
         From `tabLeave Application` la Inner Join `tabEmployee` e ON (la.employee=e.name)
         Where la.docstatus<2
-        and la.status in ("Open", "Approved")
-        AND (IFNULL(e.relieving_date, "") = "" OR e.relieving_date >= CURDATE())
-        
+        AND la.status in ("Open", "Approved") AND e.status = 'Active'
     """
+        # AND (IFNULL(e.relieving_date, "") = "" OR e.relieving_date >= CURDATE())
     query += " and la.company = %(company)s " if(filters.get("company")) else ""
     query += " and e.branch = %(branch)s " if(filters.get("branch")) else ""
     query += "and (la.from_date>=%(from_date)s and la.to_date<=%(to_date)s) " if(filters.get('from_date') and filters.get('to_date')) else ""
@@ -266,10 +295,10 @@ def get_contract_completion(filters):
         Select count(name) 
         From `tabEmployee`
         Where 
-            status="Active"
-            and (ifnull(relieving_date, "")="" || relieving_date>=curdate())
-            and (ifnull(contract_end_date, "")!="" || contract_end_date<curdate())
+            status='Active'
      """
+            # and (ifnull(contract_end_date, "")!="" || contract_end_date<curdate())
+            # and (ifnull(relieving_date, "")="" || relieving_date>=curdate())
     query += " and company = %(company)s " if(filters.get("company")) else ""
     query += " and branch = %(branch)s " if(filters.get("branch")) else ""
     query += "and (contract_end_date>=%(from_date)s and contract_end_date<=%(to_date)s) " if(filters.get('from_date') and filters.get('to_date')) else ""
@@ -283,10 +312,10 @@ def get_probation_completion(filters):
         Select count(name) 
         From `tabEmployee`
         Where 
-            status="Active"
-            and (ifnull(relieving_date, "")="" || relieving_date>=curdate())
-            and (ifnull(final_confirmation_date, "")!="" || final_confirmation_date<curdate())
+            status='Active'
      """
+            # and (ifnull(final_confirmation_date, "")!="" || final_confirmation_date<curdate())
+            # and (ifnull(relieving_date, "")="" || relieving_date>=curdate())
     query += " and company = %(company)s " if(filters.get("company")) else ""
     query += " and branch = %(branch)s " if(filters.get("branch")) else ""
     query += "and (final_confirmation_date>=%(from_date)s and final_confirmation_date<=%(to_date)s) " if(filters.get('from_date') and filters.get('to_date')) else ""
@@ -304,8 +333,9 @@ def get_avg_overtime_hours(filters):
         WHERE 
             att.docstatus = 1
             AND att.status IN ('Present', 'Work From Home')
-            AND (IFNULL(e.relieving_date, '') = '' OR e.relieving_date >= CURDATE())
+            AND e.status = 'Active'
     """
+            # AND (IFNULL(e.relieving_date, '') = '' OR e.relieving_date >= CURDATE())
     if filters.get('company'):
         query += " AND e.company = %(company)s "
     if filters.get('branch'):
@@ -337,8 +367,8 @@ def get_employee_count_by_department(filters):
         WHERE 
             status = "Active"
             AND IFNULL(department, "") != ""
-            AND (IFNULL(relieving_date, "") = "" OR relieving_date >= CURDATE())
     """
+            # AND (IFNULL(relieving_date, "") = "" OR relieving_date >= CURDATE())
     query += " AND company = %(company)s " if filters.get("company") else ""
     query += " AND branch = %(branch)s " if filters.get("branch") else ""
     query += " GROUP BY department"
@@ -372,9 +402,9 @@ def get_employee_count_by_salary_range(filters):
         WHERE 
             e.status = "Active"
             AND IFNULL(e.department, "") != ""
-            AND (IFNULL(e.relieving_date, "") = "" OR e.relieving_date >= CURDATE())
             AND latest_salary.docstatus = 1
     """
+            # AND (IFNULL(e.relieving_date, "") = "" OR e.relieving_date >= CURDATE())
     
     if filters.get("company"):
         query += " AND e.company = %(company)s "
@@ -484,6 +514,8 @@ def get_department_list(filters):
 
 @frappe.whitelist()
 def get_total_applicants(filters):
+    # if filters.get('department') or filters.get('company'):
+        # frappe.msgprint(f'department: {filters.get("department")} copmany {filters.get("company")}')
     query = """
         SELECT IFNULL(COUNT(ja.name), 0) as total
         FROM `tabJob Applicant` as ja

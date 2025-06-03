@@ -231,7 +231,7 @@ design = {
 _triggers_ = {
     search: function () {
         $("#department").on('change', function () {
-            var department = $(this).val();
+            var department = $(this).val();            
             filters["department"] = department;
             setTimeout(() => {
                 serverCall.recruiment_counts(filters);
@@ -670,7 +670,7 @@ function pieChart(data) {
 // HR Recruitment Dashboard
 function search_departments() {
     $("#department").on('change', function () {
-        console.log(company)
+        // console.log(company)
         var selectedValue = $(this).val();
         // updateTotalCandidates(selectedValue);
         // updateShortlistedCandidates(selectedValue);

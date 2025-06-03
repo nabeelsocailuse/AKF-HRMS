@@ -3,6 +3,14 @@
 let msg = ``;
 var logs = {};
 frappe.ui.form.on("ZK Tool", {
+	onload(frm){
+		// frappe.realtime.off("attendance_marked_successfully");
+		frappe.realtime.on("attendance_marked_successfully", function(data) {
+			console.log("data");
+			console.log(data);
+			// frm.reload_doc();
+		});
+	},
     refresh(frm) {
         set_queries(frm);
         frm.set_value("fetched", 0);
@@ -62,17 +70,20 @@ frappe.ui.form.on("ZK Tool", {
 	},
 	mark_attendance: function (frm) {
 		if (logs != null) {
-			var start = new Date();
-			let d = progress_message_dialog("Marking attendance!");
+			// var start = new Date();
+			// let d = progress_message_dialog("Marking attendance!");
 			let employees_list = frm.doc.employee_list;
 			frm.call('mark_attendance', {
 				employees: employees_list, logs: logs
 			}).then(r => {
 					console.log(r.message);
+					/*
 					const data = r.message;
+					
 					let msg = (data.marked == true)? "Attendance marked!": "Attendance already marked!"
 					var end = new Date();
 					const total_time = calculate_process_time(start, end);
+					
 					$(d.$wrapper).find('.change_message').empty();
 					$(d.$wrapper).find('.show_progress').empty();
 					$(d.$wrapper).find('.change_message').html(`
@@ -87,6 +98,7 @@ frappe.ui.form.on("ZK Tool", {
 					setInterval(() => {
 							d.hide();	
 						}, 10000);
+					*/
 				
 			});
 			

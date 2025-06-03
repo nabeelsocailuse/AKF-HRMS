@@ -3,12 +3,16 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import time_diff, getdate, get_datetime, time_diff_in_hours, get_time
+from frappe.utils import time_diff, getdate, get_datetime, time_diff_in_hours, get_time, datetime
+from datetime import datetime	# Mubashir Bashir 25-02-2025
+
 class AttendanceLog(Document):
 	def validate(self):
 		self.set_employee_and_shift_type()
 
 	def set_employee_and_shift_type(self):
+		if(self.shift): 
+			return
 		query = f""" 
 				select 
 					e.name,
@@ -39,13 +43,20 @@ class AttendanceLog(Document):
 					"employee": self.employee,
 					"attendance_date": self.attendance_date,
 					
-				}, ["name", "in_time", "status"], as_dict=1)
+				}, ["name", "in_time", "status", "out_time", "custom_in_times", "custom_out_times"], as_dict=1)
 
 	def update_attendance(self, attendance):
 		
 		if(attendance.status!="Present"): return
-		frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
-		frappe.db.set_value("Attendance", attendance.name, "custom_out_times", get_time(self.log))
+		if not attendance.custom_in_times and attendance.custom_out_times:
+			frappe.db.set_value("Attendance", attendance.name, "in_time", attendance.out_time)
+			frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
+			frappe.db.set_value("Attendance", attendance.name, "custom_in_times", attendance.custom_out_times)
+			frappe.db.set_value("Attendance", attendance.name, "custom_out_times", get_time(self.log))
+		else:
+			frappe.db.set_value("Attendance", attendance.name, "out_time", self.log)
+			frappe.db.set_value("Attendance", attendance.name, "custom_out_times", get_time(self.log))
+			
 		hours_worked = self.cal_hours_worked(attendance.in_time)
 		
 		frappe.db.set_value("Attendance", attendance.name, "custom_hours_worked", hours_worked)
@@ -56,21 +67,51 @@ class AttendanceLog(Document):
 		# frappe.msgprint(f"{self.log} {in_time}")
 		return time_diff(str(self.log), str(in_time))
 
+	# Mubashir Bashir 25-02-2025 Start 
 	def create_attendance(self):
+		today = datetime.today()
+		log_time = datetime.combine(today, get_time(self.log))
+
+		late_entry = False
+		early_exit = False
+		custom_out_times = ""
+		custom_in_times = ""
+
+		if self.shift:
+
+			shift_details = frappe.get_value("Shift Type", self.shift, ["start_time", "end_time"], as_dict=True)
+			if not shift_details:
+				frappe.throw("Shift details not found for the selected shift.")
+
+			shift_start = datetime.combine(today, get_time(shift_details.get("start_time")))
+			shift_end = datetime.combine(today, get_time(shift_details.get("end_time")))
+			mid_shift = shift_start + (shift_end - shift_start) / 2			
+			
+			if log_time <= mid_shift:
+				custom_in_times = log_time				
+				late_entry = self.late_entry()
+			else:				
+				custom_out_times = log_time
+				early_exit = self.early_exit()
+		else:
+			custom_in_times = log_time
+			
 		args = {
-				"doctype": "Attendance",
-				"employee": self.employee,
-				"attendance_date": self.attendance_date,
-				"status": "Present",
-				"shift": self.shift,
-				"in_time": self.log,
-				"custom_in_times": get_time(self.log),
-				"custom_out_times": "",
-				"late_entry": self.late_entry(),
-				# "custom_2_hours_late": self.get_2_hours_late()
-			}
+			"doctype": "Attendance",
+			"employee": self.employee,
+			"attendance_date": self.attendance_date,
+			"status": "Present",
+			"shift": self.shift,
+			"in_time": self.log,
+			"custom_in_times": custom_in_times,
+			"custom_out_times": custom_out_times,
+			"late_entry": late_entry,
+			"early_exit": early_exit,
+		}
+
 		doc = frappe.get_doc(args).save(ignore_permissions=True)
 		doc.submit()
+		# Mubashir Bashir 25-02-2025 End
 
 	def late_entry(self):
 		if (not self.shift or not self.log): 
@@ -145,3 +186,51 @@ def get_logs_details(filters=None):
 			and attendance_date=%(attendance_date)s
 	""", filters, as_dict=1)
 
+
+# Mubashir 25-02-2025 Start
+
+from frappe.utils import nowdate, now_datetime
+
+@frappe.whitelist()
+def get_employee_shift(employee):
+    """Get latest shift assignment for an employee."""
+    shift = frappe.db.sql("""
+        SELECT shift_type FROM `tabShift Assignment`
+        WHERE employee=%s AND docstatus=1
+        ORDER BY start_date DESC LIMIT 1
+    """, (employee,), as_dict=True)
+    
+    return shift[0]['shift_type'] if shift else None
+
+@frappe.whitelist()
+def check_attendance_status(employee, shift):
+    """Check if the employee already has an attendance log for the same shift today."""
+    existing_log = frappe.db.exists("Attendance Log", {
+        "employee": employee,
+        "shift": shift,
+        "attendance_date": nowdate()
+    })
+
+    return "check_out" if existing_log else "check_in"
+
+@frappe.whitelist()
+def get_current_datetime():
+    """Return current date and datetime"""
+    return {"date": nowdate(), "datetime": now_datetime()}
+
+@frappe.whitelist()
+def record_attendance(docname, button_type, latitude=None, longitude=None):
+    """Mark check-in or check-out and update attendance log."""
+    doc = frappe.get_doc("Attendance Log", docname)
+    
+    if button_type in ["mark_check_in", "mark_check_out"]:
+        doc.attendance_date = nowdate()
+        doc.log = now_datetime()
+        if latitude and longitude:
+            doc.latitude = latitude
+            doc.longitude = longitude
+
+    doc.save()
+    return f"{button_type.replace('_', ' ').title()} recorded successfully."
+
+# Mubashir 25-02-2025 Start

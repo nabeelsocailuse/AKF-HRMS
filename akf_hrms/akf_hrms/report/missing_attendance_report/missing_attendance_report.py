@@ -22,7 +22,8 @@ def get_columns():
         _("Grade") + "::150",
         _("Region") + "::150",
         _("Missing Attendance Dates") + ":HTML:250",
-        _("Check In/Out Missing") + "::250"
+        _("Check In/Out Missing") + "::250",
+        _("Check In/Out Time") + "::250"
     ]
 
 def get_data(filters):
@@ -40,12 +41,12 @@ def get_data(filters):
     for emp in get_employee:
         
         attendance_dates = frappe.db.sql(f"""
-            SELECT attendance_date, in_time, out_time
+            SELECT attendance_date, in_time, out_time, custom_in_times, custom_out_times
             FROM `tabAttendance` 
             WHERE employee = %(employee)s 
             AND attendance_date BETWEEN %(from_date)s AND %(to_date)s
             AND docstatus = 1
-            AND ((in_time IS NULL AND out_time IS NOT NULL) OR (out_time IS NULL AND in_time IS NOT NULL))
+            AND ((custom_in_times IS NULL AND custom_out_times IS NOT NULL) OR (custom_out_times IS NULL AND custom_in_times IS NOT NULL))
             AND status IN ('Present', 'Half Day', 'Work From Home')
         """, {"employee": emp.get("name"), "from_date": filters.get("from_date"), "to_date": filters.get("to_date")}, as_dict=1)
 
@@ -53,12 +54,15 @@ def get_data(filters):
             first_row_added = False
             for attendance in attendance_dates:
                 attendance_date = create_button(attendance['attendance_date'])
-                if attendance['in_time'] is None and attendance['out_time'] is not None:
+                if attendance['custom_in_times'] is None and attendance['custom_out_times'] is not None:
                     missing_type = 'Check In Missing'
-                elif attendance['out_time'] is None and attendance['in_time'] is not None:
+                    check_in_out_times = attendance['custom_out_times']
+                elif attendance['custom_out_times'] is None and attendance['custom_in_times'] is not None:
                     missing_type = 'Check Out Missing'
+                    check_in_out_times = attendance['custom_in_times']
                 else:
-                    missing_type = '' 
+                    missing_type = ''
+                    check_in_out_times = ''
 
                 if not first_row_added:
                     first_row = [
@@ -71,12 +75,13 @@ def get_data(filters):
                         emp.get("grade"),
                         emp.get("custom_region"),
                         attendance_date,
-                        missing_type
+                        missing_type,
+                        check_in_out_times
                     ]
                     return_list.append(first_row)
                     first_row_added = True
                 else:
-                    return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', attendance_date, missing_type])
+                    return_list.append(['-', '-', '-', '-', '-', '-', '-', '-', attendance_date, missing_type, check_in_out_times])
 
     return return_list
 

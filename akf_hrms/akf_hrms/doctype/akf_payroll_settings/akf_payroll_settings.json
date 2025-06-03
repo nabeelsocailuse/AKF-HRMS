@@ -19,7 +19,9 @@
   "delay_of_provident_fund_deduction",
   "provident_employer_contribution_percent",
   "column_break_kiieu",
-  "provident_employee_contribution_percent"
+  "provident_employee_contribution_percent",
+  "salary_applicable_rules_section",
+  "apply_21st_to_20th_salary_rule"
  ],
  "fields": [
   {
@@ -83,12 +85,23 @@
    "fieldname": "provident_employee_contribution_percent",
    "fieldtype": "Data",
    "label": "Provident Employee Contribution Percent"
+  },
+  {
+   "default": "0",
+   "fieldname": "apply_21st_to_20th_salary_rule",
+   "fieldtype": "Check",
+   "label": "Apply 21st to 20th Salary Rule"
+  },
+  {
+   "fieldname": "salary_applicable_rules_section",
+   "fieldtype": "Section Break",
+   "label": "Salary Applicable Rules"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-15 18:58:24.917628",
+ "modified": "2025-05-19 17:42:11.836839",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "AKF Payroll Settings",

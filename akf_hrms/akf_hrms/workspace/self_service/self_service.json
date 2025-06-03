@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"yCBK0YJSlQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Self Service Dashboard\",\"col\":12}},{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"nJJs2f5Ufu\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"zn2N0061BM\",\"type\":\"card\",\"data\":{\"card_name\":\"Leaves\",\"col\":4}},{\"id\":\"y4Ebr3XjZd\",\"type\":\"card\",\"data\":{\"card_name\":\"Absent Days Report\",\"col\":4}},{\"id\":\"tx9pdL4iep\",\"type\":\"card\",\"data\":{\"card_name\":\"Material Request\",\"col\":4}}]",
+ "content": "[{\"id\":\"yCBK0YJSlQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Self Service Dashboard\",\"col\":12}},{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"nJJs2f5Ufu\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"zn2N0061BM\",\"type\":\"card\",\"data\":{\"card_name\":\"Leaves\",\"col\":4}},{\"id\":\"y4Ebr3XjZd\",\"type\":\"card\",\"data\":{\"card_name\":\"Absent Days Report\",\"col\":4}},{\"id\":\"tx9pdL4iep\",\"type\":\"card\",\"data\":{\"card_name\":\"Material Request\",\"col\":4}},{\"id\":\"Ify1l7Via1\",\"type\":\"card\",\"data\":{\"card_name\":\"Expenses\",\"col\":4}},{\"id\":\"xpwIDCOl_m\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Current Job Openings\",\"col\":4}}]",
  "creation": "2024-10-17 11:28:57.774003",
  "custom_blocks": [
   {
@@ -141,9 +141,48 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Expenses",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Travel Request",
+   "link_count": 0,
+   "link_to": "Travel Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Expense Claim",
+   "link_count": 0,
+   "link_to": "Expense Claim",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Overtime Claim Form",
+   "link_count": 0,
+   "link_to": "Overtime Claim Form",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2024-12-31 20:23:09.572230",
+ "modified": "2025-04-15 19:39:15.718859",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Self Service",
@@ -156,6 +195,11 @@
    "document_type": "Attendance",
    "label": "Attendance",
    "quick_list_filter": "[[\"Attendance\",\"docstatus\",\"=\",\"1\",false]]"
+  },
+  {
+   "document_type": "Job Opening",
+   "label": "Current Job Openings",
+   "quick_list_filter": "[[\"Job Opening\",\"status\",\"=\",\"Open\",false]]"
   },
   {
    "document_type": "Leave Application",

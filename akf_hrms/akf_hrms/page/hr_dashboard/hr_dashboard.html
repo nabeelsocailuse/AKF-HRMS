@@ -213,6 +213,26 @@
                     </div>
                 </div>
 
+                <div class=" col-md-4   ">
+                    <div class="card">
+                        <div class="card-body">
+                            <div>
+                                <h3 class=" card-title mb-0">
+                                    <span class="amountCounter">
+                                        {% if exempted %}
+                                            {{exempted}}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </span>
+                                </h3>
+
+                            </div>
+                            <span class="fw-semibold d-block mb-1">Exempted</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
         <div class="col-md-6 ">

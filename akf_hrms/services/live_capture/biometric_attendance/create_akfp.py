@@ -10,20 +10,53 @@ def create_attendance_log(**kwargs):
 	_insert_attedance_log(kwargs)
 
 def _insert_attedance_log(kwargs):
+	device_id = kwargs["device_id"]
+	device_ip = kwargs["device_ip"]
+	device_port = kwargs["device_port"]
+	attendance_date = getdate(kwargs["attendance_date"])
+	log = get_datetime(kwargs["log"])
 	try:
-		frappe.get_doc({
+		args = frappe._dict({
 			"doctype": "Attendance Log",
-			"device_id": kwargs['device_id'],
-			"device_ip": kwargs["device_ip"],
-			"device_port": kwargs["device_port"],
-			"attendance_date": getdate(kwargs['attendance_date']),
-			"log": get_datetime(kwargs['log'])
-		}).save(ignore_permissions=True)
-		# frappe.db.commit()
+			"device_id": device_id,
+			"device_ip": device_ip,
+			"device_port": device_port,
+			"attendance_date": attendance_date,
+			"log_from": "Live",
+			"log": log
+		})
+		args = set_employee_and_shift_type(args)
+		frappe.get_doc(args).save(ignore_permissions=True)
+		frappe.db.commit()
+
+	except frappe.DoesNotExistError as e:
+		frappe.log_error(f"Employee not found {device_id}:{device_port} : {str(e)}", "Attendance Error (_insert_attedance_log)")
 	except Exception as e:
-		return e
+		frappe.log_error(f"Error in {device_id}:{device_port} : {str(e)}", "Attendance Error (_insert_attedance_log)")
 
 
+def set_employee_and_shift_type(args):
+	result = frappe.db.sql(f""" 
+				select 
+					e.name,
+					(Select shift_type from `tabShift Assignment` where docstatus=1 and status="Active" and employee=e.name order by start_date limit 1) as shift_type
+				from 
+					`tabEmployee` e inner join `tabZK IP Detail` zk on (e.branch=zk.branch)
+				where 
+					attendance_device_id='{args.device_id}' and zk.device_ip = '{args.device_ip}'
+				group by 
+					e.attendance_device_id
+			""", as_dict=1)
+	if(not result):
+		raise frappe.DoesNotExistError(f"Employee with device-id: {args.device_id}, & device-ip: {args.device_ip}. Not found!")
+	
+	for d in result:
+		args.update({
+			"employee":  d.name,
+			"shift": d.shift_type
+		})
+	
+	return args
 
 
 """ from __future__ import unicode_literals
@@ -45,20 +78,26 @@ def create_attendance(**kwargs):
 		'log': kwargs['log'],
 		'doctype': 'Attendance Log'
 	}
-	frappe.get_doc(args).insert() """
+	frappe.get_doc(args).insert()
 
 def changePath():
 	import subprocess, os, json
 	os.chdir('/home/ubuntu/frappe-alkhidmat/')
 	print("Changed directory to /lib/systemd/system/")
 	 # Define the args as a dictionary
-	args = {'id': 1, 'name': 'nabeel'}
+	args = {
+		"device_id": "811", 
+		"device_ip": "10.0.7.201", 
+		"device_port": 4370, 
+		"attendance_date": "2025-05-29", 
+		"log": "2025-05-29 15:28:01"
+    }
 
 	# Convert args to JSON string
 	args_json = json.dumps(args)
- 
+	
 	command = ["bench", "--site", "erp.alkhidmat.org", 
-			"execute", "akf_hrms.services.live_capture.biometric_attendance.create_akfp.checkParams",
+			"execute", "akf_hrms.services.live_capture.biometric_attendance.create_akfp.create_attendance_log",
 			"--kwargs", args_json  # Use --kwargs to pass JSON-formatted arguments
 			]
 	# Run the command
@@ -67,7 +106,6 @@ def changePath():
 	print("Command Output:", output.stdout)
 
 def checkParams(**kwargs):
-    print(type(kwargs))
-
-
-# bench --site erp.alkhidmat.org execute akf_hrms.services.live_capture.biometric_attendance.create_akfp.test_jobs_in_background
+    print(kwargs)
+"""
+# bench --site erp.alkhidmat.org execute akf_hrms.services.live_capture.biometric_attendance.create_akfp.changePath

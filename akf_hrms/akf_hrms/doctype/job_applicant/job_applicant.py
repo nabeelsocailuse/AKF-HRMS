@@ -56,11 +56,17 @@ class JobApplicant(Document):
 		elif self.status in ["Accepted", "Rejected"]:
 			emp_ref.db_set("status", self.status)
 
-	def calculate_age(self): 	# Mubashir Bashir
+	def calculate_age(self):  # Mubashir Bashir
 		if self.custom_date_of_birth:
-			birth_date = datetime.strptime(self.custom_date_of_birth, "%Y-%m-%d").date()
+			birth_date = (
+				datetime.strptime(self.custom_date_of_birth, "%Y-%m-%d").date()
+				if isinstance(self.custom_date_of_birth, str)
+				else self.custom_date_of_birth
+			)
+
 			today = date.today()
 			self.custom_age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+
 
 @frappe.whitelist()
 def create_interview(doc, interview_round):

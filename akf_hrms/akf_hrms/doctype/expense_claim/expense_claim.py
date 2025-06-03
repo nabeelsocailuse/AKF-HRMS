@@ -19,6 +19,14 @@ from hrms.mixins.pwa_notifications import PWANotificationsMixin
 from frappe.utils import today
 from datetime import datetime, timedelta
 
+# Mubarrim, April 18-2025
+from akf_hrms.akf_hrms.doctype.expense_claim.one_day_salary import get_one_day_salary
+
+# Nabeel Saleem, May 16'2025
+from akf_hrms.utils.expense_claim_utils import (
+	set_next_workflow_approver,
+	record_workflow_approver_states
+)
 
 class InvalidExpenseApproverError(frappe.ValidationError):
 	pass
@@ -36,8 +44,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 	def after_insert(self):
 		self.notify_approver()
+		set_next_workflow_approver(self)
+		# record_workflow_approver_states(self) # nabeel saleem on 21-05-2025
 
-    #Override
+	#Override
 	def validate(self):
 		if(self.travel_request):
 			self.validate_travel_dates()
@@ -58,7 +68,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		validate_active_employee(self.employee)
 		set_employee_name(self)
 		self.validate_sanctioned_amount()
-		self.validate_medical_expenses()  # Mubashir Bashir 24-01-25
+		self.validate_medical_expenses()	# Mubashir Bashir 24-01-25
 		self.calculate_total_amount()
 		self.validate_advances()
 		self.set_expense_account(validate=True)
@@ -70,6 +80,9 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			self.project = frappe.db.get_value("Task", self.task, "project")
 		# nabeel saleem, 19-12-2024	
 		self.validate_and_set_vehicle_expense()
+		# nabeel saleem, 16-05-2025
+		set_next_workflow_approver(self)
+		# if(not self.is_new()): record_workflow_approver_states(self)
 
 	def set_status(self, update=False):
 		status = {"0": "Draft", "1": "Submitted", "2": "Cancelled"}[cstr(self.docstatus or 0)]
@@ -105,6 +118,10 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			self.status = status
 
 	def on_update(self):
+		# Nabeel Saleem, 13-05-2025
+		if(hasattr(self, "workflow_state")):
+			if(self.docstatus==1):
+				self.approval_status="Approved"
 		share_doc_with_approver(self, self.expense_approver)
 		self.publish_update()
 		self.notify_approval_status()
@@ -130,7 +147,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		if not self.cost_center:
 			self.cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
 
-    #Override
+	#Override
 	def on_submit(self):
 		if(self.travel_request):
 			self.validate_travel_dates()
@@ -395,57 +412,6 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					_("Sanctioned Amount cannot be greater than Claim Amount in Row {0}.").format(d.idx)
 				)
 
-
-	# def validate_medical_expense(self):			#Mubashir Bashir
-
-	# 	from akf_hrms.patches.skip_validations import skip
-	# 	if(skip()):
-	# 		# frappe.msgprint("Validation is skipped") 
-	# 		return
-
-	# 	social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
-	# 	employee_doc = frappe.get_doc("Employee", self.employee)
-	# 	branch = employee_doc.branch
-	# 	employment_type = employee_doc.employment_type
-
-		
-	# 	salary_structure = frappe.db.sql("""
-	# 		SELECT base 
-	# 		FROM `tabSalary Structure Assignment`
-	# 		WHERE docstatus = 1 AND employee = %s
-	# 		ORDER BY from_date DESC
-	# 		LIMIT 1
-	# 	""", (self.employee), as_dict=True)
-
-	# 	if not salary_structure:
-	# 		frappe.throw(_("No Salary Structure Assignment found for the employee."))
-
-	# 	current_salary = salary_structure[0].get('base', 0)
-
-	# 	# frappe.msgprint(f'ss {social_security_amount}, branch {branch}, company {self.company}, emp type {employment_type}, emp {self.employee}, cur salary {current_salary}')
-
-		
-	# 	if (self.company == "Alkhidmat Foundation Pakistan" and 
-	# 		branch == "Central Office" and 
-	# 		employment_type == "Permanent" and 
-	# 		current_salary > social_security_amount):
-
-	# 		max_reimbursement = max(current_salary * 2, 50000)
-			
-	# 		medical_amount = 0  
-	# 		for d in self.get("expenses"):
-	# 			if d.expense_type == 'Medical':
-	# 				medical_amount += d.amount
-	# 		# Calculate the 60% of the claimed amount.
-	# 		allowed_reimbursement = min(medical_amount * 0.6, max_reimbursement)
-
-	# 		if allowed_reimbursement > max_reimbursement:
-	# 			frappe.throw(
-	# 				_("The medical expense for {0} cannot exceed 60% of the total claim, "
-	# 				"up to a maximum of {1}. Please adjust the amount.")
-	# 				.format(d.expense_type, frappe.format_value(allowed_reimbursement, "Currency"))
-	# 			)
-
 	def validate_medical_expenses(self):	# Mubashir Bashir 24-01-25 Start
 
 		from akf_hrms.patches.skip_validations import skip
@@ -491,7 +457,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		""", frappe.utils.today(), as_dict=True)[0]
 
 		previous_reimbursements = frappe.db.sql("""
-		SELECT child.expense_type, SUM(child.amount * 0.6) as reimbursed_amount
+		SELECT child.expense_type, SUM(child.amount * 0.8) as reimbursed_amount
 		FROM `tabExpense Claim` parent
 		JOIN `tabExpense Claim Detail` child ON parent.name = child.parent
 		WHERE parent.employee = %s
@@ -517,7 +483,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				elif d.expense_type == 'Artificial Limbs':
 					max_reimbursement = 45000
 
-				current_allowed = min(d.amount * 0.6, max_reimbursement)					
+				current_allowed = min(d.amount * 0.8, max_reimbursement)					
 				previous_amount = previous_claims.get(d.expense_type, 0)					
 				remaining_limit = max_reimbursement - previous_amount
 
@@ -546,7 +512,6 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					d.sanctioned_amount = current_allowed
 		# Mubashir Bashir 24-01-25 End
 
-
 	def set_expense_account(self, validate=False):
 		for expense in self.expenses:
 			if not expense.default_account or not validate:
@@ -554,74 +519,54 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					"account"
 				]
 				
-    # =================== > Custom Functions < =======================
+	# =================== > Custom Functions < =======================
 
-# Mubashir Bashir 15-01-2025 Start
 	def validate_ta_da_expense(self):
 		from akf_hrms.patches.skip_validations import skip
-		if(skip()):
+		if skip():
 			return
-		if (not self.grade):
+
+		if not self.grade:
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
-		if(self.ownership): return
+		if self.ownership:
+			return
 
-		# Mubashir Bashir 27-01-2025 Start
+		# Skip validation for these expense types
 		for e in self.expenses:
-			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']: return
-		# Mubashir Bashir 27-01-2025 End
+			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']:
+				return
 
-		travel_settings = frappe.get_all(
-			"Travel Expense Setting Table",
-			filters={"band": ["=", f"{self.grade}"]},
-			fields=["band", "daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
-		)
-
-		allowed_expenses = {}
-		expense_mapping = {
-			"Daily Allowance": "daily_allowance",
-			"Breakfast": "breakfast",
-			"Lunch": "lunch",
-			"Dinner": "dinner",
-			"Refrehment": "refrehment",
-			"Dinner (Late Sitting)": "dinner_late_sitting",
-			"Lunch (Off Day)": "lunch_off_day"
-		}
-
-		grade_defined = False
-		for setting in travel_settings:
-			band = setting.get("band")
-			if band and self.grade in band:
-				allowed_expenses = {expense_type: setting.get(field_name) for expense_type, field_name in expense_mapping.items()}
-				grade_defined = True
-				break
-
-		if not grade_defined:
-			frappe.throw(f"Please make settings for the grade '{self.grade}' in the Travel Expense Setting Table.")
-
-		error_messages = []  # Collect all error messages here
+		error_messages = []
 
 		for e in self.expenses:
-			allowed_amount = allowed_expenses.get(e.expense_type)
+			if not e.expense_type:
+				error_messages.append("Expense type is missing in one of the entries.")
+				continue
 
-			if allowed_amount is not None and allowed_amount.strip():  # Ensure the allowed amount is not empty or just whitespace  
-				try:
-					allowed_amount_float = float(allowed_amount)
-					expense_amount_float = float(e.amount)
+			ect_doc = frappe.get_doc("Expense Claim Type", e.expense_type)			
 
-					if expense_amount_float > allowed_amount_float:
-						error_messages.append(f"<b>{e.expense_type.upper()}</b> expense exceeds the allowed limit of {allowed_amount_float}. Please adjust the amount.")
-				except ValueError as ve:
-					error_messages.append(f"Error: Allowed amount for {e.expense_type} is not a valid number: {allowed_amount}. Error details: {ve}")
-				except TypeError as te:
-					error_messages.append(f"Error processing expense for {e.expense_type} {te}")
-				except Exception as ex:
-					error_messages.append(f"Unexpected error processing expense for **{e.expense_type}**: {ex}")
-			else:
-				error_messages.append(f"No allowed amount found for **{e.expense_type}**. Please check the settings.")
+			matched_row = next((row for row in ect_doc.expense_amounts if row.grade == self.grade), None)
+
+			if not matched_row:
+				error_messages.append(f"No amount defined for grade '{self.grade}' in Expense Claim Type '{e.expense_type}'.")
+				continue
+
+			try:
+				allowed_amount = float(matched_row.amount)
+				expense_amount = float(e.amount)
+
+				if e.expense_type == "Daily Allowance":
+					duty_hours, comp_off = self.get_travel_attendance()
+					if expense_amount > allowed_amount and comp_off < 2:
+						error_messages.append(f"<b>{e.expense_type.upper()}</b> exceeds the limit of {allowed_amount}. Comp off < 2.")
+				elif expense_amount > allowed_amount:
+					error_messages.append(f"<b>{e.expense_type.upper()}</b> exceeds the limit of {allowed_amount}.")
+
+			except Exception as ex:
+				error_messages.append(f"Error validating {e.expense_type}: {ex}")
 
 		if error_messages:
-			frappe.throw("<br>".join(error_messages))  # Throw all error messages at once, separated by new lines
-# Mubashir Bashir 15-01-2025 End	
+			frappe.throw("<br>".join(error_messages))
 
 	def validate_travel_dates(self):
 		query = f"""
@@ -664,8 +609,6 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 						if(expense.expense_date >= compensatory_leave_request[0].work_from_date and expense.expense_date <= compensatory_leave_request[0].work_end_date):
 							frappe.throw(f"You can't avail <b>Daily Allowance</b> against travel request: {self.travel_request}, as Compensatory Leave '{compensatory_leave_request[0].name}' already taken against '{expense.expense_date}'!")
 
-		
-
 	def validate_da(self):
 		expense_claim = frappe.db.sql(
 			"""
@@ -704,98 +647,98 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		if expense_claim:
 			frappe.throw(f"You can't apply twice for Expense Claim against travel request: {self.travel_request}")
 
-	def validate_travel_expenses(self): #by mubarrim
-
-		# Mubashir Bashir 27-01-2025 Start
+	def validate_travel_expenses(self): # Mubashir Bashir
 		for e in self.expenses:
-			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']: return
-		# Mubashir Bashir 27-01-2025 End
+			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']:
+				return
 
-		travel_settings = frappe.get_all(
-		"Travel Expense Setting Table",
-		filters={"band": ["=", f"{self.grade}"]},
-		fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
-	)
+		for expense in self.expenses:
+			if not expense.expense_type:
+				frappe.throw("Expense type is missing in one of the entries.")
 
-		expense_mapping = {
-			"Daily Allowance": "daily_allowance",
-			"Breakfast": "breakfast",
-			"Lunch": "lunch",
-			"Dinner": "dinner",
-			"Refrehment": "refrehment",
-			"Dinner (Late Sitting)": "dinner_late_sitting",
-			"Lunch (Off Day)": "lunch_off_day"
-		}
+			ect_doc = frappe.get_doc("Expense Claim Type", expense.expense_type)
 
-		for setting in travel_settings:
-			for expense in self.expenses:
-				if expense.expense_type in expense_mapping:
-					# amount = setting.get(expense_mapping[expense.expense_type]) commented by Mubashir 17-01-25
-					mapped_amount = setting.get(expense_mapping[expense.expense_type])	#Mubashir 17-01-25 Start
-					if mapped_amount is None:
-						frappe.throw(f"Amount not configured for expense type '{expense.expense_type}' in Travel Settings")					
-					amount = int(mapped_amount)			#Mubashir 17-01-25 End
-					# frappe.throw(f"{amount}")
-					if(expense.expense_type == "Daily Allowance"):
-						duty_hours = self.get_travel_attendance()
+			matched_row = next((row for row in ect_doc.expense_amounts if row.grade == self.grade), None)
 
-						if(duty_hours > 10):
-							pass
-						elif (duty_hours < 10 and duty_hours >= 6):
-							amount = int(amount)*0.5
-						elif (duty_hours < 6 and duty_hours >= 1):
-							amount = int(amount)*0.25
+			if not matched_row or matched_row.amount is None:
+				frappe.throw(f"Amount not configured for grade '{self.grade}' in Expense Claim Type '{expense.expense_type}'.")
 
-					if int(expense.amount) > int(amount):
-						frappe.throw(f"{expense.expense_type} amount for Grade '{self.grade}' can't exceed {amount}")
+			amount = float(matched_row.amount)
+			holiday = True
+
+			if expense.expense_type == "Daily Allowance":
+				duty_hours, comp_off = self.get_travel_attendance()
+				one_day_salary = get_one_day_salary(self.employee)
+				da = round(comp_off * one_day_salary, 2)
+
+				if comp_off > 1:
+					if duty_hours > 10:
+						amount = da
+						holiday = False
+					elif 6 <= duty_hours <= 10:
+						amount = (da * 0.5)
+						holiday = False
+					elif 1 <= duty_hours < 6:
+						amount = (da * 0.25)
+						holiday = False
+				else:
+					if duty_hours > 10:
+						amount = amount
+					elif 6 <= duty_hours <= 10:
+						amount *= 0.5
+					elif 1 <= duty_hours < 6:
+						amount *= 0.25
+
+			try:
+				if float(expense.amount) > float(amount) and holiday:
+					frappe.throw(f"{expense.expense_type} amount for Grade '{self.grade}' can't exceed {amount}")
+			except Exception as ex:
+				frappe.throw(f"Error validating expense '{expense.expense_type}': {ex}")
 
 	def get_travel_attendance(self):
 		duration = 0
+		comp_off = 1
 		for expense in self.expenses:
-			if(expense.expense_type == "Daily Allowance"):
-				query_result= frappe.db.sql(f"""SELECT	
-												att.custom_hours_worked
-											FROM 
-												`tabAttendance` att
-											LEFT JOIN 
-												`tabAttendance Request` ar ON ar.name = att.attendance_request
-											WHERE 
-												att.employee = '{self.employee}'
-												AND att.attendance_date = '{expense.expense_date}' 
-												AND ar.travel_request = '{self.travel_request}'
-												AND att.docstatus = 1 """ ,as_dict = 1)
+			holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
 
-				if(query_result):
-					dur = query_result[0].get('custom_hours_worked')
-				else:
-					frappe.throw(f"No attendance Record found against travel request '{self.travel_request}' for date '{expense.expense_date}'")
+			compensatory_off = frappe.db.sql("""
+				SELECT compensatory_leave
+				FROM `tabHoliday`
+				WHERE parent = %s AND holiday_date = %s
+			""", (holiday_list, expense.expense_date), as_dict=1)
 
-				# Mubashir 11-02-25 Start
-				dur = str(dur).strip()
-
-				try:
-					time_obj = datetime.strptime(dur, "%H:%M:%S.%f")
-				except ValueError:
-					time_obj = datetime.strptime(dur, "%H:%M:%S")
+			if compensatory_off:
+				comp_off = compensatory_off[0].get('compensatory_leave')
 				
-				# Mubashir 11-02-25 End
+			query_result = frappe.db.sql("""
+				SELECT att.in_time, att.out_time
+				FROM `tabAttendance` att
+				LEFT JOIN `tabAttendance Request` ar ON ar.name = att.attendance_request
+				WHERE att.employee = %s
+					AND att.attendance_date = %s
+					AND ar.travel_request = %s
+					AND att.docstatus = 1
+			""", (self.employee, expense.expense_date, self.travel_request), as_dict=1)
 
-				# Extract hours, minutes, and seconds
-				hours = time_obj.hour
-				minutes = time_obj.minute
-				seconds = time_obj.second
+			if not query_result:
+				frappe.throw(f"No attendance Record found against travel request '{self.travel_request}' for date '{expense.expense_date}'")
+			
+			attendance = query_result[0]
+			in_time_str = attendance.get('in_time')
+			out_time_str = attendance.get('out_time')
 
-				# Convert the entire time into hours as a float
-				time_in_hours = hours + minutes / 60 + seconds / 3600
+			if not in_time_str or not out_time_str:
+				frappe.throw(f"In Time or Out Time missing for date '{expense.expense_date}'")
 
-				duration += time_in_hours
+			in_time = in_time_str if isinstance(in_time_str, datetime) else datetime.strptime(in_time_str, "%Y-%m-%d %H:%M:%S")
+			out_time = out_time_str if isinstance(out_time_str, datetime) else datetime.strptime(out_time_str, "%Y-%m-%d %H:%M:%S")
 
-		# frappe.throw(f"duration: {time_in_hours}")
+			time_diff = out_time - in_time
+			time_in_hours = time_diff.total_seconds() / 3600
+			duration += time_in_hours
 		
-		return duration
-
-
-
+		return duration, int(comp_off)
+	
 	@frappe.whitelist()
 	def validate_expenses_table(self):
 		types = {d.expense_type:[] for d in self.expenses}
@@ -805,56 +748,52 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 					frappe.throw(f"You are not allowed to take <b>{d.expense_type}</b> on '{formatdate(d.expense_date)}' twice!")
 				else:
 					types[d.expense_type].append(d.expense_date)
-	
+
 	@frappe.whitelist()
-	def get_travel_expense_amount(self, expense_type):
-		if(not self.grade):
+	def get_travel_expense_amount(self):
+		if not self.grade:
 			frappe.throw("Grade is not set. Please provide a valid grade to proceed with the validation.")
 		
-		# Mubashir Bashir 27-01-2025 Start
-		for e in self.expenses:
-			if e.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']: return
-		# Mubashir Bashir 27-01-2025 End
-		
-		travel_settings = frappe.get_all(
-			"Travel Expense Setting Table",
-			filters={"band": ["=", f"{self.grade}"]},
-			fields=["daily_allowance", "breakfast", "lunch", "dinner", "refrehment", "dinner_late_sitting", "lunch_off_day"]
-		)
+		for d in self.expenses:
 
-		if(travel_settings):
-			expense_mapping = {
-				"Daily Allowance": "daily_allowance",
-				"Breakfast": "breakfast",
-				"Lunch": "lunch",
-				"Dinner": "dinner",
-				"Refrehment": "refrehment",
-				"Dinner (Late Sitting)": "dinner_late_sitting",
-				"Lunch (Off Day)": "lunch_off_day"
-			}
-			
-			for setting in travel_settings:
-				if expense_type in expense_mapping:
-					amount = setting.get(expense_mapping[expense_type])
-					if(amount):
-						if(expense_type == 'Daily Allowance'):
-							duty_hours = self.get_travel_attendance()
-							if(duty_hours > 10):
-								pass
-							elif (duty_hours < 10 and duty_hours >= 6):
-								amount = int(amount)*0.5
-								return {"amount": amount}
-							
-							elif (duty_hours < 6 and duty_hours >= 1):
-								amount = int(amount)*0.25
-								return {"amount": amount}
+			if d.expense_type in ['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs']:
+				return
 
-						return {"amount": int(amount)}
+			ect_doc = frappe.get_doc("Expense Claim Type", d.expense_type)
+
+			matched_row = next((row for row in ect_doc.expense_amounts if row.grade == self.grade), None)
+
+			if not matched_row or matched_row.amount is None:
+				frappe.throw(f"Amount is not defined for grade '{self.grade}' in Expense Claim Type '{d.expense_type}'.")
+
+			try:
+				amount = float(matched_row.amount)
+
+				if d.expense_type == 'Daily Allowance':
+					duty_hours, comp_off = self.get_travel_attendance()
+					one_day_salary = get_one_day_salary(self.employee)
+					da = round(comp_off * one_day_salary, 2)
+
+					if comp_off > 1:
+						if duty_hours > 10:
+							amount = da
+						elif 6 <= duty_hours <= 10:
+							amount = (da * 0.5)
+						elif 1 <= duty_hours < 6:
+							amount = (da * 0.25)
 					else:
-						frappe.throw(f"Amount is not defined for '{expense_type}' in Travel Expense Setting!")
-		else:
-			frappe.throw(f"Amount is not defined in Travel Expense Setting for Grade: {self.grade}!")	
-	
+						if duty_hours > 10:
+							amount = amount
+						elif 6 <= duty_hours <= 10:
+							amount *= 0.5
+						elif 1 <= duty_hours < 6:
+							amount *= 0.25
+
+					d.amount = d.sanctioned_amount = round(amount, 2)
+
+			except Exception as ex:
+				frappe.throw(f"Error calculating amount for '{d.expense_type}': {ex}")
+
 	# nabeel saleem, 19-12-2024	
 	@frappe.whitelist()
 	def validate_and_set_vehicle_expense(self):
@@ -872,9 +811,103 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 						d.sanctioned_amount = d.amount
 			if(ownership_not_found):
 				frappe.throw(f"Please select, `Vehicle Expense` expenses table.", title="Expenses Table")
-# ================================================================================================================================================== #
-# ================================================================================================================================================== #
 
+	@frappe.whitelist()
+	def get_medical_expenses_amount(self):			
+		social_security_amount = frappe.db.get_single_value('AKF Payroll Settings', 'social_security_amount')
+		employee_doc = frappe.get_doc("Employee", self.employee)
+		branch = employee_doc.branch
+		employment_type = employee_doc.employment_type
+		employment_status = employee_doc.status
+				
+		salary_structure = frappe.db.sql("""
+			SELECT base
+			FROM `tabSalary Structure Assignment`
+			WHERE docstatus = 1 AND employee = %s
+			ORDER BY from_date DESC
+			LIMIT 1
+		""", (self.employee), as_dict=True)
+
+		if not salary_structure:
+			frappe.throw(_("No Salary Structure Assignment found for the employee."))
+
+		current_salary = salary_structure[0].get('base', 0)
+
+		for d in self.get("expenses"):
+			if (d.expense_type in ['Medical', 'Vision Support Equipment', 
+				'Hearing Support Equipment', 'Artificial Limbs'] and not
+				(self.company == "Alkhidmat Foundation Pakistan" and
+				branch == "Central Office" and
+				employment_type == "Permanent" and
+				employment_status == "Active" and
+				current_salary > social_security_amount)):
+				frappe.throw(_(
+					"Only permanent employees in the Central Office with a current salary greater than the social security amount are eligible for {0} expense reimbursement."
+				).format(d.expense_type), title=_("Not Eligible"))		
+
+		current_fiscal_year = frappe.db.sql("""
+		SELECT name, year_start_date, year_end_date
+		FROM `tabFiscal Year`
+		WHERE %s BETWEEN year_start_date AND year_end_date
+		LIMIT 1
+		""", frappe.utils.today(), as_dict=True)[0]
+
+		previous_reimbursements = frappe.db.sql("""
+		SELECT child.expense_type, SUM(child.amount * 0.8) as reimbursed_amount
+		FROM `tabExpense Claim` parent
+		JOIN `tabExpense Claim Detail` child ON parent.name = child.parent
+		WHERE parent.employee = %s
+		AND parent.docstatus = 1
+		AND parent.posting_date BETWEEN %s AND %s
+		AND parent.name != %s
+		GROUP BY child.expense_type
+		""", (self.employee, current_fiscal_year.year_start_date, 
+		current_fiscal_year.year_end_date, self.name), as_dict=True)
+		
+		previous_claims = {d.expense_type: d.reimbursed_amount for d in previous_reimbursements}
+
+		for d in self.get("expenses"):
+			if d.expense_type in ['Medical', 'Vision Support Equipment', 
+				'Hearing Support Equipment', 'Artificial Limbs']:
+				
+				if d.expense_type == 'Medical':
+					max_reimbursement = max(current_salary * 2, 50000)
+				elif d.expense_type == 'Vision Support Equipment':
+					max_reimbursement = 1000
+				elif d.expense_type == 'Hearing Support Equipment':
+					max_reimbursement = 18000
+				elif d.expense_type == 'Artificial Limbs':
+					max_reimbursement = 45000
+
+				current_allowed = min(d.amount * 0.8, max_reimbursement)					
+				previous_amount = previous_claims.get(d.expense_type, 0)					
+				remaining_limit = max_reimbursement - previous_amount
+
+				if remaining_limit <= 0:
+					frappe.throw(_(
+						"You have already reached the maximum reimbursement limit of {0} "
+						"for {1} in this fiscal year ({2})."
+					).format(
+						frappe.format_value(max_reimbursement, "Currency"),
+						d.expense_type,
+						current_fiscal_year.name
+					))
+
+				if current_allowed > remaining_limit:
+					frappe.throw(_(
+						"The medical expense for {0} cannot exceed {1} "
+						"(Remaining limit for fiscal year {2}). "
+						"You have already claimed {3} this fiscal year."
+					).format(
+						d.expense_type,
+						frappe.format_value(remaining_limit, "Currency"),
+						current_fiscal_year.name,
+						frappe.format_value(previous_amount, "Currency")
+					))
+				else:
+					d.sanctioned_amount = current_allowed
+# ================================================================================================================================================== #
+# ================================================================================================================================================== #
 
 
 def update_reimbursed_amount(doc):
@@ -1124,8 +1157,8 @@ def get_employee_details():
 			"gender":emp_details.gender,
 			"employment_type":emp_details.employment_type,
 			"custom_reports_to_line_manager_name": emp_details.custom_reports_to_line_manager_name,
-            "latest_education_level": latest_qualification if latest_qualification else "No education record"
-        }
+			"latest_education_level": latest_qualification if latest_qualification else "No education record"
+		}
 	else:
 		return {
 			"message": "No record exists."
@@ -1134,92 +1167,92 @@ def get_employee_details():
 
 @frappe.whitelist()
 def get_employee_date():
-    user_id = frappe.session.user
-    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
-    
-    if employee:
-      
-        name = employee[0]['name']  
-        return {
-            "name": name,
-            "date": today()  
-        }
-    else:
-         return {
-            "message": "No Leave Record exists."
-        }
+	user_id = frappe.session.user
+	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+	
+	if employee:
+	  
+		name = employee[0]['name']  
+		return {
+			"name": name,
+			"date": today()  
+		}
+	else:
+		 return {
+			"message": "No Leave Record exists."
+		}
 
 
 
 @frappe.whitelist()
 def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
-    user_id = frappe.session.user
-    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+	user_id = frappe.session.user
+	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
 
-    if employee:
-        employee_name = employee[0].name
-        today = datetime.now()
-        
-        # Calculate the start_date (from_date)
-        day = today.day
-        if day > 20:
-            start_date = datetime(today.year, today.month, 21)
-        else:
-            if today.month == 1:  # Handle January edge case
-                start_date = datetime(today.year - 1, 12, 21)
-            else:
-                start_date = datetime(today.year, today.month - 1, 21)
+	if employee:
+		employee_name = employee[0].name
+		today = datetime.now()
+		
+		# Calculate the start_date (from_date)
+		day = today.day
+		if day > 20:
+			start_date = datetime(today.year, today.month, 21)
+		else:
+			if today.month == 1:  # Handle January edge case
+				start_date = datetime(today.year - 1, 12, 21)
+			else:
+				start_date = datetime(today.year, today.month - 1, 21)
 				
 
-        start_date = start_date.date()  
+		start_date = start_date.date()  
 
-        attendance_logs = frappe.db.sql(
-            """
-            SELECT attendance_date 
-            FROM `tabAttendance`
-            WHERE employee = %s 
-            AND attendance_date BETWEEN %s AND %s 
-            AND docstatus = 1 
-            AND status IN ('Present', 'Half Day', 'Work From Home') 
-            AND ((in_time IS NULL AND out_time IS NOT NULL) OR (out_time IS NULL AND in_time IS NOT NULL))
-            """,
-            (employee_name, start_date, today),
-            as_dict=True
-        )
-        
-        attended_dates = {log.attendance_date for log in attendance_logs}
-        
-        request_statuses_to_exclude = [
-            'Pending', 
-            'Approved by the Line Manager', 
-            'Approved by the Head of Department'
-        ]
+		attendance_logs = frappe.db.sql(
+			"""
+			SELECT attendance_date 
+			FROM `tabAttendance`
+			WHERE employee = %s 
+			AND attendance_date BETWEEN %s AND %s 
+			AND docstatus = 1 
+			AND status IN ('Present', 'Half Day', 'Work From Home') 
+			AND ((in_time IS NULL AND out_time IS NOT NULL) OR (out_time IS NULL AND in_time IS NOT NULL))
+			""",
+			(employee_name, start_date, today),
+			as_dict=True
+		)
+		
+		attended_dates = {log.attendance_date for log in attendance_logs}
+		
+		request_statuses_to_exclude = [
+			'Pending', 
+			'Approved by the Line Manager', 
+			'Approved by the Head of Department'
+		]
 
-        pending_request_dates = frappe.db.get_all(
-            "Attendance Request",
-            filters={
-                'employee': employee_name,
-                'custom_approval_status': ['in', request_statuses_to_exclude],
-                'from_date': ['between', [start_date, today]]
-            },
-            fields=['from_date']
-        )
-        pending_dates_set = {request.from_date for request in pending_request_dates}
-        
-        missing_attendance_dates = [
-            date for date in attended_dates
-            if date not in pending_dates_set
-        ]
-        
-        # limited_missing_dates = missing_attendance_dates[-5:]  
-        formatted_dates = [date for date in missing_attendance_dates]
+		pending_request_dates = frappe.db.get_all(
+			"Attendance Request",
+			filters={
+				'employee': employee_name,
+				'custom_approval_status': ['in', request_statuses_to_exclude],
+				'from_date': ['between', [start_date, today]]
+			},
+			fields=['from_date']
+		)
+		pending_dates_set = {request.from_date for request in pending_request_dates}
+		
+		missing_attendance_dates = [
+			date for date in attended_dates
+			if date not in pending_dates_set
+		]
+		
+		# limited_missing_dates = missing_attendance_dates[-5:]  
+		formatted_dates = [date for date in missing_attendance_dates]
 
-        if not formatted_dates:
-            return {"message": "All attendance marked for the last 30 days."}
-        else:
-            return {"missing_attendance_dates": formatted_dates}
-    else:
-        return {"message": "Employee not found."}
+		if not formatted_dates:
+			return {"message": "All attendance marked for the last 30 days."}
+		else:
+			return {"missing_attendance_dates": formatted_dates}
+	else:
+		return {"message": "Employee not found."}
 
 
 @frappe.whitelist()
@@ -1247,33 +1280,33 @@ def get_employee_salary():			#Mubashir Bashir
 	
 @frappe.whitelist()
 def get_employee_dependents():				#Mubashir Bashir
-    user_id = frappe.session.user
-    
-    employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
+	user_id = frappe.session.user
+	
+	employee = frappe.db.get_all('Employee', filters={'user_id': user_id}, fields=['name'])
 
-    if not employee:
-        return []
+	if not employee:
+		return []
 
-    employee_name = employee[0].get('name')
+	employee_name = employee[0].get('name')
 
-    dependents = frappe.db.get_all(
-        'Employee Dependents',
-        filters={'parent': employee_name},
-        fields=['dependent_name', 'mobile_number', 'relation', 'cnic'],
+	dependents = frappe.db.get_all(
+		'Employee Dependents',
+		filters={'parent': employee_name},
+		fields=['dependent_name', 'mobile_number', 'relation', 'cnic'],
 		limit = 2
-    )
+	)
 
-    return dependents
+	return dependents
 
 @frappe.whitelist()
 def create_additional_salary_for_expense_claim(self):
-    if (self.approval_status == "Approved"):
-        additional_salary = frappe.new_doc("Additional Salary")
-        additional_salary.employee = self.employee
-        additional_salary.company = self.company
-        additional_salary.payroll_date = self.posting_date
-        additional_salary.amount = self.grand_total
-        additional_salary.salary_component = "Expense Claim"
-        additional_salary.overwrite_salary_structure_amount = 0
-        additional_salary.insert()
-        additional_salary.submit()
+	if (self.approval_status == "Approved"):
+		additional_salary = frappe.new_doc("Additional Salary")
+		additional_salary.employee = self.employee
+		additional_salary.company = self.company
+		additional_salary.payroll_date = self.posting_date
+		additional_salary.amount = self.grand_total
+		additional_salary.salary_component = "Expense Claim"
+		additional_salary.overwrite_salary_structure_amount = 0
+		additional_salary.insert()
+		additional_salary.submit()

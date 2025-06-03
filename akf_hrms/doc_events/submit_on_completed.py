@@ -10,5 +10,5 @@ def submit_on_complete(doc, method=None):
     for d in doc.activities:
         if not d.custom_completed:
             frappe.throw(
-                f"Not allowed to Submit unless all the all the tasks are completed and 'Mark as Completed' is pressed"
+                f"Not allowed to Submit unless all the tasks are completed and 'Mark as Completed' is pressed"
             )

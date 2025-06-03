@@ -145,14 +145,14 @@ class LoanApplication(Document):
 					frappe.throw("Posting date is required.")
 
 		# def validations(self):		# Mubashir Bashir Start 13-11-2024
-		if self.loan_product == "Vehicle Loan" or self.loan_product == "Bike Loan":
+		if self.loan_product == "Car Loan" or self.loan_product == "Bike Loan":
 
 			today = datetime.now()
 			required_experience_days = 730  
 
 			permanent_employee = frappe.db.get_value("Employee", {"name": self.applicant}, "employment_type")
 
-			if self.loan_product == "Vehicle Loan" and frappe.db.exists("Loan Application", {
+			if self.loan_product == "Car Loan" and frappe.db.exists("Loan Application", {
 				"applicant": self.applicant, 
 				"docstatus": 1
 			}):
@@ -240,7 +240,7 @@ class LoanApplication(Document):
     
 	# nabeel saleem, 19-12-2024
 	def validate_loan_amount_not_exceed_to_max_loan_amount(self):
-		if(self.loan_product in ['Vehicle Loan', 'Bike Loan']):
+		if(self.loan_product in ['Car Loan', 'Bike Loan']):
 			if(self.custom_maximum_allowed_loan and self.loan_amount):
 				if(float(self.loan_amount) > float(self.custom_maximum_allowed_loan)):
 					frappe.throw(f"Loan amount: <b>{fmt_money(self.loan_amount)}</b> is exceeding the maximum allowed loan: <b>{fmt_money(self.custom_maximum_allowed_loan)}</b>.", title="Loan Conflict")
@@ -255,7 +255,7 @@ class LoanApplication(Document):
 			"O-1", "O-2", "O-3", "O-4", "PC-1", "S-1", "S-2", "S-3", "X-1"
 		]
 
-		if self.loan_product in ["Vehicle Loan", "Bike Loan"]:		
+		if self.loan_product in ["Car Loan", "Bike Loan"]:		
 			employee = frappe.get_doc("Employee", self.applicant)
 			employment_type = employee.employment_type
 			grade = employee.grade
@@ -267,7 +267,7 @@ class LoanApplication(Document):
 			two_years_experience_days = 730
 			three_years_experience_days = 1095
 
-			if self.loan_product == "Vehicle Loan" and frappe.db.exists("Loan Application", {
+			if self.loan_product == "Car Loan" and frappe.db.exists("Loan Application", {
 				"applicant": self.applicant,
 				"docstatus": 1
 			}):
@@ -283,7 +283,7 @@ class LoanApplication(Document):
 				required_experience_days = two_years_experience_days
 
 			if grade in ["A-1", "A-3", "A-4", "A-5", "A-6", "B-1", "B-2", "B-3", "C-1", "C-2", "Contractual - Part time", "D-1", "D-2", "D-3", "Data Management Officer", "F-1", "F-2", "F-3", "G-1", "G-2", "G-3", "G-4", "G-5", "G-8"]:
-				if self.loan_product == "Vehicle Loan":
+				if self.loan_product == "Car Loan":
 					frappe.throw("Employees below grade M-3 are only eligible for a Bike Loan.")
 
 			# Validate guarantors' experience and loan application statuses
@@ -330,7 +330,7 @@ class LoanApplication(Document):
 				frappe.throw(f"Applicant should have at least {experience_years} years of experience for this loan.")
 			
 	def check_overall_loan_limit(self):
-		if self.loan_product == "Vehicle Loan" or self.loan_product == "Bike Loan":
+		if self.loan_product == "Car Loan" or self.loan_product == "Bike Loan":
 			loan_product_doc = frappe.get_doc("Loan Product", self.loan_product)
 
 			latest_fiscal_year = None

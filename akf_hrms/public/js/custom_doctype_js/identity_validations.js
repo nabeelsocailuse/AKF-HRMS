@@ -24,7 +24,15 @@ frappe.ui.form.on('Employee', {
     custom_country: function(frm) {
         frm.set_value("custom_cnic", "");
         custom_country_change(frm);
-    }
+    },
+    // custom_current_role: function(frm){
+    //     frappe.call({
+    //         method: "akf_hrms.utils.employee_utils.validate_current_role",
+    //         args:{
+
+    //         },
+    //     })
+    // }
 });
 
 function set_queries(frm){

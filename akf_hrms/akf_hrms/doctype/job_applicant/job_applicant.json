@@ -17,6 +17,7 @@
   "country",
   "column_break_3",
   "job_title",
+  "job_name",
   "designation",
   "status",
   "source_and_rating_section",
@@ -97,7 +98,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Open\nReplied\nRejected\nHold",
+   "options": "Open\nReplied\nAccepted\nRejected\nHold\nLonglisted\nShortlisted",
    "reqd": 1
   },
   {
@@ -199,13 +200,20 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fetch_from": "job_title.job_title",
+   "fieldname": "job_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Job Name"
   }
  ],
  "icon": "fa fa-user",
  "idx": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-10 12:40:50.086090",
+ "modified": "2025-04-15 20:34:43.311043",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Job Applicant",

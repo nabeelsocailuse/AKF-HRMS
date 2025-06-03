@@ -23,19 +23,18 @@ def get_columns():
 		_("Mobile Allowance") + ":Data:180",
 		_("CNIC") + ":Data:120",
 		_("Contact") + ":Data:120",
+		_("Issue Date") + ":Date:120",
+		_("Balance on Issue") + ":Data:120",
+		_("Return Date") + ":Date:120",
+		_("Balance on Return") + ":Data:120",
 	]
+
 
 def get_data(filters):
     conditions = get_condition(filters)    
     query = """ 
         SELECT
-            e.name, 
-            e.employee_name, 
-            e.branch, 
-            e.department, 
-            e.designation, 
-            e.employment_type, 
-            e.grade,
+            e.name, e.employee_name, e.branch, e.department, e.designation, e.employment_type, e.grade,
             COALESCE(
                 (SELECT custom_mobile_allowance 
                 FROM `tabSalary Structure Assignment` ssa
@@ -46,10 +45,11 @@ def get_data(filters):
                 LIMIT 1), 
                 0
             ) as custom_mobile_allowence,
-            e.custom_cnic, 
-            e.cell_number
+            e.custom_cnic, ah.sim_number, ah.issue_date, ah.balance_on_issue, ah.return_date, ah.balance_on_return
         FROM `tabEmployee` e
+        LEFT JOIN `tabAsset History` ah ON ah.parent = e.name
         WHERE e.status = 'Active' {condition}
+        ORDER BY e.name, ah.issue_date DESC
     """.format(condition=conditions)
 
     results = frappe.db.sql(query, filters, as_dict=1)
@@ -60,20 +60,34 @@ def get_data(filters):
         return frappe.utils.fmt_money(value, currency='Rs').replace('.00', '')
 
     formatted_result = []
-    for row in results:
-        formatted_result.append([
-            row.get("name"),
-            row.get("employee_name"),
-            row.get("branch"),
-            row.get("department"),
-            row.get("designation"),
-            row.get("employment_type"),
-            row.get("grade"),
-            format_currency(row.get("custom_mobile_allowence")),
-            row.get("custom_cnic"),
-            row.get("cell_number")
-        ])
+    previous_employee = None
 
+    for row in results:
+        if row.get("name") == previous_employee:
+            formatted_row = ['-'] * 9
+        else:
+            formatted_row = [
+                row.get("name"),
+                row.get("employee_name"),
+                row.get("branch"),
+                row.get("department"),
+                row.get("designation"),
+                row.get("employment_type"),
+                row.get("grade"),
+                format_currency(row.get("custom_mobile_allowence")),
+                row.get("custom_cnic"),                 
+            ]
+            previous_employee = row.get("name")
+        
+        formatted_row += [            
+            row.get("sim_number"),
+            row.get("issue_date"),
+            format_currency(row.get("balance_on_issue")),
+            row.get("return_date"),
+            format_currency(row.get("balance_on_return"))
+        ]
+
+        formatted_result.append(formatted_row)
     return formatted_result
 
 def get_condition(filters):

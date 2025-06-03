@@ -8,6 +8,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "custom_next_workflow_state",
+  "custom_workflow_indication",
   "employee",
   "employee_name",
   "company",
@@ -15,8 +17,9 @@
   "department",
   "branch",
   "designation",
-  "approver",
-  "approver_name",
+  "current_role",
+  "directly_reports_to_hod",
+  "next_workflow_approver",
   "column_break_5",
   "from_date",
   "to_date",
@@ -28,20 +31,28 @@
   "from_time",
   "mark_check_out",
   "to_time",
-  "mark_check_condition",
+  "check_out",
   "travel_request",
+  "posting_date_travel_request",
   "reason_section",
   "reason",
   "column_break_4",
   "explanation",
   "approval_status",
   "amended_from",
+  "approval_details_section",
+  "approver",
+  "column_break_m6hi",
+  "approver_name",
   "current_coordinates_section",
   "latitude",
   "column_break_rism",
   "longitude",
   "section_break_ayzq",
-  "open_street_map"
+  "open_street_map",
+  "approval_state_section",
+  "custom_state_data",
+  "custom_state_html"
  ],
  "fields": [
   {
@@ -150,7 +161,7 @@
    "options": "Shift Type"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "include_holidays",
    "fieldtype": "Check",
    "hidden": 1,
@@ -236,14 +247,6 @@
    "label": "Mark Check Out"
   },
   {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "mark_check_condition",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Mark Check Condition"
-  },
-  {
    "fetch_from": "employee.custom_region",
    "fieldname": "region",
    "fieldtype": "Link",
@@ -255,7 +258,7 @@
    "fieldname": "approval_status",
    "fieldtype": "Select",
    "label": "Approval Status",
-   "options": "\nPending\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the Executive Director\nRejected by the Executive Director",
+   "options": "\nPending\nApplied\nApproved\nRejected\nApproved by the Line Manager\nRejected by the Line Manager\nApproved by the Head of Department\nRejected by the Head of Department\nApproved by the Executive Director\nRejected by the Executive Director",
    "read_only": 1
   },
   {
@@ -271,11 +274,87 @@
    "label": "To Time",
    "mandatory_depends_on": "eval: doc.reason==\"Check In/Out Miss\";",
    "read_only_depends_on": "eval: doc.reason!=\"Check In/Out Miss\";"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_next_workflow_state",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Next Workflow State"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "custom_workflow_indication",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Workflow Indication"
+  },
+  {
+   "fieldname": "approval_state_section",
+   "fieldtype": "Section Break",
+   "label": "Approval State"
+  },
+  {
+   "fieldname": "custom_state_data",
+   "fieldtype": "Code",
+   "hidden": 1,
+   "label": "State Data"
+  },
+  {
+   "fieldname": "custom_state_html",
+   "fieldtype": "HTML",
+   "label": "State HTML"
+  },
+  {
+   "fieldname": "approval_details_section",
+   "fieldtype": "Section Break",
+   "label": "Approval Details"
+  },
+  {
+   "fieldname": "column_break_m6hi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_if_empty": 1,
+   "fieldname": "posting_date_travel_request",
+   "fieldtype": "Date",
+   "label": "Posting Date (Travel Request)",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.custom_current_role",
+   "fetch_if_empty": 1,
+   "fieldname": "current_role",
+   "fieldtype": "Data",
+   "label": "Current Role",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "check_out",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Check Out"
+  },
+  {
+   "default": "0",
+   "fetch_from": "employee.custom_directly_reports_to_hod",
+   "fetch_if_empty": 1,
+   "fieldname": "directly_reports_to_hod",
+   "fieldtype": "Check",
+   "label": "Directly Reports to HOD",
+   "read_only": 1
+  },
+  {
+   "fieldname": "next_workflow_approver",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Next Workflow Approver"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-04 12:19:13.165158",
+ "modified": "2025-06-03 10:11:55.609002",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Request",

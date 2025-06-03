@@ -49,6 +49,15 @@ def set_base64_image(self):
 def get_country_details(country):
 	return frappe.db.get_value('Country', {'name': country}, ["custom_label", "custom_id_mask", "custom_id_regex"], as_dict=1)
 
+@frappe.whitelist()
+def validate_current_role(self):
+    if(self.user_id):
+        if(not self.custom_current_role):
+            frappe.throw(f"Please select, <b>{self.employee_name}</b> current role.", title="Current Role Field")
+        
+        # if(self.custom_current_role not in frappe.get_roles(self.user_id)):
+        #     frappe.throw(f"In user profile, <b>{self.employee_name}</b> doesn't assign role <b>{self.custom_current_role}</b>", title="Not permitted")
+
 def match_regex(regex ,mystr):
 	return re.match(regex, mystr)
 

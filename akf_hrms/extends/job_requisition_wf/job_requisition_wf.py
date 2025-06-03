@@ -5,7 +5,7 @@ from hrms.hr.doctype.job_requisition.job_requisition import JobRequisition
 class XJobRequisition(JobRequisition):
     def validate(self):
         super(XJobRequisition, self).validate()
-        self.validate_custom_employee_grade()
+        # self.validate_custom_employee_grade()
         self.update_pending_status()
         self.update_approval_status()
         self.update_rejected_status()

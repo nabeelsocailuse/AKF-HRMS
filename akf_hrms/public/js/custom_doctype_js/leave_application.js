@@ -17,6 +17,8 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	onload: function(frm) {
+		console.log('onload');
+		
 		// Ignore cancellation of doctype on cancel all.
 		frm.ignore_doctypes_on_cancel_all = ["Leave Ledger Entry", "Attendance"];
 		
@@ -39,6 +41,8 @@ frappe.ui.form.on("Leave Application", {
 				}
 			});
 		}
+
+		clearFieldsOnLoad(frm); // Mubashir Bashir 13-03-2025
 	},
 
 	validate: function(frm) {
@@ -272,15 +276,19 @@ frappe.ui.form.on("Leave Application", {
 			
 			const desiredOrder = [
 				"Applied",
-				"Recommended by the Line Manager",
-				"Approved by the Head of Department",
-				"Approved by the CEO"
+				"Recommended By Line Manager",
+				"Rejected By Line Manager",
+				"Recommended By Head Of Department",
+				"Rejected By Head Of Department",
+				"Recommended by Chief Executive Officer",
+				"Rejected by Chief Executive Officer",
+				"Approved",
+				"Rejected By Secretary General"
 			];
 
-			// Filter and sort states based on the desired order
 			const orderedStates = desiredOrder
-				.filter(state => stateObj.hasOwnProperty(state)) // Keep only existing states
-				.map(state => ({ key: state, ...stateObj[state] })); // Convert to array for iteration
+				.filter(state => stateObj.hasOwnProperty(state)) 
+				.map(state => ({ key: state, ...stateObj[state] })); 
 			
 
 			let rows = ``;
@@ -291,9 +299,11 @@ frappe.ui.form.on("Leave Application", {
 				rows += `
 				<tr>
 					<th scope="row">${idx}</th>	
-					<td scope="row">${data.current_user}</td>
-					<td class="">${data.next_state}</td>
+					<td scope="row">${data.employee_name}</td>
+					<td scope="row">${data.current_state}</td>
 					<td class="">${dt}</td>
+					<td class="">${data.next_state}</td>
+					
 				</tr>`;
 				idx += 1;
 			}
@@ -302,9 +312,10 @@ frappe.ui.form.on("Leave Application", {
 				<thead class="thead-dark">
 					<tr>
 					<th scope="col">#</th>
-					<th class="text-left" scope="col">Current State (User)</th>
-					<th class="text-left" scope="col">Next State (User)</th>
-					<th scope="col">DateTime</th>
+					<th class="text-left" scope="col">Employee Name</th>
+					<th class="text-left" scope="col">Current State</th>
+					<th class="text-left" scope="col">DateTime</th>
+					<th scope="col">Next State(Employee Name, Role)</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -315,6 +326,7 @@ frappe.ui.form.on("Leave Application", {
 		}
 	},
 	// End, Mubashir Bashir, 11-02-2025
+	
 	// Start, Nabeel Saleem, 02-12-2024
 	populateEmployeeIdBasedOnSelfService: function(frm){
 		if (frappe.user.has_role("Employee") && frm.doc.employee == undefined) {
@@ -342,6 +354,18 @@ frappe.ui.form.on("Leave Application", {
 	}
 	// End, Nabeel Saleem, 02-12-2024
 });
+
+// Mubashir Bashir 13-03-2025 Start
+function clearFieldsOnLoad(frm) {
+    if (frm.is_new()) {
+        frm.set_value('custom_next_workflow_state', '');
+        frm.set_value('custom_workflow_indication', '');
+        frm.set_value('custom_state_data', '');
+        frm.set_value('custom_state_html', '');
+    }
+}
+// Mubashir Bashir 13-03-2025 End
+
 
 frappe.tour["Leave Application"] = [
 	{

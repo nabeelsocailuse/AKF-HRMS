@@ -3,7 +3,7 @@ var longitude = '';
 var map;
 
 frappe.ui.form.on("Attendance Request", {
-    onload: function (frm) {
+    onload: function (frm) {        
         // frm.trigger('triggerOpenStreetMap');
         if (frappe.user.has_role("Employee") && frm.doc.employee == undefined) {
             frappe.call({
@@ -36,6 +36,14 @@ frappe.ui.form.on("Attendance Request", {
                 },
             };
         });
+        frm.set_query("travel_request", function () {
+            return {
+                filters: {
+                    employee: frm.doc.employee,
+                    docstatus: 1,
+                },
+            };
+        });
 
         frm.set_query("work_from_home_request", function () {
             return {
@@ -45,13 +53,133 @@ frappe.ui.form.on("Attendance Request", {
                 },
             };
         });
+
+        clearFieldsOnLoad(frm); // Mubashir Bashir 13-03-2025
     },
 
     refresh: function(frm) {
         frm.trigger("show_attendance_warnings");
         frm.trigger("triggerOpenStreetMap");
         triggerCheckInOutBtn(frm);
+
+        if (frm.is_new()) {
+			frm.set_value('custom_state_data', null);
+		}
+
+        frm.trigger("showWorkFlowState"); // Mubashir Bashir 11-03-2025
+        
     },
+    // Start, Mubashir Bashir, 11-02-2025
+	showWorkFlowState: function(frm){
+		if(frm.doc.custom_state_data==undefined) {
+			frm.set_df_property('custom_state_html', 'options', '<p></p>')
+		}else{
+			const stateObj = JSON.parse(frm.doc.custom_state_data)
+			
+			const desiredOrder = [
+				"Applied",
+				"Recommended By Line Manager",
+				"Rejected By Line Manager",
+				"Recommended By Head Of Department",
+				"Rejected By Head Of Department",
+				"Recommended by Chief Executive Officer",
+				"Rejected by Chief Executive Officer",
+				"Approved",
+				"Rejected By Secretary General"
+			];
+
+			const orderedStates = desiredOrder
+				.filter(state => stateObj.hasOwnProperty(state)) 
+				.map(state => ({ key: state, ...stateObj[state] })); 
+			
+
+			let rows = ``;
+			let idx = 1
+			for (const data of orderedStates) {
+				const dt = moment(data.modified_on).format("DD-MM-YYYY hh:mm:ss a");
+
+				rows += `
+				<tr>
+					<th scope="row">${idx}</th>	
+					<td scope="row">${data.employee_name}</td>
+					<td scope="row">${data.current_state}</td>
+					<td class="">${dt}</td>
+					<td class="">${data.next_state}</td>
+					
+				</tr>`;
+				idx += 1;
+			}
+			let _html_ = `
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+					<th scope="col">#</th>
+					<th class="text-left" scope="col">Employee Name</th>
+					<th class="text-left" scope="col">Current State</th>
+					<th class="text-left" scope="col">DateTime</th>
+					<th scope="col">Next State(Employee Name, Role)</th>
+					</tr>
+				</thead>
+				<tbody>
+					${rows}
+				</tbody>
+			</table>`;
+			frm.set_df_property('custom_state_html', 'options', _html_)
+		}
+	},
+	// Start, Mubashir Bashir, 11-03-2025
+	/*showWorkFlowState: function(frm){
+		if(frm.doc.custom_state_data==undefined) {
+			frm.set_df_property('custom_state_html', 'options', '<p></p>')
+		}else{
+			const stateObj = JSON.parse(frm.doc.custom_state_data)
+			
+			const desiredOrder = [
+				"Applied",
+				"Recommended By Line Manager",
+				"Rejected by the Line Manager",
+				"Recommended By Head Of Department",
+				"Rejected By Head Of Department",
+				"Approved",
+				"Rejected by Chief Executive Officer"
+			];
+
+			const orderedStates = desiredOrder
+				.filter(state => stateObj.hasOwnProperty(state)) 
+				.map(state => ({ key: state, ...stateObj[state] })); 
+			
+			let rows = ``;
+			let idx = 1
+			for (const data of orderedStates) {
+				const dt = moment(data.modified_on).format("DD-MM-YYYY hh:mm:ss a");
+
+				rows += `
+				<tr>
+					<th scope="row">${idx}</th>	
+					<td scope="row">${data.current_user}</td>
+					<td class="">${data.next_state}</td>
+					<td class="">${dt}</td>
+				</tr>`;
+				idx += 1;
+			}
+			let _html_ = `
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+					<th scope="col">#</th>
+					<th class="text-left" scope="col">Current State (User)</th>
+					<th class="text-left" scope="col">Next State (User)</th>
+					<th scope="col">DateTime</th>
+					</tr>
+				</thead>
+				<tbody>
+					${rows}
+				</tbody>
+			</table>`;
+			frm.set_df_property('custom_state_html', 'options', _html_)
+		}
+	},*/
+	// End, Mubashir Bashir, 11-03-2025
 
     show_attendance_warnings(frm) {
         if (!frm.is_new() && frm.doc.docstatus === 0) {
@@ -83,6 +211,7 @@ frappe.ui.form.on("Attendance Request", {
     from_date: function (frm) {
         frm.set_value("to_date", frm.doc.from_date);
         // start: Mubashir Bashir, 12-11-2024
+        if (frm.doc.reason != 'Check In/Out Miss') return
         if (frm.doc.employee && frm.doc.from_date) {
             frappe.call({
                 method: "frappe.client.get_list",
@@ -100,12 +229,14 @@ frappe.ui.form.on("Attendance Request", {
                     if (response && response.message && response.message.length > 0) {
                         const attendance = response.message[0];
                         
-                        if (attendance.in_time) {
+                        // Only set from_time if it hasn't been set by the button
+                        if (attendance.in_time && !frm.doc.from_time) {
                             const inTime = attendance.in_time.substring(11, 19);
                             frm.set_value("from_time", inTime);
                         }
                         
-                        if (attendance.out_time) {
+                        // Only set to_time if it hasn't been set by the button
+                        if (attendance.out_time && !frm.doc.to_time) {
                             const outTime = attendance.out_time.substring(11, 19); 
                             frm.set_value("to_time", outTime);
                         }
@@ -192,23 +323,40 @@ frappe.ui.form.on("Attendance Request", {
         frm.set_value('travel_request', null);
         show_field(frm, 'mark_check_in');
         hide_field(frm, 'mark_check_out');
+        
     },
     mark_check_in: function(frm){
         hide_field(frm, 'mark_check_in');
         show_field(frm, 'mark_check_out');
         setTimeout(() => {
-            get_current_time(frm, 'from_time');
+            get_current_time(frm, 'from_time', 'mark_check_in');
         }, 20);
 	},
-	mark_check_out: function(frm){
-		
+	mark_check_out: function(frm){        		
         hide_field(frm, 'mark_check_out');
 		show_field(frm, 'to_time');
         setTimeout(() => {
-            get_current_time(frm, 'to_time');
-        }, 20);
-		
+            get_current_time(frm, 'to_time', 'mark_check_out');            
+        }, 20);          
 	},
+
+    before_save: function(frm) {
+        if (frm.doc.reason && frm.doc.reason !== "Check In/Out Miss") {
+            if (!frm.doc.from_time) {
+                frappe.throw(__("Please mark check in using the 'Mark Check In' button"));
+                return false;
+            }
+        }
+    },
+
+    before_submit: function(frm) {
+        if (frm.doc.reason && frm.doc.reason !== "Check In/Out Miss") {
+            if (!frm.doc.check_out) {
+                frappe.throw(__("Please mark check out using the 'Mark Check Out' button"));
+                return false;
+            }
+        }
+    },
 });
 
 
@@ -321,9 +469,9 @@ function triggerCheckInOutBtn(frm){
         if(frm.doc.from_time!=undefined){
             hide_field(frm, 'mark_check_in');
             show_field(frm, 'mark_check_out');
-            show_field(frm, 'to_time');
+            // show_field(frm, 'to_time');
         }
-        if(frm.doc.to_time!=undefined){
+        if(frm.doc.to_time!=undefined && frm.doc.check_out){
             hide_field(frm, 'mark_check_out');
         }
     }else{
@@ -334,10 +482,22 @@ function triggerCheckInOutBtn(frm){
             hide_field(frm, 'mark_check_out');
         }
     }
+    if (frm.doc.reason && frm.doc.reason !== "Check In/Out Miss") {
+        if (frm.doc.check_out) {
+            show_field(frm, 'to_time');
+        }
+        else {
+            hide_field(frm, 'to_time');
+        }
+    }
 }
-function get_current_time(frm, fieldname, btnname){
-	frm.call('get_current_time').then(r => {
+function get_current_time(frm, fieldname, btnname){    
+    frm.call('get_current_time').then(r => {
         frm.set_value(fieldname, r.message);
+        if (btnname === 'mark_check_out') {
+            frm.doc.check_out = true;
+            frm.save();
+        }
     });
 }
 
@@ -348,3 +508,18 @@ function hide_field(frm, fieldname){
 function show_field(frm, fieldname){
 	frm.set_df_property(fieldname, 'hidden', 0)
 }
+
+// Mubashir Bashir 13-03-2025 Start
+function clearFieldsOnLoad(frm) {
+    if (frm.is_new()) {
+        frm.set_value('custom_next_workflow_state', '');
+        frm.set_value('custom_workflow_indication', '');
+        frm.set_value('custom_state_data', '');
+        frm.set_value('custom_state_html', '');
+        if (frm.doc.employee) {
+            frm.trigger("set_leave_approver");
+            frm.trigger("check_shift_assignment");
+        }
+    }
+}
+// Mubashir Bashir 13-03-2025 End

@@ -16,7 +16,10 @@ from frappe.utils import (
 )
 from erpnext.setup.doctype.employee.employee import is_holiday
 
-
+from akf_hrms.utils.attendance_request_utils import (
+	setting_next_workflow_approver,
+	record_workflow_approver_states
+)
 class OverlappingAttendanceRequestError(frappe.ValidationError):
     pass
 
@@ -25,10 +28,18 @@ class AttendanceRequest(Document):
 	# Function overide and Changed
 	def validate(self):
 		self.validate_future_request_and_date_of_joining() # nabeel saleem, 20-12-2024
-		self.mark_check_in_on_save() # nabeel saleem, 20-12-2024
+		# self.mark_check_in_on_save() # nabeel saleem, 20-12-2024
 		self.validate_from_time_and_to_time() # nabeel saleem, 20-12-2024
 		self.validate_half_day() # nabeel saleem, 20-12-2024
 		# self.validate_work_from_home() # Commented by Mubashir on 07-02-2025
+		# self.validate_request_overlap() # Commented by Mubashir on 12-03-2025
+
+		# self.set_next_workflow_state() # Mubashir Bashir 11-03-2025
+		# self.set_next_workflow_approver() # Mubashir Bashir 11-03-2025
+		# self.record_application_state() # Mubashir Bashir, 11-03-2025	
+		""" Nabeel Saleem, 16-05-2025 """
+		setting_next_workflow_approver(self)
+		record_workflow_approver_states(self)
 
 	def validate_future_request_and_date_of_joining(self):
 		date_of_joining = frappe.db.get_value(
@@ -53,14 +64,15 @@ class AttendanceRequest(Document):
 			)
 
 	def mark_check_in_on_save(self):
-		if(self.reason not in ["", "Check In/Out Miss"]):
+		if(self.reason and self.reason not in ["", "Check In/Out Miss"]):
 			if (not self.from_time):
-				frappe.throw("Please mark check in", title="From Time")
+				frappe.throw(_("Please mark check in using the 'Mark Check In' button"), title="From Time Required")
+			
 	
 	def mark_check_out_on_submit(self):
 		if(self.reason not in ["", "Check In/Out Miss"]):
 			if (not self.to_time):
-				frappe.throw("Please mark check out", title="To Time")
+				frappe.throw(_("Please mark check out using the 'Mark Check Out' button"), title="To Time Required")
 	
 	def validate_from_time_and_to_time(self):
 		if(self.reason in ["Check In/Out Miss"]):
@@ -100,6 +112,8 @@ class AttendanceRequest(Document):
 				& (Request.name != self.name)
 				& (self.to_date >= Request.from_date)
 				& (self.from_date <= Request.to_date)
+				& (self.to_time >= Request.from_time)
+				& (self.from_time <= Request.to_time)
 			)
 		).run(as_dict=True)
 
@@ -153,7 +167,7 @@ class AttendanceRequest(Document):
 
 	# Function overide and changed
 	def on_submit(self):
-		self.mark_check_out_on_submit() # nabeel saleem, 20-12-2024
+		# self.mark_check_out_on_submit() # nabeel saleem, 20-12-2024
 		self.cannot_submit_own_attendance_request() # nabeel saleem, 20-12-2024
 		self.create_attendance_records()
 
@@ -173,7 +187,9 @@ class AttendanceRequest(Document):
 		attendance_name = self.get_attendance_record(date)
 		status = self.get_attendance_status(date)
 		hours_worked = time_diff(self.to_time, self.from_time)
-
+		hours_worked = str(hours_worked.total_seconds() / 3600)	# Added by Mubashir Bashir on 5-3-25
+		if("." in hours_worked): hours_worked = hours_worked.split(".")[0]
+		# if("." in hours_worked): hours_worked = str(hours_worked)["."][0]
 		if attendance_name:
 			# update existing attendance, change the status
 			doc = frappe.get_doc("Attendance", attendance_name)
@@ -186,6 +202,8 @@ class AttendanceRequest(Document):
 					"in_time": f_date,
 					"out_time": t_date,
 					"custom_hours_worked": hours_worked,
+					"custom_in_times": self.from_time,
+					"custom_out_times": self.to_time
 				}
 			)
 			frappe.msgprint(
@@ -231,6 +249,8 @@ class AttendanceRequest(Document):
 			doc.custom_hours_worked = hours_worked
 			doc.in_time = str(self.from_date) + " " + str(self.from_time)
 			doc.out_time = str(self.from_date) + " " + str(self.to_time)
+			doc.custom_in_times = self.from_time
+			doc.custom_out_times = self.to_time
 			doc.status = status
 			doc.insert(ignore_permissions=True)
 			doc.submit()
@@ -325,3 +345,118 @@ class AttendanceRequest(Document):
 	def get_current_time(self):
 		cur_time = get_datetime()
 		return str(cur_time).split(" ")[1]
+
+
+	# Mubashir Bashir 11-03-2025 Start
+	@frappe.whitelist()
+	def set_next_workflow_approver(self):
+		if(not hasattr(self, 'workflow_state')): return		
+		# if(self.status!='Open'): return
+
+		# => find approver
+		def set_approver_detail(user_id):
+			self.approver = user_id
+			self.approver_name = frappe.utils.get_fullname(user_id)
+
+		if (self.custom_next_workflow_state == 'Recommended by Line Manager'):
+			reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
+			if(reports_to):
+				user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
+				if(frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Line Manager'})):
+					set_approver_detail(user_id)
+			else:
+				frappe.throw(f"Please set a `reports to` of this employee", title="Line Manager")
+					
+		elif(self.custom_next_workflow_state == 'Recommended by Head of Department'):
+			user_id = frappe.db.get_value('Employee', {'department': self.department , 'custom_hod': 1}, 'user_id')
+			if(user_id):
+				set_approver_detail(user_id)
+			else:
+				frappe.throw(f"Please set a `head of department` of department {self.department}", title="Head of Department")
+		
+		elif(self.custom_next_workflow_state == 'Approved'):
+			user_list = frappe.db.sql(""" 
+					Select 
+						u.name 
+					From 
+						`tabUser` u inner join `tabHas Role` h on (u.name=h.parent) 
+					Where 
+						h.role in ('CEO')
+					Group by
+						u.name 
+			""")
+			if(user_list):
+				set_approver_detail(user_list[0][0])
+			else:
+				frappe.throw(f"Please set a `CEO` of {self.company}", title="CEO")
+
+	def set_next_workflow_state(self):
+		employee_user_id = frappe.db.get_value("Employee", self.employee, "user_id")
+
+		if not employee_user_id: return
+
+		employee_roles = frappe.get_roles(employee_user_id)
+
+		if (frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 0}) and 
+			"Employee" in employee_roles and 
+			not any(role in employee_roles for role in ["Line Manager", "Head of Department", "CEO", "Executive Director"])):
+			if (self.custom_next_workflow_state == 'Recommended by Line Manager'):
+				self.custom_next_workflow_state = 'Recommended by Head of Department'
+				self.custom_workflow_indication = 'Line Manager to Head of Department'
+			elif (self.custom_next_workflow_state == 'Recommended by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Recommended by Line Manager'
+				self.custom_workflow_indication = 'Recommended to Line Manager'
+
+
+		elif (frappe.db.exists('Employee', {'name': self.employee, 'custom_directly_reports_to_hod': 1}) and 
+			"Employee" in employee_roles and 
+			not any(role in employee_roles for role in ["Line Manager", "Head of Department", "CEO"])):
+			if (self.custom_next_workflow_state == 'Recommended by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Recommended by Head of Department'
+				self.custom_workflow_indication = 'Applied to HOD'
+
+
+		elif "Line Manager" in employee_roles and not any(role in employee_roles for role in ["Head of Department", "CEO", "Executive Director"]):
+			if (self.custom_next_workflow_state == 'Recommended by Head of Department'):
+				self.custom_next_workflow_state = 'Approved'
+				self.custom_workflow_indication = 'Head of Department to CEO'
+			else:
+				self.custom_next_workflow_state = 'Recommended by Head of Department'
+				self.custom_workflow_indication = 'Applied to HOD'
+				
+
+		elif "Head of Department" in employee_roles and not any(role in employee_roles for role in ["CEO", "Executive Director"]):
+			self.custom_next_workflow_state = 'Approved'
+			self.custom_workflow_indication = 'Applied to CEO'
+
+	def record_application_state(self):
+		if(hasattr(self, 'workflow_state')):
+			from frappe.utils import get_datetime
+			state_dict = eval(self.custom_state_data) if(self.custom_state_data) else {}
+			# if(self.workflow_state not in state_dict):
+			state_dict.update({f"{self.workflow_state}": {
+				"current_user": f"{self.workflow_state} (<b>{frappe.utils.get_fullname(frappe.session.user)}</b>)",
+				"next_state": f"{self.custom_next_workflow_state} (<b>{self.approver_name}</b>)" if "CEO" not in frappe.get_roles(frappe.session.user) and "Executive Director" not in frappe.get_roles(frappe.session.user) else "",
+				"modified_on": get_datetime(),
+			}})
+			self.custom_state_data =  frappe.as_json(state_dict)
+
+	# Mubashir Bashir 11-03-2025 End
+
+
+# @frappe.whitelist()
+# def update_workflow_state():
+#     frappe.db.sql("""
+#         UPDATE `tabAttendance Request`
+#         SET status = 'Approved'
+#         WHERE docstatus = 1
+#     """)
+#     frappe.db.commit()
+#     print("status field updated from empty to Open")
+

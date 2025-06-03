@@ -21,6 +21,7 @@ from frappe.utils import (
 	get_link_to_form,
 	getdate,
 )
+from datetime import datetime
 
 import erpnext
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
@@ -30,6 +31,14 @@ from erpnext.accounts.utils import get_fiscal_year
 
 
 class OverridePayrollEntry(Document):
+	def autoname(self):		# Mubashir Bashir 14-May-2025
+		posting_date = datetime.strptime(self.posting_date, "%Y-%m-%d")
+		month_name = posting_date.strftime('%B')
+		year = posting_date.strftime('%Y')
+
+		series = f"HR-{year}-{month_name}.-."
+		self.name = frappe.model.naming.make_autoname(series + "#####")
+
 	def onload(self):
 		if not self.docstatus == 1 or self.salary_slips_submitted:
 			return

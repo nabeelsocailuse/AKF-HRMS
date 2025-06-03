@@ -190,7 +190,6 @@ class OAttendanceRequest(Document):
 				)
 			)
 			return False
-
 		return True
 
 	def has_leave_record(self, attendance_date: str) -> str | None:

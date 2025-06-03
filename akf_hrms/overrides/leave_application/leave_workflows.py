@@ -158,4 +158,80 @@ def validate_leave_count(self=None):
 		if half_leave_count > 1:
 			frappe.throw(_("You cannot avail more than 01 Half Day Leaves in a month"))
 
-	
+
+# bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_workflows.set_next_workflow_approver
+# Nabeel Saleem, 18-12-2024
+@frappe.whitelist()
+def set_next_workflow_approver():
+	state = []
+	for d in frappe.db.get_list("Leave Application", filters={"name": "HR-LAP-2025-00609"}, fields=["*"]):
+		employee = frappe.db.get_value("Employee", d.employee, 
+				["name", "reports_to", "user_id", "custom_current_role"], as_dict=1)
+		
+		reports_to = frappe.db.get_value("Employee",  employee.reports_to, 
+				["name", "reports_to", "user_id", "custom_current_role"], as_dict=1)
+		
+		# reports_to = frappe.db.get_value("Employee", {"reports_to": reports_to.name}, ["name", "user_id", "custom_current_role"], as_dict=1)
+		# print(f"reports_to3: {reports_to}")
+		# data = frappe.db.sql(f""" 
+		# 	Select 
+		# 		wt.state, wt.action, wt.next_state, wt.allowed
+		# 	From 
+		# 		`tabWorkflow` w inner join `tabWorkflow Transition` wt on (w.name=wt.parent)
+		# 	Where 
+		# 		w.document_type='Leave Application'
+		# 		and w.is_active = 1
+		# 		and wt.action='Approve'
+		# 		and wt.state='{row.workflow_state}'
+		# 	Order by
+		# 		wt.idx asc
+		# 	-- limit 1
+		# """, as_dict=1)
+		# print(data)
+		# state.append([
+		# 	{
+		# 		"userId": "frappe.session.user",
+		# 		"workflow_state": row.workflow_state,
+		# 		"next_workflow_state": row.custom_next_workflow_state,
+		# 		"leave_approver": row.leave_approver,
+		# 	}
+		# ])
+		# print(state)
+		# # => find approver
+		# def set_approver_detail(user_id, next_state):
+		# 	self.leave_approver = user_id
+		# 	self.leave_approver_name = get_fullname(user_id)
+		# 	self.custom_next_workflow_state = next_state
+
+		# for d in data:
+		# 	if(d.allowed == "Line Manager"):
+		# 		reports_to = frappe.db.get_value('Employee', {'name': self.employee}, 'reports_to')
+		# 		if(reports_to):
+		# 			user_id = frappe.db.get_value('Employee', {'name': reports_to}, 'user_id')
+		# 			if(frappe.db.exists('Has Role', {'parent': user_id, 'role': 'Line Manager'})):
+		# 				set_approver_detail(user_id, d.next_state)
+		# 		else:
+		# 			frappe.throw(f"Please set a `reports to` of this employee", title="Line Manager")
+						
+		# 	elif(d.allowed == "Head of Department"):
+		# 		user_id = frappe.db.get_value('Employee', {'department': self.department , 'custom_hod': 1}, 'user_id')
+		# 		if(user_id):
+		# 			set_approver_detail(user_id, d.next_state)
+		# 		else:
+		# 			frappe.throw(f"Please set a `head of department` of department {self.department}", title="Head of Department")
+			
+		# 	elif(d.allowed == 'CEO'):
+		# 		user_list = frappe.db.sql(""" 
+		# 				Select 
+		# 					u.name 
+		# 				From 
+		# 					`tabUser` u inner join `tabHas Role` h on (u.name=h.parent) 
+		# 				Where 
+		# 					h.role in ('CEO')
+		# 				Group by
+		# 					u.name 
+		# 		""")
+		# 		if(user_list):
+		# 			set_approver_detail(user_list[0][0], d.next_state)
+		# 		else:
+		# 			frappe.throw(f"Please set a `CEO` of {self.company}", title="CEO")

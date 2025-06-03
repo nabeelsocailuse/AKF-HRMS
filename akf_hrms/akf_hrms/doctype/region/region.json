@@ -20,12 +20,13 @@
   {
    "fieldname": "region_code",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Region Code"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-23 11:48:18.211045",
+ "modified": "2025-06-03 12:25:16.206339",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Region",

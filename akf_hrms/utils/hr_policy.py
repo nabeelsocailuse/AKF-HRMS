@@ -35,22 +35,31 @@ def apply_policy(doc, method=None):
         'posting_date': doc.attendance_date,
         'transition_type': 'Attendance',
         'transition_name': doc.attendance_id,
-        
     })
-    out_time = frappe.db.get_value('Attendance', doc.attendance_id, 'out_time') if(doc.attendance_id) else None
-    if(not out_time):
-        two_hours_three_late_comings_times_in_a_month(args)
-        above_two_and_less_four_hours_in_months(args)
-        late_entry_above_four_hours_in_months(args)
-    elif(out_time):
-        four_hours_or_less_early_exists_in_a_month(args)
+    shift = frappe.db.get_value('Attendance', doc.attendance_id, 'shift') if(doc.attendance_id) else None
+    if(shift): 
+        grace = frappe.db.get_value('Attendance', shift, ['custom_grace_in_time', 'custom_grace_out_time'], as_dict=1)
+        start_time = grace.custom_grace_in_time if(grace.custom_grace_in_time) else grace.start_time
+        end_time = grace.custom_grace_out_time if(grace.custom_grace_out_time) else grace.end_time
+        args.update({
+            "start_time": start_time,
+            "end_time": end_time
+        })
+        out_time = frappe.db.get_value('Attendance', doc.attendance_id, 'out_time') if(doc.attendance_id) else None
+        if(not out_time):
+            two_hours_three_late_comings_times_in_a_month(args)
+            above_two_and_less_four_hours_in_months(args)
+            late_entry_above_four_hours_in_months(args)
+        elif(out_time):
+            four_hours_or_less_early_exists_in_a_month(args)
     
 # 1
 @frappe.whitelist()
 def two_hours_three_late_comings_times_in_a_month(args):
     result = frappe.db.sql(""" 
         select 
-            count(TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600) hours
+            -- count(TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600) hours
+            count(TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600) hours
         from 
             `tabAttendance` 
         where 
@@ -62,7 +71,7 @@ def two_hours_three_late_comings_times_in_a_month(args):
             and company=%(company)s
             and employee=%(employee)s
             and month(attendance_date)=month(%(posting_date)s)
-            and ((TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)>0 and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)<=2)
+            and ((TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600)>0 and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600)<=2)
         having
             hours>0
     """, args)
@@ -84,7 +93,7 @@ def above_two_and_less_four_hours_in_months(args):
 
     result = frappe.db.sql(""" 
         select
-            count(TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600) hours
+            count(TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600) hours
         from 
             `tabAttendance` 
         where 
@@ -96,8 +105,8 @@ def above_two_and_less_four_hours_in_months(args):
             and company=%(company)s
             and employee=%(employee)s 
             and attendance_date=%(posting_date)s
-            and ((TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)>2 
-                and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)<4)
+            and ((TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600)>2 
+                and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600)<4)
         having 
             hours>0
     """, args)
@@ -118,7 +127,7 @@ def above_two_and_less_four_hours_in_months(args):
 def late_entry_above_four_hours_in_months(args):
     result = frappe.db.sql(""" 
         select 
-            count(TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600) hours
+            count(TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600) hours
         from 
             `tabAttendance` 
         where 
@@ -130,11 +139,11 @@ def late_entry_above_four_hours_in_months(args):
             and company=%(company)s
             and employee=%(employee)s
             and attendance_date=%(posting_date)s
-            and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), custom_start_time))/3600)>=4
+            and (TIME_TO_SEC(TIMEDIFF(cast(in_time as time), %(start_time)s))/3600)>=4
         having 
             hours>0
     """, args)
-    print(f'---------------late_entry_above_four_hours_in_months: {result}')
+    # print(f'---------------late_entry_above_four_hours_in_months: {result}')
     if(result): 
         args.update({
             'case_no': 3,
@@ -150,7 +159,7 @@ def four_hours_or_less_early_exists_in_a_month(args):
 
     result = frappe.db.sql(""" 
         select 
-            count(TIME_TO_SEC(TIMEDIFF(custom_end_time, cast(out_time as time)))/3600) hours
+            count(TIME_TO_SEC(TIMEDIFF(%(end_time)s, cast(out_time as time)))/3600) hours
         from 
             `tabAttendance` 
         where 
@@ -162,8 +171,8 @@ def four_hours_or_less_early_exists_in_a_month(args):
             and company=%(company)s
             and employee=%(employee)s
             and attendance_date=%(posting_date)s
-            and ((TIME_TO_SEC(TIMEDIFF(custom_end_time, cast(out_time as time)))/3600)>0 
-                and (TIME_TO_SEC(TIMEDIFF(custom_end_time, cast(out_time as time)))/3600)<=4)
+            and ((TIME_TO_SEC(TIMEDIFF(%(end_time)s, cast(out_time as time)))/3600)>0 
+                and (TIME_TO_SEC(TIMEDIFF(%(end_time)s, cast(out_time as time)))/3600)<=4)
         having
             hours>0
     """, args)
@@ -324,13 +333,14 @@ def make_attendance_deduction_ledger_entry(args):
 @frappe.whitelist()
 def get_deduction_ledger(self=None):
     from akf_hrms.overrides.leave_application.leave_application import get_leave_details
-    leave_allocation = get_leave_details(self.employee, self.start_date)
+    leave_allocation = get_leave_details(self.employee, self.start_date if(not self.custom_apply_21st_to_20th_salary_rule) else self.custom_deduction_start_date)
     
-    pre_start_date = add_to_date(self.start_date, days=-30)
-    pre_start_date = getdate(get_datetime(pre_start_date).replace(day=21))
-    pre_end_date = add_to_date(self.end_date, days=-30)
-    pre_end_date = getdate(get_datetime(pre_end_date).replace(day=20))
-    
+    # pre_start_date = add_to_date(self.start_date, days=-30)
+    # pre_start_date = getdate(get_datetime(pre_start_date).replace(day=21))
+    # pre_end_date = add_to_date(self.end_date, days=-30)
+    # pre_end_date = getdate(get_datetime(self.end_date).replace(day=20))
+    pre_start_date = self.custom_deduction_start_date
+    pre_end_date = self.custom_deduction_end_date
     result = frappe.db.sql(f""" 
         Select  ifnull(sum(total_deduction),0) as total,
                 leave_type
@@ -349,7 +359,7 @@ def get_deduction_ledger(self=None):
     rml = leave_balance["Medical Leave"]['remaining_leaves'] if("Medical Leave" in leave_balance) else 0
     rel = leave_balance["Earned Leave"]['remaining_leaves'] if("Earned Leave" in leave_balance) else 0
     rlwp = leave_balance["Leave Without Pay"]['remaining_leaves'] if("Leave Without Pay" in leave_balance) else 0
-    
+    # frappe.msgprint(f"rcl: {rcl}, rml: {rml}, rel: {rel}, rlwp: {rlwp}, result: {result}")
     def get_actual_deductions(balance, actual_balance):
         if(balance>0):
             if(actual_balance<=balance):
@@ -415,7 +425,7 @@ def get_deduction_ledger(self=None):
                     if(forwordbal>0):
                         slwp += forwordbal
                         
-        elif(d.leave_type=="Earned Leave"):
+        elif(d.leave_type.lower() in ["earned leave", "earned", "earned leaves", "earn leave", "earn leaves"]):
             rdict = get_actual_deductions(rel, rdict['forwordbal'])
             rel = rel - rdict['cutbal']
             sel += rdict['cutbal']
@@ -436,8 +446,8 @@ def get_deduction_ledger(self=None):
         elif(d.leave_type=="Leave Without Pay"):
             slwp += actual_balance
     
-    self.custom_deduction_start_date = pre_start_date
-    self.custom_deduction_end_date = pre_end_date
+    # self.custom_deduction_start_date = pre_start_date
+    # self.custom_deduction_end_date = pre_end_date
     self.custom_casual_leaves =  scl
     self.custom_medical_leaves = sml
     self.custom_earned_leaves = sel
@@ -605,7 +615,7 @@ def make_leave_ledger_entry(self=None):
     if(not self.custom_apply_deductions): return 
     def _create_(leave_type, leaves):
         from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
-        from akf_hrms.overrides.leave_application import get_leave_approver
+        from akf_hrms.overrides.leave_application.leave_application import get_leave_approver
         days = math.ceil(leaves)
         from_date = add_to_date(self.start_date)
         to_date = add_to_date(self.start_date, days=(days-1))
@@ -750,6 +760,7 @@ def record_employee_arrears_draft_additional_salary(self=None):
             })
             doc = frappe.get_doc(args)
             doc.flags.ignore_permissions=1
+            doc.flags.ignore_validate=1
             doc.insert()
     
     def remove_additional_salary():

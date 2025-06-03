@@ -70,6 +70,12 @@ doctype_js = {
     "Additional Salary": [
         "public/js/custom_doctype_js/additional_salary.js"
     ],
+    "Employee Advance":[
+        "public/js/custom_doctype_js/employee_advance_js.js"
+    ],
+    "Loan Application": [
+        "public/js/custom_doctype_js/loan_application_js.js"
+    ]
 }
 # doctype_js = {
 #     "Overtime Claim Form" : "public/js/custom_doctype_js/overtime_claim_form.js"
@@ -173,7 +179,7 @@ override_doctype_class = {
     # "Salary Slip": "akf_hrms.extends.salary_slip.akf_payroll_settings.XSalarySlip",
     "Salary Slip": "akf_hrms.overrides.salary_slip.SalarySlip",
     "Salary Structure Assignment": "akf_hrms.extends.payroll.salary_structure_assignment.XSalaryStructureAssignment",
-    "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
+    # "Gratuity": "akf_hrms.overrides.gratuity.Gratuity",
     "Appraisal": "akf_hrms.extends.appraisal_wf.appraisal_wf.XAppraisal",
     # "Leave Application": "akf_hrms.extends.leave_application_wf.leave_application_wf.XLeaveApplication",
     "Leave Application": "akf_hrms.overrides.leave_application.leave_application.LeaveApplication",
@@ -205,6 +211,22 @@ doc_events = {
     "Attendance Log": {
         "after_insert": "akf_hrms.utils.hr_policy.apply_policy"
     },
+    # "Expense Claim": {
+    #     "after_insert": "akf_hrms.utils.expense_claim_utils.set_next_workflow_approver",
+    #     "validate": "akf_hrms.utils.expense_claim_utils.set_next_workflow_approver"
+    # },
+    "Employee Advance": {
+        "on_update": "akf_hrms.utils.employee_advance_utils.set_next_workflow_approver" 
+    },
+    "Overtime Claim Form": {
+        "on_update": "akf_hrms.utils.overtime_claim_form_utils.set_next_workflow_approver" 
+    },
+    "Additional Salary": {
+        "on_update": "akf_hrms.utils.additional_salary_utils.set_next_workflow_approver" 
+    },
+    "Loan Application": {
+        "on_update": "akf_hrms.utils.loan_utils.set_next_workflow_approver" 
+    }
 }
 
 # Scheduled Tasks
