@@ -125,11 +125,11 @@ def by_pass_start_end_dates(self): # Nabeel Saleem, 18-05-2025
 	frequency = frequency.lower() if frequency else "monthly"
 	
 	monthDetails = date_diff(self.end_date, self.start_date)
-	# monthDetails = 29
+
 	month_21th = add_to_date(self.start_date, months=-1, days=20)
-	# nxt_20th = get_end_date(month_21th, frequency)
 	month_20th = add_to_date(month_21th, days=monthDetails)
 	nxt_20th = getdate(get_datetime(month_20th).replace(day=20))
+	
 	
 	if(frequency=="bimonthly"):
 		nxt_20th = add_to_date(month_21th, days=14)
@@ -142,6 +142,13 @@ def by_pass_start_end_dates(self): # Nabeel Saleem, 18-05-2025
 	
 	# self.custom_by_pass_start_date = month_21th
 	# self.custom_by_pass_end_date = nxt_20th
-	self.custom_deduction_start_date = month_21th
-	self.custom_deduction_end_date = nxt_20th
+	
+	self.custom_start_date_21st_of_last_month = month_21th
+	self.custom_end_date_20th_of_current_month = nxt_20th
+
+	ded_21th = add_to_date(self.start_date, months=-2, days=20)
+	ded_20th = getdate(get_datetime(add_to_date(ded_21th, days=monthDetails)).replace(day=20))
+	
+	self.custom_deduction_start_date = ded_21th
+	self.custom_deduction_end_date = ded_20th
 	# self.end_date = nxt_20th.get("end_date")

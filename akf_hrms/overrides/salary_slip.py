@@ -62,8 +62,14 @@ TAX_COMPONENTS_BY_COMPANY = "tax_components_by_company"
 
 from frappe.utils import (flt, month_diff, add_months, get_datetime, add_to_date)
 
-from akf_hrms.utils.hr_policy import (validate_other_info, get_eobi_pf_social_security_details, get_deduction_ledger, make_leave_ledger_entry, 
-    cancel_leave_ledger_entry, get_no_attendance, get_leave_without_pay_count)
+from akf_hrms.utils.hr_policy import (
+    validate_other_info, 
+    get_eobi_pf_social_security_details, 
+    get_deduction_ledger, 
+    make_leave_ledger_entry, 
+    cancel_leave_ledger_entry, 
+    get_no_attendance, 
+    get_leave_without_pay_count)
 
 # Nabeel Saleem, 13-02-2025
 from akf_hrms.utils.salary_slip_utils import (
@@ -72,7 +78,6 @@ from akf_hrms.utils.salary_slip_utils import (
     get_income_tax_additional_salary,
     apply_akf_payroll_settings,
     get_date_details_21st_to_20th_salary_rule,
-    
 )
 
 class SalarySlip(TransactionBase):
@@ -455,7 +460,7 @@ class SalarySlip(TransactionBase):
 		# working_days = date_diff(self.end_date, self.start_date) + 1
 		# added by nabeel 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule):
-			working_days = date_diff(self.custom_deduction_end_date, self.custom_deduction_start_date) + 1
+			working_days = date_diff(self.custom_end_date_20th_of_current_month, self.custom_start_date_21st_of_last_month) + 1
 		else:
 			working_days = date_diff(self.end_date, self.start_date) + 1
 		# ended by nabeel 20-05-2025
@@ -466,7 +471,7 @@ class SalarySlip(TransactionBase):
 		# holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
 		# added by nabeel 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule): 
-			holidays = self.get_holidays_for_employee(self.custom_deduction_start_date, self.custom_deduction_end_date)
+			holidays = self.get_holidays_for_employee(self.custom_start_date_21st_of_last_month, self.custom_end_date_20th_of_current_month)
 		else:
 			holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
 		# ended by nabeel 20-05-2025
@@ -476,7 +481,7 @@ class SalarySlip(TransactionBase):
 		# added by nabeel 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule): 
 			working_days_list = [
-				add_days(getdate(self.custom_deduction_start_date), days=day) for day in range(0, working_days)
+				add_days(getdate(self.custom_start_date_21st_of_last_month), days=day) for day in range(0, working_days)
 			]
 		else:
 			working_days_list = [
@@ -583,7 +588,7 @@ class SalarySlip(TransactionBase):
 			# days += _get_days(self.start_date, add_days(self.joining_date, -1))
 			# added by nabeel 20-05-2025
 			if(self.custom_apply_21st_to_20th_salary_rule):
-				days += _get_days(self.custom_deduction_start_date, add_days(self.joining_date, -1))	
+				days += _get_days(self.custom_start_date_21st_of_last_month, add_days(self.joining_date, -1))	
 			else:
 				days += _get_days(self.start_date, add_days(self.joining_date, -1))
 
@@ -591,7 +596,7 @@ class SalarySlip(TransactionBase):
 			# days += _get_days(add_days(self.relieving_date, 1), self.end_date)
 			# added by nabeel 20-05-2025
 			if(self.custom_apply_21st_to_20th_salary_rule):
-				days += _get_days(add_days(self.relieving_date, 1), self.custom_deduction_end_date)
+				days += _get_days(add_days(self.relieving_date, 1), self.custom_end_date_20th_of_current_month)
 			else:
 				days += _get_days(add_days(self.relieving_date, 1), self.end_date)
 		return days
@@ -603,8 +608,8 @@ class SalarySlip(TransactionBase):
 		
 		# modified by nabeel on 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule):
-			actual_start_date = getdate(self.custom_deduction_start_date)
-			actual_end_date = getdate(self.custom_deduction_end_date)
+			actual_start_date = getdate(self.custom_start_date_21st_of_last_month)
+			actual_end_date = getdate(self.custom_end_date_20th_of_current_month)
 		
 		# modified by nabeel on 20-05-2025
 		# for days in range(date_diff(self.actual_end_date, self.actual_start_date) + 1):	
@@ -634,7 +639,7 @@ class SalarySlip(TransactionBase):
 			frappe.qb.from_(Attendance)
 			.select(Count("*"))
 			.where(
-					(Attendance.attendance_date.between(self.custom_deduction_start_date, self.custom_deduction_end_date))
+					(Attendance.attendance_date.between(self.custom_start_date_21st_of_last_month, self.custom_end_date_20th_of_current_month))
 					& (Attendance.employee == self.employee)
 					& (Attendance.docstatus == 1)
 				)
@@ -658,13 +663,13 @@ class SalarySlip(TransactionBase):
 		payment_days = date_diff(self.actual_end_date, self.actual_start_date) + 1
 		# added by nabeel on 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule): 
-  			payment_days = date_diff(self.custom_deduction_end_date, self.custom_deduction_start_date) + 1
+  			payment_days = date_diff(self.custom_end_date_20th_of_current_month, self.custom_start_date_21st_of_last_month) + 1
 		
 		if not cint(include_holidays_in_total_working_days):
 			# holidays = self.get_holidays_for_employee(self.actual_start_date, self.actual_end_date)	
 			# added by nabeel on 20-05-2025
 			if(self.custom_apply_21st_to_20th_salary_rule):
-				holidays = self.get_holidays_for_employee(self.custom_deduction_start_date, self.custom_deduction_end_date)	
+				holidays = self.get_holidays_for_employee(self.custom_start_date_21st_of_last_month, self.custom_end_date_20th_of_current_month)	
 			else:
 				holidays = self.get_holidays_for_employee(self.actual_start_date, self.actual_end_date)	
 
@@ -696,8 +701,8 @@ class SalarySlip(TransactionBase):
 		if(self.custom_apply_21st_to_20th_salary_rule):
 			leaves = get_lwp_or_ppl_for_date_range(
 				self.employee,
-				self.custom_deduction_start_date,
-				self.custom_deduction_end_date
+				self.custom_start_date_21st_of_last_month,
+				self.custom_end_date_20th_of_current_month
 			)
 
 		for d in working_days_list:
@@ -774,7 +779,7 @@ class SalarySlip(TransactionBase):
 		# modified by nabeel saleem on 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule):
   			attendance_details = self.get_employee_attendance(
-				start_date=self.custom_deduction_start_date, end_date=self.custom_deduction_end_date
+				start_date=self.custom_start_date_21st_of_last_month, end_date=self.custom_end_date_20th_of_current_month
 			)
 		else:
 			attendance_details = self.get_employee_attendance(
@@ -895,9 +900,9 @@ class SalarySlip(TransactionBase):
 			self.calculate_component_amounts("deductions")
 		
 		# Nabeel Saleem, 02-01-2024
-		if(hasattr(self, "custom_deduction_end_date")):
+		if(hasattr(self, "custom_end_date_20th_of_current_month")):
 			posting_date = self.posting_date
-			self.posting_date = self.custom_deduction_end_date
+			self.posting_date = self.custom_end_date_20th_of_current_month
 			set_loan_repayment(self)
 			self.posting_date = posting_date
 		else:
