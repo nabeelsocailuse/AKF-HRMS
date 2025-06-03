@@ -13,19 +13,24 @@
   {
    "fieldname": "region_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Region Name",
+   "reqd": 1,
    "set_only_once": 1,
    "unique": 1
   },
   {
    "fieldname": "region_code",
    "fieldtype": "Data",
-   "label": "Region Code"
+   "in_list_view": 1,
+   "label": "Region Code",
+   "reqd": 1,
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-23 11:48:18.211045",
+ "modified": "2025-06-03 14:49:58.522241",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Region",
@@ -47,5 +52,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }
