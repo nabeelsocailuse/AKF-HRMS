@@ -370,7 +370,7 @@ function fetch_employee_details(frm) {          // Mubashir Bashir 13-June-2025
         frappe.db.get_doc('Employee', frm.doc.applicant)
             .then(employee => {
                 frm.set_value('custom_current_role', employee.custom_current_role || '');
-                frm.set_value('custom_directly_reports_to_hod', employee.custom_directly_reports_to_hod || '');
+                frm.set_value('directly_reports_to_hod', employee.custom_directly_reports_to_hod || '');
             })
             .catch(err => {
                 frappe.msgprint(__('Unable to fetch Employee details'));
