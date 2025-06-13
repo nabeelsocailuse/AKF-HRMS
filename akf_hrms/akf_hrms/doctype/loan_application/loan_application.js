@@ -121,6 +121,7 @@ frappe.ui.form.on('Loan Application', {
         frm.set_value("custom_guarantor_2_of_loan_application", "");
 
         validatePermanentEmployee(frm);
+        fetch_employee_details(frm); // Mubashir 13-June-2025
     },
 
     custom_guarantor_of_loan_application: function (frm) {
@@ -363,6 +364,21 @@ function validate_eligibility_on_the_basis_of_grade(frm) {
         });
 }
 // Mubashir Bashir 15-01-2025 END
+
+function fetch_employee_details(frm) {          // Mubashir Bashir 13-June-2025
+    if (frm.doc.applicant_type === 'Employee' && frm.doc.applicant) {
+        frappe.db.get_doc('Employee', frm.doc.applicant)
+            .then(employee => {
+                frm.set_value('custom_current_role', employee.custom_current_role || '');
+                frm.set_value('custom_directly_reports_to_hod', employee.custom_directly_reports_to_hod || '');
+            })
+            .catch(err => {
+                frappe.msgprint(__('Unable to fetch Employee details'));
+                console.error(err);
+            });
+        }
+}
+
 
 // Mubashir Bashir 16-01-2025 START
 function validatePermanentEmployee(frm) {

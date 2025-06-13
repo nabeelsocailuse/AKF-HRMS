@@ -36,7 +36,7 @@ def set_next_workflow_approver(doc, method=None):
 		if(self.workflow_state):
 			if(self.applicant_type=="Employee"):
 				if(not self.custom_current_role):
-					frappe.throw(f"Current role is not set in employee profile {link}.", title="Missing Information")
+					frappe.throw(f"Current role is not set in employee profile.", title="Missing Information")
 
 				if(self.custom_next_workflow_approver in ["", None]) or (self.is_new()):
 					self.custom_next_workflow_approver = self.applicant
