@@ -107,6 +107,7 @@ def record_workflow_approver_states(self, publish_progress=True):
 	# frappe.publish_realtime('event_name', {'key': 'value'}, user=frappe.session.user)
 	
 def get_next_role_employee(allowed, department):
+	return
 	if(not allowed): 
 		return []
 	query = f"""
