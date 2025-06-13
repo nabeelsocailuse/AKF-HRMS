@@ -41,7 +41,7 @@ def set_next_workflow_approver(doc, method=None):
 				if(self.custom_next_workflow_approver in ["", None]) or (self.is_new()):
 					self.custom_next_workflow_approver = self.applicant
 				
-				record_workflow_approver_states(self)
+				# record_workflow_approver_states(self)		# Commented by Mubashir on 13-Jun-2025 for testing
 
 # bench --site erp.alkhidmat.org execute akf_hrms.utils.expense_claim_utils.find_workflow_state_and_role
 def record_workflow_approver_states(self, publish_progress=True):
@@ -107,7 +107,6 @@ def record_workflow_approver_states(self, publish_progress=True):
 	# frappe.publish_realtime('event_name', {'key': 'value'}, user=frappe.session.user)
 	
 def get_next_role_employee(allowed, department):
-	return
 	if(not allowed): 
 		return []
 	query = f"""
