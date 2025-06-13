@@ -14,7 +14,8 @@ frappe.query_reports["Attendance Leave Summary"] = {
             fieldname: "branch",
             label: __("Branch"),
             fieldtype: "Link",
-            options: "Branch"
+            options: "Branch",
+            default: "Central Office"
         },
         {
             fieldname: "department",
@@ -41,24 +42,86 @@ frappe.query_reports["Attendance Leave Summary"] = {
             options: "Employment Type"
         },
         {
+            fieldname: "month",
+            label: __("Month"),
+            fieldtype: "Select",
+            options: [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ],
+            default: (function() {
+                const currentMonthIndex = new Date().getMonth();
+                const months = [
+                    "January", "February", "March", "April", "May", "June",
+                    "July", "August", "September", "October", "November", "December"
+                ];
+                return months[currentMonthIndex];
+            })(),
+            on_change: function(report) {
+                update_dynamic_dates(report);
+            }
+        },
+        {
+            fieldname: "year",
+            label: __("Year"),
+            fieldtype: "Select",
+            options: (function() {
+                const currentYear = new Date().getFullYear();
+                const startYear = currentYear - 4;
+                const years = [];
+                for (let y = startYear; y <= currentYear; y++) {
+                    years.push(y.toString());
+                }
+                return years.join("\n");
+            })(),
+            default: new Date().getFullYear().toString(),
+            on_change: function(report) {
+                update_dynamic_dates(report);
+            }
+        },
+        {
             fieldname: "from_date",
-            label: __("From Date"),
+            label: __("Attendance From Date"),
             fieldtype: "Date",
-            default: get_default_from_date(),
             reqd: 1,
+            hidden: 1
         },
         {
             fieldname: "to_date",
-            label: __("To Date"),
+            label: __("Attendance To Date"),
             fieldtype: "Date",
-            default: get_default_to_date(),
             reqd: 1,
+            hidden: 1
+        },
+        {
+            fieldname: "deduction_from_date",
+            label: __("Deduction From Date"),
+            fieldtype: "Date",
+            reqd: 1,
+            hidden: 1
+        },
+        {
+            fieldname: "deduction_to_date",
+            label: __("Deduction To Date"),
+            fieldtype: "Date",
+            reqd: 1,
+            hidden: 1
         }
     ],
 
+    hidden_columns: [
+        "Late Dates",
+        "Early Dates",
+        "Missing Dates",
+        "Leaves Deduction Dates",
+        "Absent Dates",
+        "Payment Dates"
+    ],
+
     onload: function (report) {
+        update_dynamic_dates(report);
 		hideColumns(report);
-		
+
         if (frappe.user.has_role("Employee")) {
             frappe.call({
                 method: "frappe.client.get_value",
@@ -97,31 +160,70 @@ frappe.query_reports["Attendance Leave Summary"] = {
     formatter: function (value, row, column, data, default_formatter) {
         value = default_formatter(value, row, column, data);
 
-        // Make Late.Ded, Early.Ded, and Missing.Ded columns clickable
-        if (column.id === "late_ded" && data.late_dates) {
+        // Make Late Entry, Early Exit, and Missing Attendance columns clickable
+        if (column.id === "late_entry" && data.late_dates) {
             value = `<a href="#" onclick="showDates('Late Entry Dates', '${data.late_dates}')">${value}</a>`;
         }
-        if (column.id === "early_ded" && data.early_dates) {
+        if (column.id === "early_exit" && data.early_dates) {
             value = `<a href="#" onclick="showDates('Early Exit Dates', '${data.early_dates}')">${value}</a>`;
         }
-        if (column.id === "missing_ded" && data.missing_dates) {
+        if (column.id === "missing_attendance" && data.missing_dates) {
             value = `<a href="#" onclick="showDates('Missing Attendance Dates', '${data.missing_dates}')">${value}</a>`;
         }
-
+        if (column.id === "leaves_deduction" && data.leaves_deduction_dates) {
+            value = `<a href="#" onclick="showDates('Leaves Deduction Dates', '${data.leaves_deduction_dates}')">${value}</a>`;
+        }
+        if (column.id === "absent" && data.absent_dates) {
+            value = `<a href="#" onclick="showDates('Absent Dates', '${data.absent_dates}')">${value}</a>`;
+        }
+        if (column.id === "payment_days" && data.payment_dates) {
+            value = `<a href="#" onclick="showDates('Payment Dates', '${data.payment_dates}')">${value}</a>`;
+        }
+        
         return value;
     }
 };
 
+function update_dynamic_dates(report) {
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const selected_month_name = report.get_filter_value("month");
+    const selected_year = parseInt(report.get_filter_value("year"));
+
+    if (!selected_month_name || !selected_year) return;
+
+    const selected_month = monthNames.indexOf(selected_month_name);
+
+    const att_from = new Date(selected_year, selected_month - 1, 21); // prev month 21
+    const att_to = new Date(selected_year, selected_month, 20);       // current month 20
+    const ded_from = new Date(selected_year, selected_month - 2, 21); // prev-prev 21
+    const ded_to = new Date(selected_year, selected_month - 1, 20);   // prev 20
+
+    // Formating to yyyy-mm-dd
+    function formatDate(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    report.set_filter_value("from_date", formatDate(att_from));
+    report.set_filter_value("to_date", formatDate(att_to));
+    report.set_filter_value("deduction_from_date", formatDate(ded_from));
+    report.set_filter_value("deduction_to_date", formatDate(ded_to));
+}
+
 // Function to show dates in a popup
 function showDates(title, dates) {
-    console.log("click is clicked");
-
     if (dates) {
         const dateArray = dates.split(',');
 
         const formattedDates = dateArray.map(date => {
             const [year, month, day] = date.split('-');
-            return `${day}-${month}-${year}`; 
+            return `${day}-${month}-${year}`;
         });
 
         const formattedMessage = formattedDates.join('<br>');
@@ -136,58 +238,4 @@ function showDates(title, dates) {
             message: "No dates found."
         });
     }
-}
-
-function hideColumns(report) {
-	console.log('hide columns');
-	
-    const columnsToHide = ["late_dates", "early_dates", "missing_dates"];
-
-    // Iterate through columns and hide the specified ones
-    report.columns.forEach(column => {
-        if (columnsToHide.includes(column.id)) {
-            column.hidden = true;
-        }
-    });
-
-    // Refresh the report to apply changes
-    report.refresh();
-}
-
-// Function to get default from date
-function get_default_from_date() {
-    const today = new Date();
-    const day = today.getDate();
-    const month = today.getMonth();
-    const year = today.getFullYear();
-
-    let from_date;
-
-    if (day > 20) {
-        from_date = new Date(year, month, 22).toISOString().split("T")[0];
-    } else {
-        from_date = new Date(year, month - 1, 22).toISOString().split("T")[0];
-    }
-
-    console.log("Calculated from_date:", from_date);
-    return from_date;
-}
-
-// Function to get default to date
-function get_default_to_date() {
-    const today = new Date();
-    const day = today.getDate();
-    const month = today.getMonth();
-    const year = today.getFullYear();
-
-    let to_date;
-
-    if (day > 20) {
-        to_date = new Date(year, month + 1, 21).toISOString().split("T")[0];
-    } else {
-        to_date = new Date(year, month, 21).toISOString().split("T")[0];
-    }
-
-    console.log("Calculated to_date:", to_date);
-    return to_date;
 }

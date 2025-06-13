@@ -33,6 +33,7 @@ frappe.ui.form.on("Attendance Request", {
             return {
                 filters: {
                     department: frm.doc.department,
+                    status: 'Active',
                 },
             };
         });
@@ -249,7 +250,7 @@ frappe.ui.form.on("Attendance Request", {
         // end: Mubashir Bashir, 12-11-2024
     },
 
-    employee: function (frm) {
+    employee: function (frm) {        
         if (frm.doc.employee) {
             frm.trigger("set_leave_approver");
             frm.trigger("check_shift_assignment"); // Mubashir Bashir 12-11-2024
@@ -332,13 +333,25 @@ frappe.ui.form.on("Attendance Request", {
             get_current_time(frm, 'from_time', 'mark_check_in');
         }, 20);
 	},
-	mark_check_out: function(frm){        		
-        hide_field(frm, 'mark_check_out');
-		show_field(frm, 'to_time');
-        setTimeout(() => {
-            get_current_time(frm, 'to_time', 'mark_check_out');            
-        }, 20);          
-	},
+	mark_check_out: function(frm) {
+        const [hours, minutes, seconds] = frm.doc.from_time.split(':').map(Number);
+        const formTime = new Date();
+        formTime.setHours(hours, minutes, seconds || 0, 0);
+        const now = new Date();
+        const diffInMs = now - formTime;
+        const diffInMinutes = diffInMs / (1000 * 60);
+        
+        if (diffInMinutes > 1) {
+            hide_field(frm, 'mark_check_out');
+            show_field(frm, 'to_time');
+            setTimeout(() => {
+                get_current_time(frm, 'to_time', 'mark_check_out');
+            }, 20);
+        } else {
+            frappe.msgprint(__('Time interval is too short!'));
+        }
+    },
+
 
     before_save: function(frm) {
         if (frm.doc.reason && frm.doc.reason !== "Check In/Out Miss") {

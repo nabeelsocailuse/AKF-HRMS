@@ -4,6 +4,13 @@
 frappe.ui.form.on("Travel Request", {
     onload(frm) {
         clearFieldsOnLoad(frm); // Mubashir Bashir 13-03-2025
+		frm.set_query("employee", function () {
+            return {
+                filters: {
+                    status: 'Active',
+                },
+            };
+        });
     },
     refresh(frm) {
         if (frm.doc.docstatus === 1) {
@@ -11,6 +18,7 @@ frappe.ui.form.on("Travel Request", {
                 frappe.route_options = {
                     employee: frm.doc.employee,
                     travel_request: frm.doc.name,
+					expense_type: 'Travel'
                 };
                 frappe.set_route('Form', 'Expense Claim', 'new-expense-claim');
             }, __("Create"));

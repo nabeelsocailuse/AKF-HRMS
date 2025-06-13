@@ -27,12 +27,13 @@ class OverlappingAttendanceRequestError(frappe.ValidationError):
 class AttendanceRequest(Document):
 	# Function overide and Changed
 	def validate(self):
+		self.validate_travel_dates() # Mubashir Bashir 4-6-25
 		self.validate_future_request_and_date_of_joining() # nabeel saleem, 20-12-2024
 		# self.mark_check_in_on_save() # nabeel saleem, 20-12-2024
 		self.validate_from_time_and_to_time() # nabeel saleem, 20-12-2024
 		self.validate_half_day() # nabeel saleem, 20-12-2024
 		# self.validate_work_from_home() # Commented by Mubashir on 07-02-2025
-		# self.validate_request_overlap() # Commented by Mubashir on 12-03-2025
+		# self.validate_request_overlap() # Mubashir 12-03-2025
 
 		# self.set_next_workflow_state() # Mubashir Bashir 11-03-2025
 		# self.set_next_workflow_approver() # Mubashir Bashir 11-03-2025
@@ -40,6 +41,11 @@ class AttendanceRequest(Document):
 		""" Nabeel Saleem, 16-05-2025 """
 		setting_next_workflow_approver(self)
 		record_workflow_approver_states(self)
+	
+	def on_submit(self):
+		# self.mark_check_out_on_submit() # nabeel saleem, 20-12-2024
+		self.cannot_submit_own_attendance_request() # nabeel saleem, 20-12-2024
+		self.create_attendance_records()
 
 	def validate_future_request_and_date_of_joining(self):
 		date_of_joining = frappe.db.get_value(
@@ -133,6 +139,24 @@ class AttendanceRequest(Document):
 			title=_("Overlapping Attendance Request"),
 			exc=OverlappingAttendanceRequestError,
 		)
+		
+	# Mubashir Bashir 4-56-25 Start
+	def validate_travel_dates(self):
+		if not self.travel_request: return
+		query = f"""
+					SELECT departure_date, arrival_date
+					FROM `tabTravel Itinerary`
+					WHERE parent = '{self.travel_request}'
+				"""
+		result = frappe.db.sql(query, as_dict=1)
+		if(result):
+			departure_date=getdate(result[0].departure_date)
+			arrival_date=getdate(result[0].arrival_date)
+		else:
+			frappe.throw(f"No date found for travel request: {self.travel_request}")
+		if (not departure_date<= getdate(self.from_date) <= arrival_date):
+			frappe.throw(_("Attendance Request Date should be between Departure Date and Arrival Date"))
+	# Mubashir Bashir 4-56-25 End
 
 	def on_cancel(self):
 		attendance_list = frappe.get_all(
@@ -164,12 +188,6 @@ class AttendanceRequest(Document):
 					from_date, to_date
 				)
 			)
-
-	# Function overide and changed
-	def on_submit(self):
-		# self.mark_check_out_on_submit() # nabeel saleem, 20-12-2024
-		self.cannot_submit_own_attendance_request() # nabeel saleem, 20-12-2024
-		self.create_attendance_records()
 
 	def cannot_submit_own_attendance_request(self):
 		emp_user_id = frappe.get_value("Employee", self.employee, "user_id")

@@ -25,7 +25,7 @@ from akf_hrms.akf_hrms.doctype.expense_claim.one_day_salary import get_one_day_s
 # Nabeel Saleem, May 16'2025
 from akf_hrms.utils.expense_claim_utils import (
 	set_next_workflow_approver,
-	record_workflow_approver_states
+	# record_set_next_workflow_approverworkflow_approver_states
 )
 
 class InvalidExpenseApproverError(frappe.ValidationError):
@@ -44,7 +44,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 	def after_insert(self):
 		self.notify_approver()
-		set_next_workflow_approver(self)
+		# set_next_workflow_approver(self)
 		# record_workflow_approver_states(self) # nabeel saleem on 21-05-2025
 
 	#Override
@@ -81,8 +81,9 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		# nabeel saleem, 19-12-2024	
 		self.validate_and_set_vehicle_expense()
 		# nabeel saleem, 16-05-2025
-		set_next_workflow_approver(self)
+		# set_next_workflow_approver(self)
 		# if(not self.is_new()): record_workflow_approver_states(self)
+		self.validate_expense_amounts()	# Mubashir Bashir 04-06-25
 
 	def set_status(self, update=False):
 		status = {"0": "Draft", "1": "Submitted", "2": "Cancelled"}[cstr(self.docstatus or 0)]
@@ -125,6 +126,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 		share_doc_with_approver(self, self.expense_approver)
 		self.publish_update()
 		self.notify_approval_status()
+		set_next_workflow_approver(self)
 
 	def after_delete(self):
 		self.publish_update()
@@ -696,48 +698,49 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				frappe.throw(f"Error validating expense '{expense.expense_type}': {ex}")
 
 	def get_travel_attendance(self):
-		duration = 0
-		comp_off = 1
-		for expense in self.expenses:
-			holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
+		if self.expense_type == 'Travel':
+			duration = 0
+			comp_off = 1
+			for expense in self.expenses:
+				holiday_list= frappe.db.get_value("Employee",self.employee,"holiday_list")
 
-			compensatory_off = frappe.db.sql("""
-				SELECT compensatory_leave
-				FROM `tabHoliday`
-				WHERE parent = %s AND holiday_date = %s
-			""", (holiday_list, expense.expense_date), as_dict=1)
+				compensatory_off = frappe.db.sql("""
+					SELECT compensatory_leave
+					FROM `tabHoliday`
+					WHERE parent = %s AND holiday_date = %s
+				""", (holiday_list, expense.expense_date), as_dict=1)
 
-			if compensatory_off:
-				comp_off = compensatory_off[0].get('compensatory_leave')
+				if compensatory_off:
+					comp_off = compensatory_off[0].get('compensatory_leave')
+					
+				query_result = frappe.db.sql("""
+					SELECT att.in_time, att.out_time
+					FROM `tabAttendance` att
+					LEFT JOIN `tabAttendance Request` ar ON ar.name = att.attendance_request
+					WHERE att.employee = %s
+						AND att.attendance_date = %s
+						AND ar.travel_request = %s
+						AND att.docstatus = 1
+				""", (self.employee, expense.expense_date, self.travel_request), as_dict=1)
+
+				if not query_result:
+					frappe.throw(f"No attendance Record found against travel request '{self.travel_request}' for date '{expense.expense_date}'")
 				
-			query_result = frappe.db.sql("""
-				SELECT att.in_time, att.out_time
-				FROM `tabAttendance` att
-				LEFT JOIN `tabAttendance Request` ar ON ar.name = att.attendance_request
-				WHERE att.employee = %s
-					AND att.attendance_date = %s
-					AND ar.travel_request = %s
-					AND att.docstatus = 1
-			""", (self.employee, expense.expense_date, self.travel_request), as_dict=1)
+				attendance = query_result[0]
+				in_time_str = attendance.get('in_time')
+				out_time_str = attendance.get('out_time')
 
-			if not query_result:
-				frappe.throw(f"No attendance Record found against travel request '{self.travel_request}' for date '{expense.expense_date}'")
+				if not in_time_str or not out_time_str:
+					frappe.throw(f"In Time or Out Time missing for date '{expense.expense_date}'")
+
+				in_time = in_time_str if isinstance(in_time_str, datetime) else datetime.strptime(in_time_str, "%Y-%m-%d %H:%M:%S")
+				out_time = out_time_str if isinstance(out_time_str, datetime) else datetime.strptime(out_time_str, "%Y-%m-%d %H:%M:%S")
+
+				time_diff = out_time - in_time
+				time_in_hours = time_diff.total_seconds() / 3600
+				duration += time_in_hours
 			
-			attendance = query_result[0]
-			in_time_str = attendance.get('in_time')
-			out_time_str = attendance.get('out_time')
-
-			if not in_time_str or not out_time_str:
-				frappe.throw(f"In Time or Out Time missing for date '{expense.expense_date}'")
-
-			in_time = in_time_str if isinstance(in_time_str, datetime) else datetime.strptime(in_time_str, "%Y-%m-%d %H:%M:%S")
-			out_time = out_time_str if isinstance(out_time_str, datetime) else datetime.strptime(out_time_str, "%Y-%m-%d %H:%M:%S")
-
-			time_diff = out_time - in_time
-			time_in_hours = time_diff.total_seconds() / 3600
-			duration += time_in_hours
-		
-		return duration, int(comp_off)
+			return duration, int(comp_off)
 	
 	@frappe.whitelist()
 	def validate_expenses_table(self):
@@ -793,7 +796,12 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 
 			except Exception as ex:
 				frappe.throw(f"Error calculating amount for '{d.expense_type}': {ex}")
-
+	# Mubashir Bashir 4-6-25 Start
+	def validate_expense_amounts(self):
+		for expense in self.expenses:
+			if expense.amount <= 0: 
+				frappe.throw(f'Expense amount for type {expense.expense_type} must be greater than 0', title= 'Invalid Expense Amount')
+	# Mubashir Bashir 4-6-25 End
 	# nabeel saleem, 19-12-2024	
 	@frappe.whitelist()
 	def validate_and_set_vehicle_expense(self):

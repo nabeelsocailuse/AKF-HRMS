@@ -558,10 +558,10 @@ class SalarySlip(TransactionBase):
 			- self._get_days_outside_period(include_holidays_in_total_working_days, holidays)
 			- self._get_marked_attendance_days(holidays)
 		)
-
+		
 		if include_holidays_in_total_working_days and holidays:
 			unmarked_days -= self._get_number_of_holidays(holidays)
-
+		
 		return unmarked_days
 
 	def _get_days_outside_period(
@@ -599,6 +599,7 @@ class SalarySlip(TransactionBase):
 				days += _get_days(add_days(self.relieving_date, 1), self.custom_end_date_20th_of_current_month)
 			else:
 				days += _get_days(add_days(self.relieving_date, 1), self.end_date)
+		
 		return days
 
 	def _get_number_of_holidays(self, holidays: list | None = None) -> float:
@@ -617,7 +618,7 @@ class SalarySlip(TransactionBase):
 			date = add_days(actual_end_date, -days)
 			if date in holidays:
 				no_of_holidays += 1
-		# frappe.msgprint(f"{actual_start_date}  {actual_end_date}  {no_of_holidays}")
+		
 		return no_of_holidays
 
 	def _get_marked_attendance_days(self, holidays: list | None = None) -> float:
@@ -647,7 +648,7 @@ class SalarySlip(TransactionBase):
 			
 		if holidays:
 			query = query.where(Attendance.attendance_date.notin(holidays))
-		# frappe.msgprint(f"query.run()[0][0]: {(query.run()[0][0])}")
+		
 		return query.run()[0][0]
 
 	def get_payment_days(self, include_holidays_in_total_working_days):

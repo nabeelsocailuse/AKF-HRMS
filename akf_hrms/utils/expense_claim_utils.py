@@ -8,19 +8,20 @@ from frappe.model.workflow import get_transitions
 
 def set_next_workflow_approver(self):
 	if(hasattr(self, 'workflow_state')):
+		if(self.workflow_state):
+			if(not self.current_role):
+				frappe.throw(f"Current role is not set in employee profile {link}.", title="Missing Information")
 
-		if(not self.current_role):
-			frappe.throw(f"Current role is not set in employee profile {link}.", title="Missing Information")
-
-		if(self.next_workflow_approver in ["", None]) or (self.is_new()):
-			self.next_workflow_approver = self.employee
-	
-	frappe.enqueue(
-			record_workflow_approver_states,
-			timeout=300,
-			self = self,
-			publish_progress=False,
-		)
+			if(self.next_workflow_approver in ["", None]) or (self.is_new()):
+				self.next_workflow_approver = self.employee
+			
+			record_workflow_approver_states(self)
+	# frappe.enqueue(
+	# 		record_workflow_approver_states,
+	# 		timeout=300,
+	# 		self = self,
+	# 		publish_progress=False,
+	# 	)
 	'''frappe.msgprint(
 		_(f"{self.workflow_state} Approval state is queued. It may take a few minutes"),
 		alert=True,

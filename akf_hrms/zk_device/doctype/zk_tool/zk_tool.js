@@ -49,7 +49,7 @@ frappe.ui.form.on("ZK Tool", {
 			.then(r => {
 				let data = r.message;
 				logs = data.logs;
-				console.log(logs);
+				console.log(data);
 				frm.set_value("fetched", data.fetched);
 				var end = new Date();
 				const total_time = calculate_process_time(start, end);

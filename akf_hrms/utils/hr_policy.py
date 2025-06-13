@@ -505,7 +505,7 @@ def validate_other_info(self=None):
 @frappe.whitelist()
 def get_eobi_pf_social_security_details(self=None):      
     # Validate EOBI Employer Contribution
-    employee = frappe.get_doc("Employee", {"name": self.employee}, ["name", "custom_eobi_applicable"])
+    employee = frappe.get_doc("Employee", {"name": self.employee}, ["name", "custom_eobi_applicable", "custom_social_security_applicable"])
     if employee.custom_eobi_applicable == 1:
         self.custom_eobi_employer_contribution = frappe.db.get_value("AKF Payroll Settings", None, "eobi_employer_contribution")   
         # Validate EOBI Employee Contribution
@@ -534,12 +534,9 @@ def get_eobi_pf_social_security_details(self=None):
     social_security_amount = frappe.db.get_value("AKF Payroll Settings", None, "social_security_amount")
     social_security_rate = frappe.db.get_value("AKF Payroll Settings", None, "social_security_rate")		
     
-    if flt(self.gross_pay) <= flt(social_security_amount):                     
-        ssa_gross_pay = frappe.db.get_value("Salary Structure Assignment", {"employee": self.employee, "docstatus":1}, "base")                  
-        social_security_amount_deduction = flt(ssa_gross_pay) * flt(social_security_rate) 
-        for d in self.deductions:
-            if d.salary_component == "Social Security":
-                d.amount = social_security_amount_deduction
+    ssa_gross_pay = frappe.db.get_value("Salary Structure Assignment", {"employee": self.employee, "docstatus":1}, "base")                  
+    if ssa_gross_pay and flt(ssa_gross_pay) <= flt(social_security_amount) or employee.custom_social_security_applicable == 1:                     
+        self.custom_social_security_employer_contribution = flt(ssa_gross_pay) * flt(social_security_rate)        
     get_set_takful_plan(self)
         
 @frappe.whitelist()
