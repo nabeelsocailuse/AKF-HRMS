@@ -43,7 +43,7 @@ class AttendanceRequest(Document):
 		record_workflow_approver_states(self)
 	
 	def on_submit(self):
-		# self.mark_check_out_on_submit() # nabeel saleem, 20-12-2024
+		self.mark_check_out_on_submit() # nabeel saleem, 20-12-2024
 		self.cannot_submit_own_attendance_request() # nabeel saleem, 20-12-2024
 		self.create_attendance_records()
 

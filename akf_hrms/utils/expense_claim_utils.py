@@ -4,31 +4,19 @@ from frappe.utils import (
 	get_datetime, 
 	get_link_to_form
 )
-from frappe.model.workflow import get_transitions
+from akf_hrms.utils.workflow_transitions_utils import get_transitions
+import time
 
 def set_next_workflow_approver(self):
 	if(hasattr(self, 'workflow_state')):
 		if(self.workflow_state):
 			if(not self.current_role):
-				frappe.throw(f"Current role is not set in employee profile {link}.", title="Missing Information")
+				frappe.throw(f"Current role is not set in employee profile.", title="Missing Information")
 
 			if(self.next_workflow_approver in ["", None]) or (self.is_new()):
 				self.next_workflow_approver = self.employee
-			
 			record_workflow_approver_states(self)
-	# frappe.enqueue(
-	# 		record_workflow_approver_states,
-	# 		timeout=300,
-	# 		self = self,
-	# 		publish_progress=False,
-	# 	)
-	'''frappe.msgprint(
-		_(f"{self.workflow_state} Approval state is queued. It may take a few minutes"),
-		alert=True,
-		indicator="blue",
-	)'''
 
-# bench --site erp.alkhidmat.org execute akf_hrms.utils.expense_claim_utils.find_workflow_state_and_role
 def record_workflow_approver_states(self, publish_progress=True):
 	
 	approversList = eval(self.custom_state_data) if(self.custom_state_data) else []
@@ -44,23 +32,24 @@ def record_workflow_approver_states(self, publish_progress=True):
 		return
 
 	doc = frappe.get_doc("Expense Claim", self.name)
+	
 	transitions = get_transitions(doc)
-
+	
 	wf = frappe._dict()
 	
-	for row in transitions: 
-		if(row["action"].lower()!='reject'): wf.update(row)
+	for row in transitions:
+		if(row["action"].lower()!='reject'): wf.update(row) 
 	
 	current_approver = self.next_workflow_approver
-	nxt_employee_name = ""
 	
+	nxt_employee_name = ""
+
 	for d in get_next_role_employee(wf.allowed, self.department):
 		if(not d.custom_current_role):
 			link = get_link_to_form("Employee", d.name, d.employee_name)
 			frappe.throw(f"Please set current role in {link}")
 		frappe.db.set_value("Expense Claim", self.name, 'next_workflow_approver', d.name)
 		nxt_employee_name = d.name
-
 	cur_employee_name = frappe.db.get_value("Employee", current_approver, "employee_name")
 	if(nxt_employee_name!=""): 
 		nxt_employee_name = frappe.db.get_value("Employee", nxt_employee_name, "employee_name")
@@ -77,7 +66,7 @@ def record_workflow_approver_states(self, publish_progress=True):
 	})
 	frappe.db.set_value("Expense Claim", self.name, 'custom_state_data', frappe.as_json(approversList))
 	frappe.publish_realtime('event_name', {'key': 'value'}, user=frappe.session.user)
-
+	self.reload()
 	
 def get_next_role_employee(allowed, department):
 	if(not allowed): 
@@ -87,7 +76,7 @@ def get_next_role_employee(allowed, department):
 		From `tabEmployee` e
 		Where 
 			status='Active'
-			and custom_current_role= '{allowed}'
+			-- and custom_current_role= '{allowed}'
 			and user_id in (select u.name from `tabUser` u inner join `tabHas Role` h on (u.name=h.parent)
 				where h.role='{allowed}')
 	"""

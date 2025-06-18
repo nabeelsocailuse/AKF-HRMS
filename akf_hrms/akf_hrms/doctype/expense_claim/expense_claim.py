@@ -156,8 +156,8 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 			self.validate_compensatory_leave_request()
 
 		
-		if self.approval_status == "Draft":
-			frappe.throw(_("""Approval Status must be 'Approved' or 'Rejected'"""))
+		# if self.approval_status == "Draft":
+		# 	frappe.throw(_("""Approval Status must be 'Approved' or 'Rejected'"""))
 
 		self.update_task_and_project()
 		self.make_gl_entries()

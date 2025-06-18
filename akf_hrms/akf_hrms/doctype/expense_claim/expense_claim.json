@@ -140,8 +140,7 @@
    "fieldname": "expense_approver",
    "fieldtype": "Link",
    "label": "Expense Approver",
-   "options": "User",
-   "read_only": 1
+   "options": "User"
   },
   {
    "default": "Draft",
@@ -537,7 +536,7 @@
  "idx": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-17 16:50:36.303601",
+ "modified": "2025-06-18 18:18:20.393907",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Expense Claim",
