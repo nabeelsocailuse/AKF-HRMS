@@ -633,5 +633,5 @@
    "value": "eval:['Medical', 'Vision Support Equipment', 'Hearing Support Equipment', 'Artificial Limbs'].includes(doc.expense_type)"
   }
  ],
- "sync_on_migrate": 1
+ "sync_on_migrate": 0
 }

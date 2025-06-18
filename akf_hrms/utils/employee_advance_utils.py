@@ -7,6 +7,7 @@ from frappe.utils import (
 from frappe.model.workflow import get_transitions
 
 def set_next_workflow_approver(doc, method=None):
+	return
 	self=doc
 	if(hasattr(self, 'workflow_state')):
 

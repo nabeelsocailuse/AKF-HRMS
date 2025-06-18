@@ -143,6 +143,7 @@
    "label": "Identification Document Number"
   },
   {
+   "depends_on": "eval:doc.travel_type == 'International'",
    "fetch_from": "employee.passport_number",
    "fieldname": "passport_number",
    "fieldtype": "Data",
@@ -172,6 +173,7 @@
   {
    "fieldname": "costing_details",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Costing Details"
   },
   {
@@ -190,7 +192,8 @@
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "label": "Cost Center",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "permlevel": 2
   },
   {
    "fieldname": "dimension_col_break",
@@ -200,6 +203,7 @@
    "collapsible": 1,
    "fieldname": "event_details",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Event Details"
   },
   {
@@ -229,6 +233,7 @@
   {
    "fieldname": "approval_details_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Approval Details"
   },
   {
@@ -310,8 +315,13 @@
   }
  ],
  "is_submittable": 1,
- "links": [],
- "modified": "2025-05-16 12:45:44.967219",
+ "links": [
+  {
+   "link_doctype": "Employee Advance",
+   "link_fieldname": "custom_travel_request"
+  }
+ ],
+ "modified": "2025-06-17 17:59:54.922559",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Travel Request",

@@ -211,43 +211,7 @@ frappe.ui.form.on("Attendance Request", {
 
     from_date: function (frm) {
         frm.set_value("to_date", frm.doc.from_date);
-        // start: Mubashir Bashir, 12-11-2024
-        if (frm.doc.reason != 'Check In/Out Miss') return
-        if (frm.doc.employee && frm.doc.from_date) {
-            frappe.call({
-                method: "frappe.client.get_list",
-                args: {
-                    doctype: "Attendance",
-                    fields: ["in_time", "out_time"],
-                    filters: {
-                        employee: frm.doc.employee,
-                        attendance_date: frm.doc.from_date,
-                        docstatus: 1 
-                    },
-                    limit: 1
-                },
-                callback: function(response) {
-                    if (response && response.message && response.message.length > 0) {
-                        const attendance = response.message[0];
-                        
-                        // Only set from_time if it hasn't been set by the button
-                        if (attendance.in_time && !frm.doc.from_time) {
-                            const inTime = attendance.in_time.substring(11, 19);
-                            frm.set_value("from_time", inTime);
-                        }
-                        
-                        // Only set to_time if it hasn't been set by the button
-                        if (attendance.out_time && !frm.doc.to_time) {
-                            const outTime = attendance.out_time.substring(11, 19); 
-                            frm.set_value("to_time", outTime);
-                        }
-                    } else {
-                        console.log("No attendance record found for the selected date.");
-                    }
-                }
-            });
-        }
-        // end: Mubashir Bashir, 12-11-2024
+        get_check_in_out_miss_time(frm); // Mubashir 17-June-2025
     },
 
     employee: function (frm) {        
@@ -324,7 +288,7 @@ frappe.ui.form.on("Attendance Request", {
         frm.set_value('travel_request', null);
         show_field(frm, 'mark_check_in');
         hide_field(frm, 'mark_check_out');
-        
+        get_check_in_out_miss_time(frm); // Mubashir 17-June-2025        
     },
     mark_check_in: function(frm){
         hide_field(frm, 'mark_check_in');
@@ -536,3 +500,45 @@ function clearFieldsOnLoad(frm) {
     }
 }
 // Mubashir Bashir 13-03-2025 End
+
+// start: Mubashir Bashir, 12-11-2024
+function get_check_in_out_miss_time(frm) {
+    if (frm.doc.reason != 'Check In/Out Miss') return
+    if (frm.doc.employee && frm.doc.from_date) {
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Attendance",
+                fields: ["in_time", "out_time", "custom_in_times", "custom_out_times"],
+                filters: {
+                    employee: frm.doc.employee,
+                    attendance_date: frm.doc.from_date,
+                    docstatus: 1 
+                },
+                limit: 1
+            },
+            callback: function(response) {
+                if (response && response.message && response.message.length > 0) {
+                    const attendance = response.message[0];                    
+                    
+                    // Only set from_time if it hasn't been set by the button
+                    if (attendance.custom_in_times && !frm.doc.from_time) {
+                        // const inTime = attendance.in_time.substring(11, 19);                    
+                        const inTime = attendance.custom_in_times;
+                        frm.set_value("from_time", inTime);
+                    }
+                    
+                    // Only set to_time if it hasn't been set by the button
+                    if (attendance.custom_out_times && !frm.doc.to_time) {
+                        // const outTime = attendance.out_time.substring(11, 19);                        
+                        const outTime = attendance.custom_out_times
+                        frm.set_value("to_time", outTime);
+                    }
+                } else {
+                    console.log("No attendance record found for the selected date.");
+                }
+            }
+        });
+    }
+}
+// end: Mubashir Bashir, 12-11-2024

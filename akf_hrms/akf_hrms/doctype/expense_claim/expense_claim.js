@@ -7,6 +7,25 @@ frappe.provide("erpnext.accounts.dimensions");
 frappe.ui.form.on('Expense Claim', {
     onload: function (frm) {
         erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
+        if (frm.is_new()) {
+            frappe.call({
+                method: 'frappe.client.get_list',
+                args: {
+                    doctype: 'Employee',
+                    filters: {
+                        user_id: frappe.session.user
+                    },
+                    fields: ['name','expense_approver'],
+                    limit_page_length: 1
+                },
+                callback: function(response) {
+                    if (response.message && response.message.length > 0) {
+                        frm.set_value('employee', response.message[0].name);
+                        frm.set_value('expense_approver', response.message[0].expense_approver);
+                    }
+                }
+            });
+        }
         
         // if (!frm.doc.employee && !frm.doc.expense_approver) {
         //     frappe.throw(__('Please select Employee and Approver first'));

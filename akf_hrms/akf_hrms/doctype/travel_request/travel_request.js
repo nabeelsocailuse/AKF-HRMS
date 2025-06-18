@@ -4,6 +4,7 @@
 frappe.ui.form.on("Travel Request", {
     onload(frm) {
         clearFieldsOnLoad(frm); // Mubashir Bashir 13-03-2025
+		setEmployeeFromSession(frm); // Mubashir Bashir 17-06-2025
 		frm.set_query("employee", function () {
             return {
                 filters: {
@@ -14,6 +15,9 @@ frappe.ui.form.on("Travel Request", {
     },
     refresh(frm) {
         if (frm.doc.docstatus === 1) {
+			// Mubashir 17-June-2025 Start
+            setEmployeeAdvanceButton(frm);
+			// Mubashir 17-June-2025 End
             frm.add_custom_button(__('Expense Claim'), function () {
                 frappe.route_options = {
                     employee: frm.doc.employee,
@@ -212,3 +216,53 @@ function clearFieldsOnLoad(frm) {
     }
 }
 // Mubashir Bashir 13-03-2025 End
+
+// Mubashir Bashir 17-06-2025 Start
+function setEmployeeFromSession(frm) {
+	if (frm.is_new()) {
+		frappe.call({
+			method: "frappe.client.get_list",
+			args: {
+				doctype: "Employee",
+				filters: {
+					user_id: frappe.session.user,
+					status: "Active"
+				},
+				fields: ["name"]
+			},
+			callback: function (r) {
+				if (r.message && r.message.length > 0) {
+					frm.set_value("employee", r.message[0].name);
+				}
+			}
+		});
+	}
+}
+
+function setEmployeeAdvanceButton(frm) {
+    if (frm.doc.docstatus !== 1) return;
+
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+            doctype: "Employee Advance",
+            filters: {
+                custom_travel_request: frm.doc.name,
+                docstatus: ["!=", 2] 
+            },
+            limit_page_length: 1
+        },
+        callback: function (r) {
+            if (!r.message || r.message.length === 0) {
+                frm.add_custom_button(__('Employee Advance'), function () {
+                    frappe.route_options = {
+                        employee: frm.doc.employee,
+                        custom_travel_request: frm.doc.name,
+                    };
+                    frappe.set_route('Form', 'Employee Advance', 'new-employee-advance');
+                }, __("Create"));
+            }
+        }
+    });
+}
+// Mubashir Bashir 17-06-2025 End
