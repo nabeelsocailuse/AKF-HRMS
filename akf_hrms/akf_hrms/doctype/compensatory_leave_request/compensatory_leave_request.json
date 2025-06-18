@@ -86,6 +86,7 @@
    "default": "0",
    "fieldname": "half_day",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Half Day"
   },
   {
@@ -130,7 +131,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-20 12:15:48.650446",
+ "modified": "2025-06-18 11:05:42.452984",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Compensatory Leave Request",

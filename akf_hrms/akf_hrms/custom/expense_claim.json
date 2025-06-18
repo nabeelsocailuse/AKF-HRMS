@@ -1157,37 +1157,6 @@
    "amend": 0,
    "cancel": 0,
    "create": 0,
-   "creation": "2025-06-17 15:49:33.654586",
-   "delete": 0,
-   "docstatus": 0,
-   "email": 0,
-   "export": 1,
-   "idx": 0,
-   "if_owner": 0,
-   "import": 0,
-   "modified": "2025-06-17 15:49:33.654586",
-   "modified_by": "Administrator",
-   "name": "50c5049ec5",
-   "owner": "Administrator",
-   "parent": "Expense Claim",
-   "permlevel": 2,
-   "print": 0,
-   "read": 1,
-   "report": 0,
-   "role": "Employee",
-   "select": 0,
-   "share": 0,
-   "submit": 0,
-   "write": 0
-  },
-  {
-   "_assign": null,
-   "_comments": null,
-   "_liked_by": null,
-   "_user_tags": null,
-   "amend": 0,
-   "cancel": 0,
-   "create": 0,
    "creation": "2025-06-17 15:49:51.886142",
    "delete": 0,
    "docstatus": 0,
@@ -1929,5 +1898,5 @@
    "value": "1"
   }
  ],
- "sync_on_migrate": 0
+ "sync_on_migrate": 1
 }
