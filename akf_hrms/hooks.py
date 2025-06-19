@@ -212,12 +212,12 @@ doc_events = {
         "after_insert": "akf_hrms.utils.hr_policy.apply_policy"
     },
     # "Expense Claim": {
-    #     "after_insert": "akf_hrms.utils.expense_claim_utils.set_next_workflow_approver",
-    #     "validate": "akf_hrms.utils.expense_claim_utils.set_next_workflow_approver"
+        # "after_insert": "akf_hrms.utils.expense_claim_utils.set_next_workflow_approver",
+        # "on_update": "akf_hrms.utils.expense_claim_utils.set_next_workflow_approver"
     # },
-    "Employee Advance": {
-        "on_update": "akf_hrms.utils.employee_advance_utils.set_next_workflow_approver" 
-    },
+    # "Employee Advance": {
+        # "on_update": "akf_hrms.utils.employee_advance_utils.set_next_workflow_approver" \
+    # },
     "Overtime Claim Form": {
         "on_update": "akf_hrms.utils.overtime_claim_form_utils.set_next_workflow_approver" 
     },
@@ -226,7 +226,7 @@ doc_events = {
     },
     "Loan Application": {
         "on_update": "akf_hrms.utils.loan_utils.set_next_workflow_approver" 
-    }
+    },
 }
 
 # Scheduled Tasks
