@@ -255,6 +255,7 @@
    "read_only": 1
   },
   {
+   "default": "Pending",
    "fieldname": "approval_status",
    "fieldtype": "Select",
    "label": "Approval Status",
@@ -354,7 +355,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-03 16:53:15.359348",
+ "modified": "2025-06-19 19:03:01.173732",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Request",
