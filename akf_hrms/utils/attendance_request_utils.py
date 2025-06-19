@@ -122,6 +122,7 @@ def record_workflow_approver_states(self):
 		})
 		self.custom_state_data =  frappe.as_json(approversList)
 
-def get_approver_id(employee_id):
-	
+
+# Mubashir Bashir 19-June-2025
+def get_approver_id(employee_id):	
 	return frappe.db.get_value("Employee", employee_id, ["user_id"])
