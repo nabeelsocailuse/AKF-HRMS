@@ -134,7 +134,7 @@ frappe.ui.form.on('Employee Advance', {
 
 	make_deduction_via_additional_salary: function(frm) {
 		frappe.call({
-			method: "hrms.hr.doctype.employee_advance.employee_advance.create_return_through_additional_salary",
+			method: "akf_hrms.akf_hrms.doctype.employee_advance.employee_advance.create_return_through_additional_salary",
 			args: {
 				doc: frm.doc
 			},
@@ -148,7 +148,7 @@ frappe.ui.form.on('Employee Advance', {
 	make_payment_entry: function(frm) {
 		let method = "hrms.overrides.employee_payment_entry.get_payment_entry_for_employee";
 		if (frm.doc.__onload && frm.doc.__onload.make_payment_via_journal_entry) {
-			method = "hrms.hr.doctype.employee_advance.employee_advance.make_bank_entry";
+			method = "akf_hrms.akf_hrms.doctype.employee_advance.employee_advance.make_bank_entry";
 		}
 		return frappe.call({
 			method: method,
@@ -183,7 +183,7 @@ frappe.ui.form.on('Employee Advance', {
 
 	make_return_entry: function(frm) {
 		frappe.call({
-			method: 'hrms.hr.doctype.employee_advance.employee_advance.make_return_entry',
+			method: 'akf_hrms.akf_hrms.doctype.employee_advance.employee_advance.make_return_entry',
 			args: {
 				'employee': frm.doc.employee,
 				'company': frm.doc.company,
@@ -212,7 +212,7 @@ frappe.ui.form.on('Employee Advance', {
 
 	get_pending_amount: function(frm) {
 		frappe.call({
-			method: "hrms.hr.doctype.employee_advance.employee_advance.get_pending_amount",
+			method: "akf_hrms.akf_hrms.doctype.employee_advance.employee_advance.get_pending_amount",
 			args: {
 				"employee": frm.doc.employee,
 				"posting_date": frm.doc.posting_date

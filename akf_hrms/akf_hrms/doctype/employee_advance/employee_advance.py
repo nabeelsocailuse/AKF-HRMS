@@ -199,7 +199,6 @@ class EmployeeAdvance(Document):
 		self.reload()
 		self.set_status(update=True)
 
-
 @frappe.whitelist()
 def get_pending_amount(employee, posting_date):
 	employee_due_amount = frappe.get_all(
