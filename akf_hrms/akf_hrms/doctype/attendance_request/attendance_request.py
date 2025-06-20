@@ -77,8 +77,8 @@ class AttendanceRequest(Document):
 	
 	def mark_check_out_on_submit(self):
 		if(self.reason not in ["", "Check In/Out Miss"]):
-			if (not self.to_time):
-				frappe.throw(_("Please mark check out using the 'Mark Check Out' button"), title="To Time Required")
+			if (not self.check_out):
+				frappe.throw(_("Please mark check out using the 'Mark Check Out' button"), title="To Time Missing")
 	
 	def validate_from_time_and_to_time(self):
 		if(self.reason in ["Check In/Out Miss"]):

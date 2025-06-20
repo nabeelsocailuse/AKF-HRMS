@@ -68,6 +68,7 @@ def setting_next_workflow_approver(self):
 		if(self.next_workflow_approver in ["", None]) or (self.is_new()):
 			self.next_workflow_approver = self.employee
 			self.approver = get_approver_id(self.employee)
+			self.approver_name = get_approver_name(self.employee)
 
 def record_workflow_approver_states(self):
 	if(hasattr(self, 'workflow_state')):
@@ -109,6 +110,7 @@ def record_workflow_approver_states(self):
 
 		self.next_workflow_approver = prev.reports_to
 		self.approver = get_approver_id(prev.reports_to)
+		self.approver_name = get_approver_name(prev.reports_to)
 
 		approversList.update({
 			f"{self.workflow_state}": {
@@ -126,3 +128,5 @@ def record_workflow_approver_states(self):
 # Mubashir Bashir 19-June-2025
 def get_approver_id(employee_id):	
 	return frappe.db.get_value("Employee", employee_id, ["user_id"])
+def get_approver_name(employee_id):	
+	return frappe.db.get_value("Employee", employee_id, ["employee_name"])

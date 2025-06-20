@@ -216,7 +216,7 @@ frappe.ui.form.on("Attendance Request", {
 
     employee: function (frm) {        
         if (frm.doc.employee) {
-            frm.trigger("set_leave_approver");
+            // frm.trigger("set_leave_approver"); This is commentd by Mubashir due to approver set from workflow in attendance_request_utils
             frm.trigger("check_shift_assignment"); // Mubashir Bashir 12-11-2024
         }
     },
@@ -494,7 +494,7 @@ function clearFieldsOnLoad(frm) {
         frm.set_value('custom_state_data', '');
         frm.set_value('custom_state_html', '');
         if (frm.doc.employee) {
-            frm.trigger("set_leave_approver");
+            // frm.trigger("set_leave_approver"); This is commentd by Mubashir due to approver set from workflow in attendance_request_utils
             frm.trigger("check_shift_assignment");
         }
     }
