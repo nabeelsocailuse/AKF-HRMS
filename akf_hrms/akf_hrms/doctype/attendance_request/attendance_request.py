@@ -221,7 +221,8 @@ class AttendanceRequest(Document):
 					"out_time": t_date,
 					"custom_hours_worked": hours_worked,
 					"custom_in_times": self.from_time,
-					"custom_out_times": self.to_time
+					"custom_out_times": self.to_time,
+					"attendance_request": self.name
 				}
 			)
 			frappe.msgprint(
