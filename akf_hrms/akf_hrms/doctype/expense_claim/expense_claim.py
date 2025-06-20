@@ -51,7 +51,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 	def validate(self):
 		if(self.travel_request):
 			self.validate_travel_dates()
-			# self.validate_compensatory_leave_request()
+			self.validate_compensatory_leave_request()
 
 		self.validate_overlap_expense_claim()
 		self.validate_ta_da_expense()
