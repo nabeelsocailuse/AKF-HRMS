@@ -27,6 +27,7 @@
   {
    "fieldname": "designation",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Designation",
    "options": "Designation"
@@ -39,16 +40,16 @@
   },
   {
    "fieldname": "loan_entitlement",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Loan Entitlement",
-   "options": "Vehicle Loan\nBike Loan"
+   "options": "Loan Product"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-15 16:48:55.287948",
+ "modified": "2025-06-24 19:59:22.499963",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Grade Entitlement",

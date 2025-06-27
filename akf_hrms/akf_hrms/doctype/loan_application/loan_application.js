@@ -138,71 +138,12 @@ frappe.ui.form.on('Loan Application', {
         frm.set_value("repayment_method", "");
         frm.set_value("repayment_periods", "");
         frm.set_value("total_payable_amount", 0);
-        
-        if (frm.doc.loan_product == "Advance Salary") {
-            frm.set_value("repayment_method", "Repay Fixed Amount per Period");
-            frappe.call({
-                method: "frappe.client.get_list",
-                args: {
-                    doctype: "Salary Structure Assignment",
-                    fields: ["base"],
-                    filters: {
-                        employee: frm.doc.applicant,
-                        docstatus: 1,
-                        from_date: ["<", new Date()],
-                    },
-                    order_by: "from_date DESC",
-                    limit_page_length: 1,
-                },
-                callback: function (r) {
-                    console.log(r.message);
-                    if (r.message[0]) {
-                        frm.set_value("custom_maximum_allowed_loan", r.message[0].base / 2);
-                        frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
-                        frm.set_value("repayment_amount", frm.doc.custom_maximum_allowed_loan);
-                        frm.set_value("repay_from_salary", 1);
-                        frm.set_df_property("applicant", "read_only", 1);
-                        frm.set_df_property("repay_from_salary", "read_only", 1);
-                    } else {
-                        frm.set_value("loan_product", "");
-                        frappe.msgprint(
-                            __("Not authorized to apply for the loan as there is no Salary Structure Assignment currently active.")
-                        );
-                    }
-                },
-            });
-        } else {
-            frm.set_df_property("applicant", "read_only", 0);
-            frm.set_df_property("repay_from_salary", "read_only", 0);
-        }
+        frm.set_value("custom_maximum_allowed_loan", "");
 
-							// Mubashir Bashir Start 14-11-2024
-        // For Vehicle Loan
-        if (frm.doc.loan_product == "Vehicle Loan" || frm.doc.loan_product == "Bike Loan") {
-            validate_eligibility_on_the_basis_of_grade(frm);    // <-- Mubashir 15-01-25
+        validateAdvanceSalary(frm);
+        validateVehicleLoan(frm);
+        validateOtherLoans(frm);
 
-            get_latest_vehicle_loan_limit(frm, frm.doc.loan_product)
-                .then(latest_limit => {
-                    if (latest_limit) {
-                        console.log("latest limit: ", latest_limit);
-                        frm.set_value("custom_maximum_allowed_loan", latest_limit);
-                        console.log("latest custom_maximum_allowed_loan: ", frm.doc.custom_maximum_allowed_loan);
-                        frm.set_df_property("custom_maximum_allowed_loan", "read_only", 1);
-                    } else {
-                        frappe.msgprint(
-                            __("No loan limit found for the latest fiscal year.")
-                        );
-                    }
-                })
-                .catch(error => {
-                    frappe.msgprint(__("Error fetching loan limit: ") + error);
-                });
-        }		// Mubashir Bashir End 14-11-2024
-        else {
-            // frm.set_df_property("custom_maximum_allowed_loan", "read_only", 0);
-            frm.set_df_property("repayment_method", "read_only", 0);
-            // frm.set_df_property("repayment_periods", "read_only", 0);
-        }
     },
 
     loan_amount: function (frm) {
@@ -227,7 +168,7 @@ frappe.ui.form.on('Loan Application', {
         } 
         
 		// Mubashir Bashir Start 11-13-2024
-        if (frm.doc.loan_product == "Vehicle Loan" || frm.doc.loan_product == "Bike Loan") {
+        if (['Vehicle Loan', 'Car Loan', 'Bike Loan'].includes(frm.doc.loan_product)) {
             if (frm.doc.loan_amount > frm.doc.custom_maximum_allowed_loan)
               frappe.msgprint(__("Loan amount cannot exceed the limit of PKR " + frm.doc.custom_maximum_allowed_loan));
         }  // Mubashir Bashir End 11-13-2024
@@ -250,7 +191,6 @@ frappe.ui.form.on('Loan Application', {
     });
     },
 });
-
 // Mubashir Bashir Start 14-11-2024
 
 function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-01-2025 Start
@@ -319,7 +259,7 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-0
 
 // Mubashir Bashir 15-01-2025 START
 function validate_eligibility_on_the_basis_of_grade(frm) {
-    if (!['Vehicle Loan', 'Bike Loan'].includes(frm.doc.loan_product)) {
+    if (!['Vehicle Loan', 'Car Loan', 'Bike Loan'].includes(frm.doc.loan_product)) {
         return;
     }
 
@@ -371,6 +311,7 @@ function fetch_employee_details(frm) {          // Mubashir Bashir 13-June-2025
             .then(employee => {
                 frm.set_value('custom_current_role', employee.custom_current_role || '');
                 frm.set_value('directly_reports_to_hod', employee.custom_directly_reports_to_hod || '');
+                frm.set_value('custom_head_of_hr', employee.custom_head_of_hr || '');
             })
             .catch(err => {
                 frappe.msgprint(__('Unable to fetch Employee details'));
@@ -578,8 +519,99 @@ async function validateGuaranters(frm) {
 
 // Debounced version of the validation function
 const debouncedValidateGuaranters = debounce(validateGuaranters, 300);
-
 // Mubashir Bashir 16-01-2025 END
+
+
+// Mubashir Bashir 25-June-2025 START
+function validateAdvanceSalary(frm) {
+    if (frm.doc.custom_loan_category == "Advance Salary") {
+        frm.set_value("repayment_method", "Repay Fixed Amount per Period");
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Salary Structure Assignment",
+                fields: ["base"],
+                filters: {
+                    employee: frm.doc.applicant,
+                    docstatus: 1,
+                    from_date: ["<", new Date()],
+                },
+                order_by: "from_date DESC",
+                limit_page_length: 1,
+            },
+            callback: function (r) {
+                console.log(r.message);
+                if (r.message[0]) {
+                    frm.set_value("custom_maximum_allowed_loan", r.message[0].base / 2);
+                    frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
+                    frm.set_value("repayment_amount", frm.doc.custom_maximum_allowed_loan);
+                    frm.set_value("repay_from_salary", 1);
+                    frm.set_df_property("applicant", "read_only", 1);
+                    frm.set_df_property("repay_from_salary", "read_only", 1);
+                } else {
+                    frm.set_value("loan_product", "");
+                    frappe.msgprint(
+                        __("Not authorized to apply for the loan as there is no Salary Structure Assignment currently active.")
+                    );
+                }
+            },
+        });
+    } else {
+        frm.set_df_property("applicant", "read_only", 0);
+        frm.set_df_property("repay_from_salary", "read_only", 0);
+    }
+
+}
+
+function validateVehicleLoan(frm) {
+    // Mubashir Bashir Start 14-11-2024
+    if (frm.doc.custom_loan_category == 'Vehicle Loan') {
+        validate_eligibility_on_the_basis_of_grade(frm);    // <-- Mubashir 15-01-25
+
+        get_latest_vehicle_loan_limit(frm, frm.doc.loan_product)
+            .then(latest_limit => {
+                if (latest_limit) {
+                    console.log("latest limit: ", latest_limit);
+                    frm.set_value("custom_maximum_allowed_loan", latest_limit);
+                } else {
+                    frappe.msgprint(
+                        __("No loan limit found for the latest fiscal year.")
+                    );
+                }
+            })
+            .catch(error => {
+                frappe.msgprint(__("Error fetching loan limit: ") + error);
+            });
+    }		// Mubashir Bashir End 14-11-2024
+    else {
+        frm.set_df_property("repayment_method", "read_only", 0);
+        // frm.set_df_property("repayment_periods", "read_only", 0);
+    }
+
+}
+
+function validateOtherLoans(frm) {
+    if (['Vehicle Loan', 'Advance Salary'].includes(frm.doc.custom_loan_category)) return
+    frappe.call({
+                method: "frappe.client.get_list",
+                args: {
+                    doctype: "Loan Product",
+                    fields: ["maximum_loan_amount"],
+                    filters: {
+                        name: frm.doc.loan_product,
+                    }
+                },
+                callback: function (r) {
+                    if (r.message[0]) {
+                        frm.set_value("custom_maximum_allowed_loan", r.message[0].maximum_loan_amount);
+                        frm.set_value("loan_amount", frm.doc.custom_maximum_allowed_loan);
+                        frm.set_value("repayment_amount", frm.doc.custom_maximum_allowed_loan);
+                    }
+                },
+            });
+
+}
+// Mubashir Bashir 25-June-2025 END
 
 
 

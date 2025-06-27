@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import cint, flt, rounded, fmt_money
+from frappe.utils import cint, flt, rounded, fmt_money, today, add_months, getdate
 from datetime import datetime, timedelta, date
 
 from lending.loan_management.doctype.loan.loan import (
@@ -23,7 +23,6 @@ from lending.loan_management.doctype.loan_security_price.loan_security_price imp
 )
 
 from akf_hrms.utils.loan_utils import (
-    validate_guarantors,
     set_employee_defaults
 )
 
@@ -120,12 +119,12 @@ class LoanApplication(Document):
 		if frappe.db.exists("Loan Application", {
 			"applicant": self.applicant, 
 			"docstatus": 1,
-			"loan_product": "Advance Salary"
+			"custom_loan_category": "Advance Salary"
 		}):
 			frappe.throw("You have already applied for Advanced Salary and cannot apply again.")
 			return
 
-		if self.loan_product == "Advance Salary":
+		if self.custom_loan_category == "Advance Salary":
 			today = datetime.now()
 
 			if self.posting_date:
@@ -162,43 +161,68 @@ class LoanApplication(Document):
 			if(self.custom_guarantor_of_loan_application == self.custom_guarantor_2_of_loan_application):
 				frappe.throw(f"Both guarantor cannot be same.", title="Guarantor")
     
-	# nabeel saleem, 19-12-2024
+	# Mubashir Bashir 25-June-2025
 	def validate_loan_amount_not_exceed_to_max_loan_amount(self):
-		if(self.loan_product in ['Car Loan', 'Bike Loan']):
-			if(self.custom_maximum_allowed_loan and self.loan_amount):
-				if(float(self.loan_amount) > float(self.custom_maximum_allowed_loan)):
-					frappe.throw(f"Loan amount: <b>{fmt_money(self.loan_amount)}</b> is exceeding the maximum allowed loan: <b>{fmt_money(self.custom_maximum_allowed_loan)}</b>.", title="Loan Conflict")
+		if(self.custom_maximum_allowed_loan and self.loan_amount):
+			if(float(self.loan_amount) > float(self.custom_maximum_allowed_loan)):
+				frappe.throw(f"Loan amount: <b>{fmt_money(self.loan_amount)}</b> is exceeding the maximum allowed loan: <b>{fmt_money(self.custom_maximum_allowed_loan)}</b>.", title="Loan Conflict")
 	
 	# Mubashir Bashir Start 03-01-2025
 	def validate_permanent_employee(self):
-		loan_type = ['Advance Salary', 'Car Loan', 'Bike Loan']
+		# loan_type = ['Advance Salary', 'Car Loan', 'Bike Loan']
 		applicant_employment_type = frappe.db.get_value("Employee", {"name": self.applicant}, "employment_type")
-		if self.loan_product in loan_type and applicant_employment_type != 'Permanent':
+		# if self.loan_product in loan_type and applicant_employment_type != 'Permanent':
+		if applicant_employment_type != 'Permanent':
 			frappe.throw("Only Permanent Employees are eligible for this Loan")
 
-	# Mubashir Bashir Start 03-01-2025
+	# Mubashir Bashir Start 26-06-2025
 	def validate_applicant_eligibility(self):
-		# validate any other self loan application
-		if frappe.db.exists("Loan Application", {
+		
+		has_active_application = frappe.db.exists("Loan Application", {
 			"applicant": self.applicant,
 			"docstatus": ["<", 2],
 			"name": ["!=", self.name]
-		}) or frappe.db.exists("Loan", {
+		})
+
+		has_active_loan = frappe.db.exists("Loan", {
 			"applicant": self.applicant,
 			"status": ["!=", "Closed"]
-		}):
+		})
+
+		if has_active_application or has_active_loan:
 			frappe.throw(f"Applicant {self.applicant_name} already has an active Loan or Loan Application.")
 			return
 
-		# if frappe.db.exists("Loan", {
-		# 	"applicant": self.applicant,
-		# 	"status": "Closed"
-		# }):
-		# 	frappe.throw(f"Applicant {self.applicant_name} already has an active Loan or Loan Application.")
+		closed_loans = frappe.get_all("Loan", 
+			filters={"applicant": self.applicant, "status": "Closed"},
+			fields=["name"]
+		)
 
+		for loan in closed_loans:
+			lrs = frappe.get_all("Loan Repayment Schedule", 
+				filters={"loan": loan.name}, 
+				fields=["name"]
+			)
+
+			for schedule in lrs:
+				repayment_dates = frappe.get_all("Repayment Schedule",
+					filters={"parent": schedule.name},
+					fields=["payment_date"],
+					order_by="payment_date desc",
+					limit=1
+				)
+
+				if repayment_dates:
+					last_payment_date = getdate(repayment_dates[0].payment_date)
+					if getdate(today()) < add_months(last_payment_date, 3):
+						frappe.throw(
+							f"Applicant {self.applicant_name} must wait 3 months after loan closure. "
+							f"Last loan was closed on {last_payment_date.strftime('%Y-%m-%d')}."
+						)
+						return
 
 	def validate_applicant_experience(self):
-		if self.loan_product == 'Advance Salary': return
+		if self.custom_loan_category in ['Advance Salary', 'Vehicle Loan']: return
 		# validate 2 years experience
 		today = datetime.now()
 		required_experience_days = 730  # 2 years
