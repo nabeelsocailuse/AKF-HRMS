@@ -88,7 +88,7 @@
    "fieldtype": "Select",
    "label": "Status",
    "no_copy": 1,
-   "options": "Open\nApproved\nRejected",
+   "options": "Open\nApproved\nRejected\nCancelled",
    "permlevel": 1,
    "read_only_depends_on": "eval: (doc.workflow_state!=undefined || doc.workflow_state!=\"\")"
   },
@@ -244,7 +244,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-30 16:38:33.696232",
+ "modified": "2025-06-30 11:03:05.142931",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Loan Application",

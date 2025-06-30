@@ -23,7 +23,8 @@ from lending.loan_management.doctype.loan_security_price.loan_security_price imp
 )
 
 from akf_hrms.utils.loan_utils import (
-    set_employee_defaults
+    set_employee_defaults,
+	record_terminal_workflow_state
 )
 
 class LoanApplication(Document):
@@ -56,6 +57,13 @@ class LoanApplication(Document):
 	def on_submit(self):
 		self.check_total_loan_budget()
 	# Mubashir Bashir End 13-11-2024
+	
+	# Mubashir Bashir Start 30-June-2025
+	def on_cancel(self):
+		self.db_set("status", "Cancelled")
+		self.db_set("workflow_state", "Cancelled")
+		record_terminal_workflow_state(self)
+	# Mubashir Bashir End 30-June-2025
 
 	def set_branch(self): #mubarrim 06-01-2025
 		if(self.applicant_type == "Employee"):
