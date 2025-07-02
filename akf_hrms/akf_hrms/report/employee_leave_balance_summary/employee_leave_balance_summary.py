@@ -59,7 +59,7 @@ def get_data(filters, leave_types):
 
 	data = []
 	for employee in active_employees:
-		row = [employee.name, employee.employee_name, row.branch, employee.department]
+		row = [employee.name, employee.employee_name, employee.branch, employee.department]
 		available_leave = get_leave_details(employee.name, filters.date)
   
 		for leave_type in leave_types:
