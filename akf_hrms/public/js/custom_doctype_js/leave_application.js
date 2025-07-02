@@ -137,7 +137,7 @@ frappe.ui.form.on("Leave Application", {
 		}
 	},
 
-	employee: function(frm) {
+	employee: function(frm) {		
 		frm.trigger("make_dashboard");
 		frm.trigger("get_leave_balance");
 		//start, Nabeel Saleem, 29-11-2024
@@ -158,6 +158,7 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	leave_type: function(frm) {
+		short_half_leave_message(frm); // Mubashir Bashir 2-July-2025
 		frm.trigger("get_leave_balance");
 	},
 
@@ -366,6 +367,15 @@ function clearFieldsOnLoad(frm) {
 }
 // Mubashir Bashir 13-03-2025 End
 
+// Mubashir Bashir 2-July-2025
+function short_half_leave_message(frm) {
+    if (['Short Leave', 'Half Day Leave'].includes(frm.doc.leave_type)) {
+        frm.set_df_property('leave_type', 'description', '<span style="color: #0c5ebd;">Short Leave and Half Day Leave are allocated annually but can only be availed once per month.</span>');
+    } else {
+        frm.set_df_property('leave_type', 'description', '');
+    }
+}
+  
 
 frappe.tour["Leave Application"] = [
 	{
