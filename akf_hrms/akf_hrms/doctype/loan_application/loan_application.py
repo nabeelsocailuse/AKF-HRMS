@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import cint, flt, rounded, fmt_money, today, add_months, getdate
+from frappe.utils import cint, flt, rounded, fmt_money, today, add_months, getdate, nowdate
 from datetime import datetime, timedelta, date
 
 from lending.loan_management.doctype.loan.loan import (
@@ -368,39 +368,56 @@ class LoanApplication(Document):
 			if self.repayment_periods > matching_entitlement.repayment_period:
 				frappe.throw(f"Repayment periods cannot exceed {matching_entitlement.repayment_period} months for {self.loan_product}")
 
-	# Mubashir Bashir Start 03-01-2025		
+	# Mubashir Bashir Start 03-01-2025
 	def check_total_loan_budget(self):
-		if self.loan_product == "Car Loan" or self.loan_product == "Bike Loan":
-			loan_product_doc = frappe.get_doc("Loan Product", self.loan_product)
+		if self.custom_loan_category != 'Vehicle Loan':
+			return
 
-			latest_fiscal_year = None
-			latest_total_loan_budget = 0
+		today = getdate(nowdate())
 
-			for loan_limit_row in loan_product_doc.custom_loan_limit:
-				fiscal_year_doc = frappe.get_doc("Fiscal Year", loan_limit_row.fiscal_year)
-				# to_date = datetime.strptime(fiscal_year_doc.year_end_date, '%Y-%m-%d')
-				to_date = datetime.combine(fiscal_year_doc.year_end_date, datetime.min.time())
+		# Find current fiscal year
+		fiscal_year = frappe.get_all(
+			"Fiscal Year",
+			filters={
+				"year_start_date": ["<=", today],
+				"year_end_date": [">=", today]
+			},
+			fields=["name"]
+		)
 
-				if not latest_fiscal_year or to_date > latest_fiscal_year:
-					latest_fiscal_year = to_date
-					latest_total_loan_budget = flt(loan_limit_row.total_loan_budget)
-				
-				# frappe.throw(f'fiscal year {latest_fiscal_year}, total loan budget {latest_total_loan_budget}, loan_per_emp {loan_limit_row.max_loan_per_emp}')
+		if not fiscal_year:
+			frappe.throw("No Fiscal Year defined for the current date.")
 
-			if not latest_total_loan_budget:
-				frappe.throw("No total loan limit set for the latest fiscal year.")
+		current_fiscal_year = fiscal_year[0].name
 
-			total_loan_amount = frappe.db.sql("""
-									SELECT SUM(loan_amount) 
-									FROM `tabLoan Application` 
-									WHERE docstatus = 1
-								""", as_dict=True)[0].get('SUM(loan_amount)', 0)
+		loan_product_doc = frappe.get_doc("Loan Product", self.loan_product)
 
-			total_loan_amount = flt(self.loan_amount)
-			total_loan_amount += flt(self.loan_amount) if self.loan_amount else 0.0
+		matched_row = None
+		for loan_limit_row in loan_product_doc.custom_loan_limit:
+			if loan_limit_row.fiscal_year == current_fiscal_year:
+				matched_row = loan_limit_row
+				break
 
-			if total_loan_amount > latest_total_loan_budget:
-				frappe.throw(f"The loan amount for {self.loan_product} applications exceeds the total limit of {latest_total_loan_budget}.")
+		if not matched_row:
+			frappe.throw(f"No loan limit set for the current fiscal year ({current_fiscal_year}).")
+
+		total_loan_budget = flt(matched_row.total_loan_budget)
+
+		# Calculate total approved loan amount
+		total_approved = frappe.db.sql("""
+			SELECT SUM(loan_amount)
+			FROM `tabLoan Application`
+			WHERE docstatus = 1
+			AND loan_product = %s
+		""", (self.loan_product,), as_dict=True)[0].get('SUM(loan_amount)', 0.0)
+
+		# Add current application amount
+		total_approved += flt(self.loan_amount)
+
+		if total_approved > total_loan_budget:
+			frappe.throw(
+				f"The total loan amount for {self.loan_product} exceeds the total budget limit of {total_loan_budget} in fiscal year {current_fiscal_year}."
+			)
 	# Mubashir Bashir End 14-11-2024
 
 

@@ -14,13 +14,8 @@ frappe.ui.form.on('Loan Application', {
 	
 		frm.trigger("toggle_fields");
 		frm.trigger("add_toolbar_buttons");
-		frm.set_query('loan_product', () => {
-			return {
-				filters: {
-					company: frm.doc.company
-				}
-			};
-		});
+		frm.trigger("display_active_employees_guarantors_loan_product_company"); // Mubashir Bashir 2-July-2025
+
 	},
 	repayment_method: function(frm) {
 		frm.doc.repayment_amount = frm.doc.repayment_periods = "";
@@ -190,11 +185,48 @@ frappe.ui.form.on('Loan Application', {
         };
     });
     },
+
+    // Mubashir Bashir 2-July-2025
+    display_active_employees_guarantors_loan_product_company: function (frm) {
+        // this will show only the loan products of the selected company
+		frm.set_query('loan_product', () => {
+			return {
+				filters: {
+					company: frm.doc.company
+				}
+			};
+		});
+        // this will show only the active employees of the selected company
+        frm.fields_dict.applicant.get_query = function(doc) {
+            if (doc.applicant_type === 'Employee') {
+                return {
+                    filters: {
+                        status: 'Active',
+                        company: frm.doc.company
+                    }
+                };
+            }
+        };
+        // this will show only the active employees
+        frm.set_query("custom_guarantor_of_loan_application", function () {
+            return {
+                filters: {
+                    status: 'Active',
+                },
+            };
+        });
+        // this will show only the active employees
+        frm.set_query("custom_guarantor_2_of_loan_application", function () {
+            return {
+                filters: {
+                    status: 'Active',
+                },
+            };
+        });
+    }
 });
 // Mubashir Bashir Start 14-11-2024
-
-function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-01-2025 Start
-    // Get employee grade first
+function set_repayment_period_based_on_grade(frm, loan_product) {
     frappe.db.get_value("Employee", {"name": frm.doc.applicant}, ["grade", "date_of_joining"])
         .then(r => {
             frm.set_value("repayment_method", "Repay Over Number of Periods");
@@ -202,10 +234,9 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-0
             let grade = r.message.grade;
             let date_of_joining = r.message.date_of_joining;
 
-            // Get Employee Grade doc with child table
             frappe.db.get_doc("Employee Grade", grade)
                 .then(grade_doc => {
-                    // Find matching entitlement based on loan product and experience
+                    // matching entitlement based on loan product and experience
                     let today = new Date();
                     let joining_date = new Date(date_of_joining);
                     let experience_days = Math.floor((today - joining_date) / (1000 * 60 * 60 * 24));
@@ -221,41 +252,48 @@ function get_latest_vehicle_loan_limit(frm, loan_product) {     // Mubashir 15-0
                         frm.refresh_field("repayment_periods");
                     }
                 });
-        });  // Mubashir 15-01-2025 END
+        });  
+}// Mubashir 15-01-2025 END
 
-    return new Promise((resolve, reject) => {
+function set_vehicle_loan_limit(frm, loan_product) {    // Mubashir Bashir 2-July-2025 Start
+    let today = frappe.datetime.get_today();
+
+    frappe.db.get_list('Fiscal Year', {
+        filters: [
+            ['year_start_date', '<=', today],
+            ['year_end_date', '>=', today]
+        ],
+        fields: ['name']
+    }).then(fiscal_years => {
+        if (!fiscal_years.length) {
+            frappe.throw(__('No Fiscal Year found for today.'));
+            return;
+        }
+
+        let current_fiscal_year = fiscal_years[0].name;
+
         frappe.db.get_doc('Loan Product', loan_product)
             .then(doc => {
-                console.log(doc);
                 if (doc.custom_loan_limit && doc.custom_loan_limit.length > 0) {
-                    let latest_limit = null;
-                    let latest_date = null;
+                    let matching_row = doc.custom_loan_limit.find(row => row.fiscal_year === current_fiscal_year);
 
-                    console.log("custom loan limit: ", doc.custom_loan_limit);
-                    
-
-                    let promises = doc.custom_loan_limit.map(row => {
-                        return frappe.db.get_doc('Fiscal Year', row.fiscal_year)
-                            .then(fiscal_year => {
-                                let to_date = new Date(fiscal_year.to_date);
-                                
-                                if (!latest_date || to_date > latest_date) {
-                                    latest_date = to_date;
-                                    latest_limit = row.max_loan_per_emp;
-                                }
-                                console.log("Latest Limit: ", latest_limit, " on latest date: ", latest_date, " and to_date: ", to_date);
-                                
-                            });
-                    });
-
-                    Promise.all(promises).then(() => resolve(latest_limit));
+                    if (matching_row) {
+                        frm.set_value("custom_maximum_allowed_loan", matching_row.max_loan_per_emp);
+                    } else {
+                        frappe.throw(__('No loan limit defined for the current fiscal year (' + current_fiscal_year + ').'));
+                    }
                 } else {
-                    resolve(null);  // No loan limits found
+                    frappe.throw(__('No loan limit data found in Loan Product.'));
                 }
             })
-            .catch(error => reject(error));
+            // .catch(error => {
+            //     frappe.msgprint(__("Error fetching Loan Product: ") + error);
+            // });
+
+    }).catch(error => {
+        frappe.msgprint(__("Error fetching Fiscal Year: ") + error);
     });
-}  // Mubashir Bashir End 14-11-2024
+}  // Mubashir Bashir 2-July-2025 End
 
 // Mubashir Bashir 15-01-2025 START
 function validate_eligibility_on_the_basis_of_grade(frm) {
@@ -568,21 +606,10 @@ function validateVehicleLoan(frm) {
     if (frm.doc.custom_loan_category == 'Vehicle Loan') {
         validate_eligibility_on_the_basis_of_grade(frm);    // <-- Mubashir 15-01-25
 
-        get_latest_vehicle_loan_limit(frm, frm.doc.loan_product)
-            .then(latest_limit => {
-                if (latest_limit) {
-                    console.log("latest limit: ", latest_limit);
-                    frm.set_value("custom_maximum_allowed_loan", latest_limit);
-                } else {
-                    frappe.msgprint(
-                        __("No loan limit found for the latest fiscal year.")
-                    );
-                }
-            })
-            .catch(error => {
-                frappe.msgprint(__("Error fetching loan limit: ") + error);
-            });
-    }		// Mubashir Bashir End 14-11-2024
+        set_repayment_period_based_on_grade(frm, frm.doc.loan_product); // Muashir 2-July-2025
+        set_vehicle_loan_limit(frm, frm.doc.loan_product); // Muashir 2-July-2025
+
+    }
     else {
         frm.set_df_property("repayment_method", "read_only", 0);
         // frm.set_df_property("repayment_periods", "read_only", 0);
