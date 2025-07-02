@@ -23,6 +23,7 @@ def get_columns(leave_types):
 		_("Employee Name") + "::200",
 		_("Branch") + ":Link/Branch:150",
 		_("Department") + ":Link/Department:150",
+		_("Employment Type") + ":Link/Employment Type:150",
 	]
 
 	for leave_type in leave_types:
