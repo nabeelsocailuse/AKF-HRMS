@@ -37,12 +37,14 @@ def get_conditions(filters):
 	}
 	if filters.get("employee_status"):
 		conditions.update({"status": filters.get("employee_status")})
+	if filters.get("branch"):
+		conditions.update({"branch": filters.get("branch")})
 	if filters.get("department"):
 		conditions.update({"department": filters.get("department")})
 	if filters.get("employee"):
 		conditions.update({"employee": filters.get("employee")})
-	if filters.get("branch"):
-		conditions.update({"branch": filters.get("branch")})
+	if filters.get("employment_type"):
+		conditions.update({"employment_type": filters.get("employment_type")})
 
 	return conditions
 
@@ -54,12 +56,12 @@ def get_data(filters, leave_types):
 	active_employees = frappe.get_list(
 		"Employee",
 		filters=conditions,
-		fields=["name", "employee_name", "branch", "department", "user_id"],
+		fields=["name", "employee_name", "branch", "department", "employment_type", "user_id"],
 	)
 
 	data = []
 	for employee in active_employees:
-		row = [employee.name, employee.employee_name, employee.branch, employee.department]
+		row = [employee.name, employee.employee_name, employee.branch, employee.department, employee.employment_type]
 		available_leave = get_leave_details(employee.name, filters.date)
   
 		for leave_type in leave_types:
