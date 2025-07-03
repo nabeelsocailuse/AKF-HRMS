@@ -46,6 +46,7 @@ def get_employee_details():
 			reports_to_designation = frappe.db.get_value('Employee', emp_details.reports_to,'designation')
 
 		return {
+			"name": emp_details.name,
 			"first_name": emp_details.first_name,
 			"branch": emp_details.branch,
 			"designation": emp_details.designation,
