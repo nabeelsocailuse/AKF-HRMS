@@ -16,6 +16,8 @@ frappe.ui.form.on('Loan Application', {
 		frm.trigger("add_toolbar_buttons");
 		frm.trigger("display_active_employees_guarantors_loan_product_company"); // Mubashir Bashir 2-July-2025
 
+        set_loan_product_readonly(frm); // Mubashir Bashir 3-July-2025
+
 	},
 	repayment_method: function(frm) {
 		frm.doc.repayment_amount = frm.doc.repayment_periods = "";
@@ -134,6 +136,8 @@ frappe.ui.form.on('Loan Application', {
         frm.set_value("repayment_periods", "");
         frm.set_value("total_payable_amount", 0);
         frm.set_value("custom_maximum_allowed_loan", "");
+        frm.set_value("custom_guarantor_of_loan_application", "");
+        frm.set_value("custom_guarantor_2_of_loan_application", "");
 
         validateAdvanceSalary(frm);
         validateVehicleLoan(frm);
@@ -207,20 +211,24 @@ frappe.ui.form.on('Loan Application', {
                 };
             }
         };
-        // this will show only the active employees
+        // guarantor 1 set query
         frm.set_query("custom_guarantor_of_loan_application", function () {
             return {
+                query: "akf_hrms.akf_hrms.doctype.loan_application.loan_application.get_eligible_guarantors",
                 filters: {
-                    status: 'Active',
-                },
+                    exclude_employee: frm.doc.custom_guarantor_2_of_loan_application,
+                    applicant: frm.doc.applicant
+                }
             };
         });
-        // this will show only the active employees
+        // guarantor 2 set query
         frm.set_query("custom_guarantor_2_of_loan_application", function () {
             return {
+                query: "akf_hrms.akf_hrms.doctype.loan_application.loan_application.get_eligible_guarantors",
                 filters: {
-                    status: 'Active',
-                },
+                    exclude_employee: frm.doc.custom_guarantor_of_loan_application,
+                    applicant: frm.doc.applicant
+                }
             };
         });
     }
@@ -388,55 +396,45 @@ async function validateGuaranters(frm) {
         const guarantor1 = frm.doc.custom_guarantor_of_loan_application;
         const guarantor2 = frm.doc.custom_guarantor_2_of_loan_application;
 
-        // Basic validation checks
         if (!guarantor1 && !guarantor2) return;
-        
-        // Check if applicant is their own guarantor
+
         if (frm.doc.applicant === guarantor1 || frm.doc.applicant === guarantor2) {
-            frappe.show_alert({
-                message: __("Applicant can not be their own guarantor."),
-                indicator: 'red'
-            });
+            frappe.show_alert({ message: __("Applicant can not be their own guarantor."), indicator: 'red' });
             return;
         }
 
-        // Check if both guarantors are the same
         if (guarantor1 && guarantor2 && guarantor1 === guarantor2) {
-            frappe.show_alert({
-                message: __("Both guarantors cannot be the same person."),
-                indicator: 'red'
-            });
+            frappe.show_alert({ message: __("Both guarantors cannot be the same person."), indicator: 'red' });
             return;
         }
 
-        // Only proceed with full validation if both guarantors are set
         if (!(guarantor1 && guarantor2)) {
-            frappe.show_alert({
-                message: __("Please select both guarantors."),
-                indicator: 'orange'
-            });
+            frappe.show_alert({ message: __("Please select both guarantors."), indicator: 'orange' });
             return;
         }
 
         const today = new Date();
         const requiredExperienceDays = 730;
 
-        // Get employee details for both guarantors
-        const [emp1, emp2] = await Promise.all([
-            frappe.db.get_doc('Employee', guarantor1),
-            frappe.db.get_doc('Employee', guarantor2)
+        // Calling server-side API to get guarantor details (with ignore_permissions)
+        const [emp1Res, emp2Res] = await Promise.all([
+            frappe.call("akf_hrms.akf_hrms.doctype.loan_application.loan_application.get_guarantor_details", {
+                employee_name: guarantor1
+            }),
+            frappe.call("akf_hrms.akf_hrms.doctype.loan_application.loan_application.get_guarantor_details", {
+                employee_name: guarantor2
+            })
         ]);
 
-        // Validate employment types
+        const emp1 = emp1Res.message;
+        const emp2 = emp2Res.message;
+
         if (emp1.employment_type !== 'Permanent' || emp2.employment_type !== 'Permanent') {
-            frappe.show_alert({
-                message: __("Only permanent employees can be guarantor."),
-                indicator: 'red'
-            });
+            frappe.show_alert({ message: __("Only permanent employees can be guarantor."), indicator: 'red' });
             return;
         }
 
-        // Check for existing loans and guarantor roles
+        // Checking for existing loans and guarantor roles
         const [
             hasLoan1,
             hasLoan2,
@@ -449,7 +447,7 @@ async function validateGuaranters(frm) {
                 filters: {
                     applicant: guarantor1,
                     docstatus: 1,
-                    name: ['!=', frm.doc.name] // Exclude current document
+                    name: ['!=', frm.doc.name]
                 }
             }),
             frappe.db.count('Loan Application', {
@@ -490,41 +488,26 @@ async function validateGuaranters(frm) {
         ]);
 
         if (hasLoan1 > 0) {
-            frappe.show_alert({
-                message: __(`Guarantor ${guarantor1} already has an active loan application.`),
-                indicator: 'red'
-            });
+            frappe.show_alert({ message: __(`Guarantor ${guarantor1} already has an active loan application.`), indicator: 'red' });
             return;
         }
         if (hasLoan2 > 0) {
-            frappe.show_alert({
-                message: __(`Guarantor ${guarantor2} already has an active loan application.`),
-                indicator: 'red'
-            });
+            frappe.show_alert({ message: __(`Guarantor ${guarantor2} already has an active loan application.`), indicator: 'red' });
             return;
         }
         if (isGuarantor1A > 0 || isGuarantor1B > 0) {
-            frappe.show_alert({
-                message: __(`Guarantor ${guarantor1} is already acting as a guarantor for another loan application.`),
-                indicator: 'red'
-            });
+            frappe.show_alert({ message: __(`Guarantor ${guarantor1} is already acting as a guarantor for another loan application.`), indicator: 'red' });
             return;
         }
         if (isGuarantor2A > 0 || isGuarantor2B > 0) {
-            frappe.show_alert({
-                message: __(`Guarantor ${guarantor2} is already acting as a guarantor for another loan application.`),
-                indicator: 'red'
-            });
+            frappe.show_alert({ message: __(`Guarantor ${guarantor2} is already acting as a guarantor for another loan application.`), indicator: 'red' });
             return;
         }
 
         // Experience validation
         for (const [emp, guarantor] of [[emp1, guarantor1], [emp2, guarantor2]]) {
             if (!emp.date_of_joining) {
-                frappe.show_alert({
-                    message: __(`Guarantor ${guarantor} does not have a valid date of joining.`),
-                    indicator: 'red'
-                });
+                frappe.show_alert({ message: __(`Guarantor ${guarantor} does not have a valid date of joining.`), indicator: 'red' });
                 return;
             }
 
@@ -532,28 +515,19 @@ async function validateGuaranters(frm) {
             const experience = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
 
             if (experience < requiredExperienceDays) {
-                frappe.show_alert({
-                    message: __(`Guarantor ${guarantor} should have at least 2 years of experience.`),
-                    indicator: 'red'
-                });
+                frappe.show_alert({ message: __(`Guarantor ${guarantor} should have at least 2 years of experience.`), indicator: 'red' });
                 return;
             }
         }
 
-        // If all validations pass
-        frappe.show_alert({
-            message: __("Guarantor validation successful"),
-            indicator: 'green'
-        }, 5);
+        frappe.show_alert({ message: __("Guarantor validation successful"), indicator: 'green' }, 5);
 
     } catch (error) {
         console.error("Error in validateGuaranters:", error);
-        frappe.show_alert({
-            message: __("Error validating guarantors. Please try again."),
-            indicator: 'red'
-        });
+        frappe.show_alert({ message: __("Error validating guarantors. Please try again."), indicator: 'red' });
     }
 }
+
 
 // Debounced version of the validation function
 const debouncedValidateGuaranters = debounce(validateGuaranters, 300);
@@ -640,6 +614,14 @@ function validateOtherLoans(frm) {
 }
 // Mubashir Bashir 25-June-2025 END
 
+// Mubashir Bashir 3-July-2025
+function set_loan_product_readonly(frm) {
+    if (!frm.is_new()) {
+        frm.set_df_property('loan_product', 'read_only', 1);
+    } else {
+        frm.set_df_property('loan_product', 'read_only', 0);
+    }
+}
 
 
 

@@ -560,7 +560,7 @@ class ExpenseClaim(AccountsController, PWANotificationsMixin):
 				if e.expense_type == "Daily Allowance":
 					duty_hours, comp_off = self.get_travel_attendance()
 					if expense_amount > allowed_amount and comp_off < 2:
-						error_messages.append(f"<b>{e.expense_type.upper()}</b> exceeds the limit of {allowed_amount}. Comp off < 2.")
+						error_messages.append(f"<b>{e.expense_type.upper()}</b> exceeds the limit of {allowed_amount}.")
 				elif expense_amount > allowed_amount:
 					error_messages.append(f"<b>{e.expense_type.upper()}</b> exceeds the limit of {allowed_amount}.")
 

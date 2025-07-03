@@ -375,7 +375,6 @@ class LoanApplication(Document):
 
 		today = getdate(nowdate())
 
-		# Find current fiscal year
 		fiscal_year = frappe.get_all(
 			"Fiscal Year",
 			filters={
@@ -403,15 +402,15 @@ class LoanApplication(Document):
 
 		total_loan_budget = flt(matched_row.total_loan_budget)
 
-		# Calculate total approved loan amount
+		# total approved loans amount
 		total_approved = frappe.db.sql("""
-			SELECT SUM(loan_amount)
+			SELECT SUM(loan_amount) AS total
 			FROM `tabLoan Application`
 			WHERE docstatus = 1
 			AND loan_product = %s
-		""", (self.loan_product,), as_dict=True)[0].get('SUM(loan_amount)', 0.0)
+		""", (self.loan_product,), as_dict=True)[0].get('total') or 0.0
 
-		# Add current application amount
+		# plus current application amount
 		total_approved += flt(self.loan_amount)
 
 		if total_approved > total_loan_budget:
@@ -486,6 +485,52 @@ class LoanApplication(Document):
 
 		if not self.loan_amount and self.is_secured_loan and self.proposed_pledges:
 			self.loan_amount = self.maximum_loan_amount
+
+# Mubashir Bashir 3-July-2025
+@frappe.whitelist()
+def get_guarantor_details(employee_name):
+    doc = frappe.get_doc("Employee", employee_name, ignore_permissions=True)
+
+    return {
+        "employment_type": doc.employment_type,
+        "date_of_joining": doc.date_of_joining
+    }
+# Mubashir Bashir 3-July-2025
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_eligible_guarantors(doctype, txt, searchfield, start, page_len, filters):
+    exclude_employee = filters.get("exclude_employee")
+    applicant = filters.get("applicant")
+
+    today = frappe.utils.nowdate()
+    two_years_ago = frappe.utils.add_days(today, -730)
+
+    conditions = [
+        "status = 'Active'",
+        "employment_type = 'Permanent'",
+        f"date_of_joining <= '{two_years_ago}'"
+    ]
+
+    if exclude_employee:
+        conditions.append(f"name != '{exclude_employee}'")
+    if applicant:
+        conditions.append(f"name != '{applicant}'")
+
+    condition_str = " AND ".join(conditions)
+
+    return frappe.db.sql(f"""
+        SELECT name, employee_name
+        FROM `tabEmployee`
+        WHERE {condition_str}
+        AND ({searchfield} LIKE %(txt)s OR employee_name LIKE %(txt)s)
+        ORDER BY employee_name ASC
+        LIMIT %(start)s, %(page_len)s
+    """, {
+        "txt": f"%{txt}%",
+        "start": start,
+        "page_len": page_len
+    })
+
 
 
 @frappe.whitelist()
@@ -593,3 +638,5 @@ def get_proposed_pledge(securities):
 	proposed_pledges["maximum_loan_amount"] = maximum_loan_amount
 
 	return proposed_pledges
+
+

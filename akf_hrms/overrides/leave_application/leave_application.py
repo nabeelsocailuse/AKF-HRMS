@@ -2060,5 +2060,3 @@ def record_workflow_approver_states(self):
 # 		frappe.db.set_value("Leave Application", self.name, "workflow_state", "Approved")
 # 		frappe.db.set_value("Leave Application", self.name, "custom_state_data", frappe.as_json(state_dict))
 # 		print(f"state_dict: {state_dict}")		
-
-
