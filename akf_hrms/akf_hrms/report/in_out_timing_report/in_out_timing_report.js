@@ -85,22 +85,11 @@ frappe.query_reports["In Out Timing Report"] = {
 			"label": __("Designation"),
 			"fieldtype": "Link",
 			"options": "Designation"
-		},
-		/* {
-			"fieldname":"late_entry",
-			"label": __("Late Entry"),
-			"fieldtype": "Check",
-			"options": ""
-		},
-		{
-			"fieldname":"early_exit",
-			"label": __("Early Exit"),
-			"fieldtype": "Check",
-			"options": ""
-		}, */
+		},		
 	],
 	"onload": function(frm) {
-		return  frappe.call({
+		// Set years
+		frappe.call({
 			method: "hrms.hr.report.monthly_attendance_sheet.monthly_attendance_sheet.get_attendance_years",
 			callback: function(r) {
 				var year_filter = frappe.query_report.get_filter('year');
@@ -108,6 +97,26 @@ frappe.query_reports["In Out Timing Report"] = {
 				year_filter.df.default = r.message.split("\n")[0];
 				year_filter.refresh();
 				year_filter.set_input(year_filter.df.default);
+			}
+		});
+
+		// Set current user's employee ID
+		frappe.call({
+			method: "frappe.client.get_list",
+			args: {
+				doctype: "Employee",
+				filters: {
+					"user_id": frappe.session.user
+				},
+				fields: ["name"]
+			},
+			callback: function(r) {
+				if (r.message && r.message.length > 0) {
+					var employee_filter = frappe.query_report.get_filter('employee');
+					employee_filter.df.default = r.message[0].name;
+					employee_filter.refresh();
+					employee_filter.set_input(r.message[0].name);
+				}
 			}
 		});
 	}
