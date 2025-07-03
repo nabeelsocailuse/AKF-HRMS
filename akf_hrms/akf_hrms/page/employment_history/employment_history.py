@@ -28,12 +28,13 @@ def verify_doc_permissions(filters):
 		frappe.throw(f"You don't have access to employee <b>{employee}</b>")
 	
 def get_employee_details(filters):
+	# (select ifnull((base+ custom_mobile_allowance + custom_vehicle_allowance + custom_accomodation_allowance + custom_fuel_allowance + variable),0) from `tabSalary Structure Assignment` where docstatus=1 and employee=emp.name order by from_date desc limit 1) as current_salary,
 	result = frappe.db.sql("""
 		SELECT
 			CONCAT_WS(' ', emp.first_name, emp.middle_name, emp.last_name) as full_name,
 			emp.designation as designation,
 			emp.date_of_joining as date_of_joining,
-			(select ifnull((base+ custom_mobile_allowance + custom_vehicle_allowance + custom_accomodation_allowance + custom_fuel_allowance + variable),0) from `tabSalary Structure Assignment` where docstatus=1 and employee=emp.name order by from_date desc limit 1) as current_salary,
+			(select ifnull((base),0) from `tabSalary Structure Assignment` where docstatus=1 and employee=emp.name order by from_date desc limit 1) as current_salary,
 			emp.custom_father_name as father_name,
 			emp.department as department,
 			emp.employment_type as employment_type,
