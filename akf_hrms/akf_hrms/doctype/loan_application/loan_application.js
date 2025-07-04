@@ -16,7 +16,7 @@ frappe.ui.form.on('Loan Application', {
 		frm.trigger("add_toolbar_buttons");
 		frm.trigger("display_active_employees_guarantors_loan_product_company"); // Mubashir Bashir 2-July-2025
 
-        set_loan_product_readonly(frm); // Mubashir Bashir 3-July-2025
+        set_fields_readonly(frm); // Mubashir Bashir 3-July-2025
 
 	},
 	repayment_method: function(frm) {
@@ -615,11 +615,15 @@ function validateOtherLoans(frm) {
 // Mubashir Bashir 25-June-2025 END
 
 // Mubashir Bashir 3-July-2025
-function set_loan_product_readonly(frm) {
+function set_fields_readonly(frm) {
     if (!frm.is_new()) {
         frm.set_df_property('loan_product', 'read_only', 1);
+        frm.set_df_property('custom_guarantor_of_loan_application', 'read_only', 1);
+        frm.set_df_property('custom_guarantor_2_of_loan_application', 'read_only', 1);
     } else {
         frm.set_df_property('loan_product', 'read_only', 0);
+        frm.set_df_property('custom_guarantor_of_loan_application', 'read_only', 0);
+        frm.set_df_property('custom_guarantor_2_of_loan_application', 'read_only', 0);
     }
 }
 
