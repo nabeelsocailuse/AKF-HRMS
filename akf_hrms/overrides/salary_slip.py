@@ -1078,7 +1078,6 @@ class SalarySlip(TransactionBase):
 
 	def compute_ctc(self):
 		if hasattr(self, "previous_taxable_earnings"):
-
 			return (
 				self.previous_taxable_earnings_before_exemption
 				+ self.current_structured_taxable_earnings_before_exemption
@@ -1096,7 +1095,7 @@ class SalarySlip(TransactionBase):
 		prev_period_non_taxable_earnings = self.get_salary_slip_details(
 			self.payroll_period.start_date, self.start_date, parentfield="earnings", is_tax_applicable=0
 		)
-
+		print(f"prev_period_non_taxable_earnings = {prev_period_non_taxable_earnings}")
 		(
 			current_period_non_taxable_earnings,
 			non_taxable_additional_salary,
@@ -1110,9 +1109,10 @@ class SalarySlip(TransactionBase):
 		# print(f"future_period_non_taxable_earnings: {future_period_non_taxable_earnings}")
 		# print(ceil(self.remaining_sub_periods) - 1)
 		# print('-----------------------------------------------------')
-		# print(prev_period_non_taxable_earnings)
-		# print(current_period_non_taxable_earnings)
-		# print(future_period_non_taxable_earnings)
+		# print(f"prev_period_non_taxable_earnings: {prev_period_non_taxable_earnings}")
+		# print(f"current_period_non_taxable_earnings: {current_period_non_taxable_earnings}")
+		# print(f"future_period_non_taxable_earnings: {future_period_non_taxable_earnings}")
+		# print(f"non_taxable_additional_salary: {non_taxable_additional_salary}")
 		# print(non_taxable_additional_salary)
 		non_taxable_earnings = (
 			prev_period_non_taxable_earnings
@@ -1120,7 +1120,7 @@ class SalarySlip(TransactionBase):
 			+ future_period_non_taxable_earnings
 			+ non_taxable_additional_salary
 		)
-
+		print(f"non_taxable_earnings: {non_taxable_earnings}")
 		return non_taxable_earnings
 
 	def get_non_taxable_earnings_for_current_period(self):
@@ -1714,7 +1714,7 @@ class SalarySlip(TransactionBase):
 		variable_based_on_taxable_salary=0,
 		field_to_select="amount",
 	):
-		if(parentfield == "earnings"): 
+		if(parentfield == "earnings" and is_tax_applicable==1 and field_to_select=="amount"): 
 			return get_pre_salary_percent_taxable_amount(
 						self,
 						# self.employee,

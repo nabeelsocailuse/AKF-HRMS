@@ -1,152 +1,320 @@
 <!-- Mubashir Bashir 21-05-2025 -->
 <style>
-/* General styles */
-table, th, td {
-    border: 1px solid gray;
-    border-collapse: collapse;
-}
-
-/* Print-specific styles */
-@media print {
-    body {
-        margin: 0;
-        padding: 0;
+    /* General styles */
+    table,
+    th,
+    td {
+        border: 1px solid gray;
+        border-collapse: collapse;
     }
-    
+
+    /* for the table border */
+    .print-format .table-bordered td,
+    .print-format .table-bordered th,
+    table,
+    th,
+    td {
+        border: 1px solid gray;
+        border-collapse: collapse;
+    }
+
     table {
         width: 100%;
         page-break-inside: auto;
+        background-color: #fff;
     }
-    
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
+
+    .print-format th {
+        color: #ffffff;
+        font-weight: normal;
+        border-bottom-width: 1px !important;
+        background: #0060ae;
     }
-    
-    thead {
-        display: table-header-group;
+
+    .table>thead:first-child>tr:first-child>th {
+        border-top: unset;
     }
-    
-    tbody {
-        display: table-row-group;
+
+    /* Print-specific styles */
+    @media print {
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* for the table border */
+        .print-format .table-bordered td,
+        .print-format .table-bordered th,
+        table,
+        th,
+        td {
+            border: 1px solid gray;
+            border-collapse: collapse;
+        }
+        /* csms style start*/
+
+        body,
+        .print-format {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Adjust main content wrapper */
+        .print-format .main-wrapper {
+            padding: 0mm !important;
+            margin: auto;
+            width: 210mm;
+            /* A4 width */
+            height: auto;
+            background: white;
+            box-sizing: border-box;
+        }
+
+        /* If inner content has spacing */
+        .print-format td,
+        .print-format th {
+            padding: 4px !important;
+            font-size: 12px;
+            vertical-align: top;
+        }
+                @page {
+        margin: 7mm;
+        }
+        /* csms style end */
+
+        .print-format th {
+            color: #ffffff !important;
+            font-weight: normal;
+            border-bottom-width: 1px !important;
+            background: #0060ae !important;
+        }
+        .print-format td font {
+            color: #000000 !important;
+            font-weight: 500;
+        }
+
+        .table>thead:first-child>tr:first-child>th {
+            border-top: unset;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tbody {
+            display: table-row-group;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .header-left {
+            /* flex: 1; */
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .header-right img {
+            max-height: 45px;
+        }
+
+        /* Ensure text is readable in print */
+        font {
+            color: #ffffff !important;
+            font-weight: bold !important;
+        }
+
+        /* Ensure table headers are visible */
+        th {
+            background-color: #000 !important;
+            color: #fff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
     }
-    
-    .header-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
-    }
-   .header-left {
-        /* flex: 1; */
-    }
-    
-    .header-right {
-        text-align: right;
-    }
-    
-    .header-right img {
-        max-height: 45px;
-    }
-    
-    /* Ensure text is readable in print */
-    font {
-        color: #000 !important;
-    }
-    
-    /* Ensure table headers are visible */
-    th {
-        background-color: #000 !important;
-        color: #fff !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-}
 </style>
 
 <div class="header-section">
-	<div class="header-left "style="float: left; margin-bottom:12px">
-		<h5><b>{%= __("Salary Slip & Certificate of Deduction") %}</b></h5>	
-		<h5> {%= __("Tax Year : ") %} {%= __(filters.fiscal_year) %}</h5>
-		<table>
-			<tr>
-				<th style="text-align: center; background-color:#000!important;color:#fff!important;" colspan="2"><font size="-2" style="color:#fff!important;">{%= __("Employee Details") %}</font></th>
-				<th style="text-align: center; background-color:#000!important;color:#fff!important;" colspan="2"><font size="-2" style="color:#fff!important;">{%= __("Payment Details") %}</font></th>
-			</tr>
-			<tr>
-				<td><font size="-3"><b>{%= __("Name") %}</b></font></td>
-				<td><font size="-3">{%= __(filters.employee_name) %}</font></td>
-				<td><font size="-3"><b>{%= __("Employee No.") %}</b></font></td>
-				<td><font size="-3">{%= __(filters.employee) %}</font></td>
-			</tr>
-			<tr>
-				<td><font size="-3"><b>{%= __("Designation") %}</b></font></td>
-				<td><font size="-3">{%= __(filters.designation) %}</font></td>
-				<td><font size="-3"><b>{%= __("Bank Name") %}</b></font></td>
-				<td><font size="-3">{%= __(filters.bank_name) %}</font></td>
-			</tr>
-			<tr>
-				<td><font size="-3"><b>{%= __("CNIC No.") %}</b></font></td>
-				<td><font size="-3">{%= __(filters.cnic) %}</font></td>
-				<td><font size="-3"><b>{%= __("Acc No.") %}</b></font></td>
-				<td><font size="-3">{%= __(filters.bank_ac_no) %}</font></td>
-			</tr>
-			<tr>
-				<td><font size="-3"><b>{%= __("Salary Period:") %}</b></font></td>
-				<td colspan="3" style="text-align:center;"><font size="-3">{%= __("July-") %} {%= __(filters.fiscal_year.split("-")[0]) %} {%= __(" to ") %} {%= __("June-") %} {%= __(filters.fiscal_year.split("-")[1]) %}</font></td>
-			</tr>
-		</table>
-	</div>
-	<div class="header-right"style="float: right;">
-		<div class="text-center">
-            <img height="65" src="/assets/akf_hrms/images/Alkhidmat_Foundation_Pakistan.png">	
-        </div>	
-		<h5>{%= __("NTN NO: ") %} {%= __(filters.cnic) %}</h5>
-	</div>
+    <div class="header-left " style="float: left; margin-bottom:12px">
+        <h5><b>{%= __("Salary Slip & Certificate of Deduction") %}</b></h5>
+        <h5> {%= __("Tax Year : ") %} {%= __(filters.fiscal_year) %}</h5>
+        <table>
+            <tr>
+                <th style="text-align: center; ;" colspan="2">
+                    <font size="-2" style="color: #ffffff">{%= __("Employee Details") %}</font>
+                </th>
+                <th style="text-align: center; ;" colspan="2">
+                    <font size="-2" style="color: #ffffff">{%= __("Payment Details") %}</font>
+                </th>
+            </tr>
+            <tr>
+                <td>
+                    <font size="-3"><b>{%= __("Name") %}</b></font>
+                </td>
+                <td>
+                    <font size="-3">{%= __(filters.employee_name) %}</font>
+                </td>
+                <td>
+                    <font size="-3"><b>{%= __("Employee No.") %}</b></font>
+                </td>
+                <td>
+                    <font size="-3">{%= __(filters.employee) %}</font>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <font size="-3"><b>{%= __("Designation") %}</b></font>
+                </td>
+                <td>
+                    <font size="-3">{%= __(filters.designation) %}</font>
+                </td>
+                <td>
+                    <font size="-3"><b>{%= __("Bank Name") %}</b></font>
+                </td>
+                <td>
+                    <font size="-3">{%= __(filters.bank_name) %}</font>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <font size="-3"><b>{%= __("CNIC No.") %}</b></font>
+                </td>
+                <td>
+                    <font size="-3">{%= __(filters.cnic) %}</font>
+                </td>
+                <td>
+                    <font size="-3"><b>{%= __("Acc No.") %}</b></font>
+                </td>
+                <td>
+                    <font size="-3">{%= __(filters.bank_ac_no) %}</font>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <font size="-3"><b>{%= __("Salary Period:") %}</b></font>
+                </td>
+                <td colspan="3" style="text-align:center;">
+                    <font size="-3">{%= __("July-") %} {%= __(filters.fiscal_year.split("-")[0]) %} {%= __(" to ") %}
+                        {%= __("June-") %} {%= __(filters.fiscal_year.split("-")[1]) %}</font>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="header-right" style="float: right;">
+        <div class="text-center">
+            <img height="65" src="/assets/akf_hrms/images/Alkhidmat_Foundation_Pakistan.png">
+        </div>
+        <h5>{%= __("NTN NO: ") %} {%= __(filters.cnic) %}</h5>
+    </div>
 </div>
 <div>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-	    <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Particulars") %}
-		</font></th>	    
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Jul-")%} {%= __(filters.hidden_year.split("-")[0]) %}</font></th> 
- 
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Aug-")%} {%= __(filters.hidden_year.split("-")[0])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Sep-")%} {%= __(filters.hidden_year.split("-")[0])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Oct-")%} {%= __(filters.hidden_year.split("-")[0])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Nov-")%} {%= __(filters.hidden_year.split("-")[0])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Dec-")%} {%= __(filters.hidden_year.split("-")[0])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Jan-")%} {%= __(filters.hidden_year.split("-")[1])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Feb-")%} {%= __(filters.hidden_year.split("-")[1])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Mar-")%} {%= __(filters.hidden_year.split("-")[1])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Apr-")%} {%= __(filters.hidden_year.split("-")[1])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("May-")%} {%= __(filters.hidden_year.split("-")[1])%}</font></th>  
-            <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Jun-")%} {%= __(filters.hidden_year.split("-")[1])%}</font></th>
-	    <th style="text-align:center; background-color:#000!important;color:#fff!important; "><font size="-2" style="color:#fff!important;">{%= __("Total")%}
-		</font></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for(var i=0, l=data.length; i<l; i++) { %}
+    <table class="table table-bordered">
+        <thead>
             <tr>
-                <td style="text-align: left"><font size="-4">{%= frappe.format(data[i]["components"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-0"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-1"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-2"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-3"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-4"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-5"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-6"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-7"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-8"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-9"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-10"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["mm-11"], {fieldtype: "HTML"}) %}</font></td>
-                <td style="text-align: right"><font size="-4">{%= frappe.format(data[i]["total"], {fieldtype: "HTML"}) %}</font></td>
-            </tr>
-        {% } %}
-    </tbody>
-</table>
-</div>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Particulars") %}
+                    </font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Jul-")%} {%= __(filters.hidden_year.split("-")[0]) %}</font>
+                </th>
 
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Aug-")%} {%= __(filters.hidden_year.split("-")[0])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Sep-")%} {%= __(filters.hidden_year.split("-")[0])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Oct-")%} {%= __(filters.hidden_year.split("-")[0])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Nov-")%} {%= __(filters.hidden_year.split("-")[0])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Dec-")%} {%= __(filters.hidden_year.split("-")[0])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Jan-")%} {%= __(filters.hidden_year.split("-")[1])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Feb-")%} {%= __(filters.hidden_year.split("-")[1])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Mar-")%} {%= __(filters.hidden_year.split("-")[1])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Apr-")%} {%= __(filters.hidden_year.split("-")[1])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("May-")%} {%= __(filters.hidden_year.split("-")[1])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Jun-")%} {%= __(filters.hidden_year.split("-")[1])%}</font>
+                </th>
+                <th style="text-align:center; ">
+                    <font size="-2" style="">{%= __("Total")%}
+                    </font>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for(var i=0, l=data.length; i<l; i++) { %} <tr>
+                <td style="text-align: left">
+                    <font size="-4">{%= frappe.format(data[i]["components"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-0"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-1"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-2"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-3"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-4"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-5"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-6"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-7"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-8"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-9"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-10"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["mm-11"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                <td style="text-align: right">
+                    <font size="-4">{%= frappe.format(data[i]["total"], {fieldtype: "HTML"}) %}</font>
+                </td>
+                </tr>
+                {% } %}
+        </tbody>
+    </table>
+</div>

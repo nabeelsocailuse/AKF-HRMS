@@ -29,6 +29,7 @@ def get_salary_percent_taxable_amount(self, salary_component, amount):
 		if (taxable_salary_percentage):
 			if (taxable_salary_percentage>0.0):
 				amount = self._salary_structure_assignment.base * (taxable_salary_percentage/100)
+				self.custom_non_tax_salary = (self._salary_structure_assignment.base - amount) # 10% of base salary
 				return amount
 	return amount
 
@@ -57,10 +58,10 @@ def get_pre_salary_percent_taxable_amount(
 		frappe.qb.from_(ss)
 		.join(sd)
 		.on(sd.parent == ss.name)
-		.select(sd.parent,sd.salary_component, sd.amount)
+		.select(sd.parent,sd.salary_component, field, sd.is_tax_applicable)
 		.where(sd.parentfield == parentfield)
 		.where(sd.is_flexible_benefit == is_flexible_benefit)
-		.where(sd.is_tax_applicable == 1)
+		.where(sd.is_tax_applicable == is_tax_applicable)
 		.where(ss.docstatus == 1)
 		.where(ss.employee == self.employee)
 		.where(ss.start_date.between(start_date, end_date))
@@ -68,11 +69,14 @@ def get_pre_salary_percent_taxable_amount(
 	)
 	# frappe.msgprint(f"{start_date} {end_date}")
 	result = query.run(as_dict=True)
-	# frappe.throw(f"{result}")
+	print(f"start_date =  {start_date}")	
+	print(f"end_date =  {end_date}")
+	print(f"result =  {result}")
 	pre_taxable_earnings = 0.0
 	for d in result:
 		# if(d.is_tax_applicable): 
-		pre_taxable_earnings += get_salary_percent_taxable_amount(self, d.salary_component, d.amount)
+		amount = d.amount if (field_to_select == "amount") else d.additional_amount
+		pre_taxable_earnings += get_salary_percent_taxable_amount(self, d.salary_component, amount)
 		# print(f"d: {d}")
 		# frappe.msgprint(f"{pre_taxable_earnings}")
 	# print(f"---pre_taxable_earnings: {pre_taxable_earnings}")

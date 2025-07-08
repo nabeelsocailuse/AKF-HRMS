@@ -187,6 +187,7 @@ override_doctype_class = {
     # "Attendance Request": "akf_hrms.overrides.attendance_request.OAttendanceRequest",
     # "Expense Claim": "akf_hrms.overrides.expense_claim.ExpenseClaim",
     "Additional Salary": "akf_hrms.overrides.additional_salary.XAdditionalSalary",
+    "Loan Product": "akf_hrms.overrides.loan_product_override.XLoanProduct",
 }
 
 # Document Events
