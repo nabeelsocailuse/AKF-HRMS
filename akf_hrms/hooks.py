@@ -342,4 +342,4 @@ advance_payment_doctypes = ["Gratuity", "Employee Advance"]
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
-# fixtures = ["Custom Field"]
+fixtures = ["Navbar Settings"]
