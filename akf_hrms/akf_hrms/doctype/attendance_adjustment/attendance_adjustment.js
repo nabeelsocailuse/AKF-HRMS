@@ -119,7 +119,7 @@ function loadSevenDaysStats(frm) {
                 </tr>`;
         }
         let _html_ = `
-            <h3 style="">Attendance Stats (7 Days)</h3>
+            <h3 style="">Attendance Stats (30 Days)</h3>
             <table class="table">
                 <thead class="thead-dark" >
                     <tr>

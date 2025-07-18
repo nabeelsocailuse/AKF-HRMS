@@ -9,7 +9,7 @@ class AttendanceAdjustment(Document):
 	def get_attendance_stats(self, adjust=None):
 		attendance_date =""
 		if(not adjust):
-			attendance_date =f" and (attendance_date between DATE_SUB('{self.posting_date}', INTERVAL 7 DAY) and '{self.posting_date}')"
+			attendance_date =f" and (attendance_date between DATE_SUB('{self.posting_date}', INTERVAL 30 DAY) and '{self.posting_date}')"
 		elif(adjust==1):
 			attendance_date = f" and attendance_date = '{self.adjustment_date}' "
 
