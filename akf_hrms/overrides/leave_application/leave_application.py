@@ -98,7 +98,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		if frappe.db.get_value("Leave Type", self.leave_type, "is_optional_leave"):
 			self.validate_optional_leave()
 		self.validate_applicable_after()
-		self.validate_three_casual_leaves_in_current_month() # Mubashir Bashir 1-1-2025
+		self.validate_three_consecutive_casual_leaves_in_period() # Mubashir Bashir 17-07-2025
 		self.short_leave_one_in_a_month() # Mubashir Bashir 1-1-2025
 		self.half_day_leave_one_in_a_month() # Mubashir Bashir 1-1-2025
 		self.short_leave_cannot_exceed_3_hours() # Mubashir Bashir 1-1-2025
@@ -308,61 +308,6 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			)
 
 	""" HR Leave Policy """
-	""" Casual Leave allowed 3 three in a month... """
-	# def validate_three_casual_leaves_in_current_month(self):
-	# 	from akf_hrms.patches.skip_validations import skip
-	# 	if(skip()): 
-	# 		return
-	# 	if(self.leave_type!="Casual Leave"): return
-	# 	# start validation
-	# 	from frappe.utils import get_first_day, get_last_day, getdate
-	# 	import datetime
-	# 	# Parse the from_date string into a datetime object
-	# 	from_month = getdate(self.from_date)
-	# 	# Get the month name
-	# 	from_month_name = from_month.strftime("%B")
-	# 	# Parse the to_date string into a datetime object
-	# 	to_month = getdate(self.to_date)
-	# 	# Get the month name
-	# 	to_month_name = to_month.strftime("%B")
-
-
-	# 	def verifyLeaves(conditions, month_name):
-	# 		result = frappe.db.sql(f""" 
-	# 			select 
-	# 				ifnull(sum(total_leave_days),0) total_leaves
-	# 			from 
-	# 				`tabLeave Application` 
-	# 			{conditions}
-	# 			""")
-	# 		if(result): 
-	# 			total_leaves = result[0][0] + self.total_leave_days
-	# 			if(total_leaves>3):
-	# 				frappe.throw(f"3 <b>{self.leave_type}</b> allowed in a month <b>{month_name}</b>.", title="Exception")
-
-	# 	conditions = f""" 
-	# 	where 
-	# 		docstatus=1
-	# 		and employee = '{self.employee}'
-	# 		and company = '{self.company}'
-	# 		and leave_type = '{self.leave_type}'
-	# 	"""
-	# 	if(from_month_name == to_month_name):
-	# 		start_date =  get_first_day(self.from_date)
-	# 		end_date =  get_last_day(self.to_date)
-	# 		conditions += f" and (from_date>='{start_date}' and to_date<='{end_date}') "
-	# 		verifyLeaves(conditions, from_month_name)
-			
-	# 	else:
-	# 		# validate with from date
-	# 		start_date =  get_first_day(self.from_date)
-	# 		end_date =  get_last_day(self.from_date)
-	# 		conditions += " and (from_date>='{start_date}' and to_date<='{end_date}') "
-	# 		verifyLeaves(conditions, from_month_name)
-	# 		# validate with to date
-	# 		start_date =  get_first_day(self.to_date)
-	# 		end_date =  get_last_day(self.to_date)
-	# 		verifyLeaves(conditions, to_month_name)
 	
 	""" HR Policy for Casual, Short, and Half day leaves Implemented By Mubashir """
 	""" --------------------------------START----------------------------------- """
@@ -460,9 +405,9 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			)
 			raise
 
-	# Implemented by Mubashir 1-1-2025			
-	def validate_three_casual_leaves_in_current_month(self):
-		"""Validates that an employee doesn't exceed 3 casual leaves in a payroll period"""
+	# Implemented by Mubashir 17-07-2025			
+	def validate_three_consecutive_casual_leaves_in_period(self):
+		"""Validates that an employee doesn't exceed 3 consecutive casual leaves in a payroll period"""
 		from akf_hrms.patches.skip_validations import skip
 		if skip() or self.leave_type != "Casual Leave":
 			return
@@ -472,42 +417,77 @@ class LeaveApplication(Document, PWANotificationsMixin):
 			from_date_period_start, from_date_period_end = self.get_payroll_period_dates(self.from_date)
 			to_date_period_start, to_date_period_end = self.get_payroll_period_dates(self.to_date)
 
-			# If leave application spans multiple payroll periods
-			if from_date_period_start != to_date_period_start:
-				self.verify_leave_count(					
-					from_date_period_start,
-					from_date_period_end,
-					self.get_period_name(from_date_period_start),
-					3,
-					"Casual Leave"
-				)
-				self.verify_leave_count(					
-					to_date_period_start,
-					to_date_period_end,
-					self.get_period_name(to_date_period_start),
-					3,
-					"Casual Leave"
-				)
-			else:
-				self.verify_leave_count(					
-					from_date_period_start,
-					from_date_period_end,
-					self.get_period_name(from_date_period_start),
-					3,
-					"Casual Leave"
-				)
+			# For each period spanned by the application
+			periods = set()
+			periods.add((from_date_period_start, from_date_period_end))
+			periods.add((to_date_period_start, to_date_period_end))
 
+			for period_start, period_end in periods:
+				# Get all existing casual leave applications in this period (excluding current)
+				existing_leaves = frappe.db.sql("""
+					SELECT from_date, to_date
+					FROM `tabLeave Application`
+					WHERE 
+						docstatus != 2
+						AND workflow_state NOT IN ('Rejected', 'Rejected by Line Manager', 'Rejected by Head of Department', 'Rejected by Chief Executive Officer')
+						AND employee = %s
+						AND company = %s
+						AND leave_type = %s
+						AND from_date >= %s 
+						AND to_date <= %s
+						AND name != %s
+				""", (
+					self.employee,
+					self.company,
+					"Casual Leave",
+					period_start,
+					period_end,
+					self.name
+				), as_dict=1)
+
+				# Add current application
+				all_leaves = list(existing_leaves)
+				all_leaves.append({"from_date": self.from_date, "to_date": self.to_date})
+
+				# Collect all leave dates in this period
+				leave_dates = set()
+				for leave in all_leaves:
+					start = getdate(leave["from_date"])
+					end = getdate(leave["to_date"])
+					for d in range((end - start).days + 1):
+						leave_dates.add(start + datetime.timedelta(days=d))
+
+				# Only consider dates within the period
+				period_dates = set()
+				p_start = getdate(period_start)
+				p_end = getdate(period_end)
+				for d in range((p_end - p_start).days + 1):
+					period_dates.add(p_start + datetime.timedelta(days=d))
+				leave_dates = leave_dates & period_dates
+
+				# Check for more than 3 consecutive days
+				if leave_dates:
+					sorted_dates = sorted(leave_dates)
+					max_consec = 1
+					current_consec = 1
+					for i in range(1, len(sorted_dates)):
+						if (sorted_dates[i] - sorted_dates[i-1]).days == 1:
+							current_consec += 1
+							max_consec = max(max_consec, current_consec)
+						else:
+							current_consec = 1
+					if max_consec > 3:
+						frappe.throw(
+							msg=f"You cannot apply for more than 3 consecutive Casual Leave days in a payroll period. Found {max_consec} consecutive days.",
+							title="Maximum Consecutive Casual Leave Days Exceeded"
+						)
 		except Exception as e:
 			frappe.log_error(
-				message=f"Error in casual leave validation: {str(e)}",
-				title="Casual Leave Validation Error"
+				message=f"Error in consecutive casual leave validation: {str(e)}",
+				title="Consecutive Casual Leave Validation Error"
 			)
 			raise
-			# frappe.throw(
-			# 	msg="Error validating casual leaves. Please contact system administrator.",
-			# 	title="Validation Error"
-			# )
-	
+
 	# Implemented by Mubashir 1-1-2025
 	def short_leave_one_in_a_month(self):
 		"""Validates that an employee doesn't exceed 1 short leave in a payroll period"""
