@@ -94,12 +94,14 @@ def record_workflow_approver_states(self):
 		
 		if(self.directly_reports_to_hod) and (self.workflow_state=="Applied"):
 			
-			nxt = frappe.db.get_value("Employee", {"custom_hod": 1,"department": self.department}, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
-			
+			# nxt = frappe.db.get_value("Employee", {"custom_hod": 1,"department": self.department}, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
+			reports_to = frappe.db.get_value("Employee", {"name": self.employee}, ["reports_to"], as_dict=1)
+			nxt = frappe.db.get_value("Employee", {"custom_hod": 1,"name": reports_to.reports_to}, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
+			# f"`Head of Department` is not set for department <b>{self.department}</b> of employee {link} ", title="Missing Information"
 			if(not nxt): 
 				link = get_link_to_form("Employee", prev.name, prev.employee_name)
 				frappe.throw(
-						f"`Head of Department` is not set for department <b>{self.department}</b> of employee {link} ", title="Missing Information"
+						f"`Head of Department` is not set for employee {link} ", title="Missing Information"
 					)
 		
 		if(not nxt.custom_current_role):
