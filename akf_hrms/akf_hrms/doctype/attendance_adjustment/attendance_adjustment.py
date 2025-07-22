@@ -38,7 +38,7 @@ class AttendanceAdjustment(Document):
 		conditions = " and late_entry = 1 " if(self.compensation_type=="Late Entry" and self.docstatus==0) else ""
 		conditions += " and early_exit = 1 " if(self.compensation_type=="Early Exit" and self.docstatus==0) else ""
 		if(self.compensation_for and self.docstatus==1): conditions = f" and name = '{self.compensation_for}' "
-		else: conditions = """ and (ifnull(custom_overtime_hours, "")="" or custom_overtime_hours <= 0) """
+		# else: conditions = """ and (ifnull(custom_overtime_hours, "")="" or custom_overtime_hours <= 0) """
 		return frappe.db.sql(f""" 
 			select name, custom_total_working_hours, in_time, out_time, custom_hours_worked, ifnull(custom_overtime_hours, '-')  as custom_overtime_hours
 			from `tabAttendance`
