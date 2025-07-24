@@ -78,7 +78,7 @@ def get_employee_data(filters):
         # Get leave details using the imported function
         leave_details = get_leave_details(emp.name, filters.get('from_date'))
         leave_allocation = leave_details.get('leave_allocation', {})
-
+        
         # Initialize leave counts
         leave_counts = {
             'Casual Leave': {'allowed': 0, 'availed': 0, 'balance': 0},

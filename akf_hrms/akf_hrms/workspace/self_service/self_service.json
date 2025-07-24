@@ -211,7 +211,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-07-01 12:07:14.353670",
+ "modified": "2025-07-15 17:20:59.482280",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Self Service",
@@ -258,7 +258,7 @@
    "role": "Line Manager"
   }
  ],
- "sequence_id": 39.0,
+ "sequence_id": 38.0,
  "shortcuts": [],
  "title": "Self Service"
 }
