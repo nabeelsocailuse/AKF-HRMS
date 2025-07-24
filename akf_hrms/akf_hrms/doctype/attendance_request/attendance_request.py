@@ -469,13 +469,137 @@ class AttendanceRequest(Document):
 	# Mubashir Bashir 11-03-2025 End
 
 
-# @frappe.whitelist()
-# def update_workflow_state():
-#     frappe.db.sql("""
-#         UPDATE `tabAttendance Request`
-#         SET status = 'Approved'
-#         WHERE docstatus = 1
-#     """)
-#     frappe.db.commit()
-#     print("status field updated from empty to Open")
+
+# /////////////////////////////////////
+# /////////////////////////////////////
+# /////////////////////////////////////
+import frappe
+import json
+
+@frappe.whitelist()
+def update_all_attendance_request_approver_states():
+    attendance_request_apps = frappe.get_all(
+        "Attendance Request",
+        filters={"workflow_state": "Recommended By Head Of Department"},
+        fields=["name", "employee", "custom_state_data"]
+    )
+
+    for app in attendance_request_apps:
+        attendance_request_app_id = app.name
+
+        if not app.custom_state_data:
+            print(f"[SKIP] No custom_state_data for {attendance_request_app_id}")
+            continue
+
+        try:
+            state_data = json.loads(app.custom_state_data)
+        except json.JSONDecodeError:
+            print(f"[ERROR] Invalid JSON in custom_state_data for {attendance_request_app_id}")
+            continue
+
+        applied_state = state_data.get("Recommended By Head Of Department")
+        if not applied_state:
+            print(f"[SKIP] 'Recommended By Head Of Department' state not found in custom_state_data for {attendance_request_app_id}")
+            continue
+
+        previous_attendance_request_approver1 = frappe.db.get_value("Employee", app.employee, "reports_to")
+        previous_attendance_request_approver = frappe.db.get_value("Employee", previous_attendance_request_approver1, "reports_to")
+        attendance_request_approver = frappe.db.get_value("Employee", previous_attendance_request_approver, "leave_approver")
+        if not attendance_request_approver:
+            print(f"[SKIP] No attendance_request approver for employee {app.employee}")
+            continue
+
+        attendance_request_approver_role = frappe.db.get_value("Employee", {"user_id": attendance_request_approver}, "custom_current_role")
+        attendance_request_approver_name = frappe.db.get_value("Employee", {"user_id": attendance_request_approver}, "employee_name")
+
+        new_next_state = f"{attendance_request_approver_name}, (<b>{attendance_request_approver_role}</b>)"
+        applied_state["next_state"] = new_next_state
+        state_data["Recommended By Head Of Department"] = applied_state
+
+        frappe.db.set_value("Attendance Request", attendance_request_app_id, "custom_state_data", json.dumps(state_data))
+        print(f"[UPDATED] {attendance_request_app_id} → {new_next_state}")
+
+    frappe.db.commit()
+    print("All applicable Attendance Requests updated.")
+
+
+def update_attendance_request_approvers_for_applied():
+    attendance_request_apps = frappe.get_all(
+        "Attendance Request",
+        filters={"workflow_state": "Recommended By Line Manager"},
+        fields=["name", "employee"]
+    )
+    count = 0
+    for app in attendance_request_apps:
+        # previous_attendance_request_approver1 = frappe.db.get_value("Employee", app.employee, "reports_to")
+        previous_attendance_request_approver = frappe.db.get_value("Employee", app.employee, "reports_to")
+        attendance_request_approver = frappe.db.get_value("Employee", previous_attendance_request_approver, "leave_approver")
+
+        if attendance_request_approver:
+            attendance_request_approver_name = frappe.db.get_value("User", attendance_request_approver, "full_name")
+
+            update_fields = {
+                "approver": attendance_request_approver,
+                "approver_name": attendance_request_approver_name
+            }
+
+            frappe.db.set_value("Attendance Request", app.name, update_fields)
+        count += 1
+        print(f"[{count}] Updating Attendance Request: {app.name} for Employee: {app.employee}")
+    frappe.db.commit()
+
+@frappe.whitelist()
+def update_employee_details_in_attendace_requests():
+    valid_states = ["Applied", "Recommended By Line Manager", "Recommended By Head Of Department"]
+
+    # Get all matching Leave Applications
+    attendance_apps = frappe.get_all(
+        "Attendance Request",
+        filters={"workflow_state": ["in", valid_states]},
+        fields=["name", "employee"]
+    )
+
+    total = len(attendance_apps)
+    updated = 0
+    skipped = 0
+    skipped_records = []
+
+    for app in attendance_apps:
+        try:
+            employee = frappe.get_doc("Employee", app.employee)
+
+            attendance_doc = frappe.get_doc("Attendance Request", app.name)
+
+            frappe.db.set_value("Attendance Request", app.name, "current_role", employee.custom_current_role)
+            frappe.db.set_value("Attendance Request", app.name, "directly_reports_to_hod", employee.custom_directly_reports_to_hod)
+            frappe.db.set_value("Attendance Request", app.name, "department", employee.department)			
+
+            # attendance_doc.current_role = employee.custom_current_role
+            # attendance_doc.directly_reports_to_hod = employee.reports_to
+            # attendance_doc.department = employee.department
+
+            # attendance_doc.save(ignore_permissions=True)
+            updated += 1
+
+        except Exception as e:
+            skipped += 1
+            skipped_records.append({
+                "attendace_request": app.name,
+                "error": str(e)
+            })
+            frappe.logger().error(f"Skipping Attendance Request {app.name}: {e}")
+
+    frappe.db.commit()
+
+    print(json.dumps({
+        "total_attendace_requests": total,
+        "updated": updated,
+        "skipped": skipped,
+        "skipped_records": skipped_records
+    }, indent=2))
+
+
+# bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.update_attendance_request_approvers_for_applied
+# bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.update_all_attendance_request_approver_states
+# bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.update_employee_details_in_attendace_requests
 

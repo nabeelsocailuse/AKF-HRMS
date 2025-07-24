@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "autoname": "HR-TRQ-.YYYY.-.#####",
  "creation": "2018-05-15 06:32:33.950356",
  "doctype": "DocType",
@@ -168,6 +169,7 @@
   {
    "fieldname": "itinerary",
    "fieldtype": "Table",
+   "label": "Travel Itinerary",
    "options": "Travel Itinerary"
   },
   {
@@ -321,7 +323,7 @@
    "link_fieldname": "custom_travel_request"
   }
  ],
- "modified": "2025-06-17 17:59:54.922559",
+ "modified": "2025-07-24 10:02:39.447073",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Travel Request",

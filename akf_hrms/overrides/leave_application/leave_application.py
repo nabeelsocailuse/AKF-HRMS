@@ -125,6 +125,8 @@ class LeaveApplication(Document, PWANotificationsMixin):
 		self.publish_update()
 		self.notify_approval_status()
 
+		set_next_workflow_approver_details(self) # Mubashir BAshir 23-7-25
+
 	def on_submit(self):
 		if self.status in ["Open", "Cancelled"]:
 			frappe.throw(
@@ -1958,6 +1960,14 @@ def record_workflow_approver_states(self):
 			}
 		})
 		self.custom_state_data =  frappe.as_json(approversList)
+
+def set_next_workflow_approver_details(self):
+	if self.workflow_state in ['Recommended By Line Manager', 'Recommended By Head Of Department'] :
+		next_leave_approver = frappe.get_value("Employee", {"user_id":self.leave_approver}, 'leave_approver')
+		self.leave_approver = next_leave_approver
+		self.leave_approver_name = get_fullname(next_leave_approver) 
+
+
 # # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application._set_next_workflow_approver
 # def _set_next_workflow_approver():
 # 	from frappe.utils import get_datetime
@@ -2039,4 +2049,150 @@ def record_workflow_approver_states(self):
 		
 # 		frappe.db.set_value("Leave Application", self.name, "workflow_state", "Approved")
 # 		frappe.db.set_value("Leave Application", self.name, "custom_state_data", frappe.as_json(state_dict))
-# 		print(f"state_dict: {state_dict}")		
+# 		print(f"state_dict: {state_dict}")
+# 
+
+
+# /////////////////////////////////////
+# /////////////////////////////////////
+# /////////////////////////////////////
+import frappe
+import json
+
+@frappe.whitelist()
+def update_all_leave_approver_states():
+    leave_apps = frappe.get_all(
+        "Leave Application",
+        filters={"workflow_state": "Applied"},
+        fields=["name", "employee", "custom_state_data"]
+    )
+
+    for app in leave_apps:
+        leave_app_id = app.name
+
+        if not app.custom_state_data:
+            print(f"[SKIP] No custom_state_data for {leave_app_id}")
+            continue
+
+        try:
+            state_data = json.loads(app.custom_state_data)
+        except json.JSONDecodeError:
+            print(f"[ERROR] Invalid JSON in custom_state_data for {leave_app_id}")
+            continue
+
+        applied_state = state_data.get("Applied")
+        if not applied_state:
+            print(f"[SKIP] 'Applied' state not found in custom_state_data for {leave_app_id}")
+            continue
+
+        # previous_leave_approver = frappe.db.get_value("Employee", app.employee, "reports_to")
+        leave_approver = frappe.db.get_value("Employee", app.employee, "leave_approver")
+        if not leave_approver:
+            print(f"[SKIP] No leave approver for employee {app.employee}")
+            continue
+
+        leave_approver_role = frappe.db.get_value("Employee", {"user_id": leave_approver}, "custom_current_role")
+        leave_approver_name = frappe.db.get_value("Employee", {"user_id": leave_approver}, "employee_name")
+
+        new_next_state = f"{leave_approver_name}, (<b>{leave_approver_role}</b>)"
+        applied_state["next_state"] = new_next_state
+        state_data["Applied"] = applied_state
+
+        frappe.db.set_value("Leave Application", leave_app_id, "custom_state_data", json.dumps(state_data))
+        print(f"[UPDATED] {leave_app_id} → {new_next_state}")
+
+    frappe.db.commit()
+    print("All applicable Leave Applications updated.")
+
+
+def update_leave_approvers_for_applied():
+    leave_apps = frappe.get_all(
+        "Leave Application",
+        filters={"workflow_state": "Recommended By Line Manager"},
+        fields=["name", "employee"]
+    )
+
+    for app in leave_apps:
+        previous_leave_approver = frappe.db.get_value("Employee", app.employee, "reports_to")
+        leave_approver = frappe.db.get_value("Employee", previous_leave_approver, "leave_approver")
+
+        if leave_approver:
+            leave_approver_name = frappe.db.get_value("User", leave_approver, "full_name")
+
+            update_fields = {
+                "leave_approver": leave_approver,
+                "leave_approver_name": leave_approver_name
+            }
+
+            frappe.db.set_value("Leave Application", app.name, update_fields)
+
+    frappe.db.commit()
+
+@frappe.whitelist()
+def update_employee_details_in_leave_applications():
+    valid_states = ["Applied", "Recommended By Line Manager", "Recommended By Head Of Department"]
+
+    # Get all matching Leave Applications
+    leave_apps = frappe.get_all(
+        "Leave Application",
+        filters={"workflow_state": ["in", valid_states]},
+        fields=["name", "employee"]
+    )
+
+    total = len(leave_apps)
+    updated = 0
+    skipped = 0
+    skipped_records = []
+
+    for app in leave_apps:
+        try:
+            employee = frappe.get_doc("Employee", app.employee)
+
+            leave_doc = frappe.get_doc("Leave Application", app.name)
+
+            leave_doc.custom_current_role = employee.custom_current_role
+            leave_doc.custom_directly_reports_to_hod = employee.reports_to
+            leave_doc.department = employee.department
+
+            leave_doc.save(ignore_permissions=True)
+            updated += 1
+
+        except Exception as e:
+            skipped += 1
+            skipped_records.append({
+                "leave_application": app.name,
+                "error": str(e)
+            })
+            frappe.logger().error(f"Skipping Leave Application {app.name}: {e}")
+
+    frappe.db.commit()
+
+    print(json.dumps({
+        "total_leave_applications": total,
+        "updated": updated,
+        "skipped": skipped,
+        "skipped_records": skipped_records
+    }, indent=2))
+
+
+@frappe.whitelist()
+def update_approve_leave_open_status_to_approve():
+
+    # Get all matching Leave Applications
+    leave_apps = frappe.get_all(
+        "Leave Application",
+        filters={"workflow_state": "Approved", "status": "Open"},
+        fields=["name", "employee"]
+    )
+    count = 0
+    for app in leave_apps:
+		# Update the status to "Approved"
+        frappe.db.set_value("Leave Application", app.name, "status", "Approved")
+        count += 1
+        print(f"[{count}] Updating Leave Application: {app.name} for Employee: {app.employee}")
+
+
+# bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_leave_approvers_for_applied
+# bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_all_leave_approver_states
+# bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_employee_details_in_leave_applications
+# bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_approve_leave_open_status_to_approve

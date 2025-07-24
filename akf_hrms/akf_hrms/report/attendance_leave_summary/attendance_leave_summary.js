@@ -159,7 +159,7 @@ frappe.query_reports["Attendance Leave Summary"] = {
 
     formatter: function (value, row, column, data, default_formatter) {
         value = default_formatter(value, row, column, data);
-
+        console.log(value, row, column, data)
         // Make Late Entry, Early Exit, and Missing Attendance columns clickable
         if (column.id === "late_entry" && data.late_dates) {
             value = `<a href="#" onclick="showDates('Late Entry Dates', '${data.late_dates}')">${value}</a>`;
@@ -173,6 +173,14 @@ frappe.query_reports["Attendance Leave Summary"] = {
         if (column.id === "leaves_deduction" && data.leaves_deduction_dates) {
             value = `<a href="#" onclick="showDates('Leaves Deduction Dates', '${data.leaves_deduction_dates}')">${value}</a>`;
         }
+        
+        if (column.id === "late_entry_deduction" && data.late_entry_deduction_dates) {
+            value = `<a href="#" onclick="loadDates('Late Entry Deduction Dates', '${data.late_entry_deduction_dates}')">${value}</a>`;
+        }
+        if (column.id === "early_exit_deduction" && data.early_exit_deduction_dates) {
+            value = `<a href="#" onclick="showDates('Early Exit Deduction Dates', '${data.early_exit_deduction_dates}')">${value}</a>`;
+        }
+
         if (column.id === "absent" && data.absent_dates) {
             value = `<a href="#" onclick="showDates('Absent Dates', '${data.absent_dates}')">${value}</a>`;
         }
@@ -218,6 +226,30 @@ function update_dynamic_dates(report) {
 
 // Function to show dates in a popup
 function showDates(title, dates) {
+    if (dates) {
+        const dateArray = dates.split(',');
+
+        const formattedDates = dateArray.map(date => {
+            const [year, month, day] = date.split('-');
+            return `${day}-${month}-${year}`;
+        });
+
+        const formattedMessage = formattedDates.join('<br>');
+
+        frappe.msgprint({
+            title: title,
+            message: formattedMessage
+        });
+    } else {
+        frappe.msgprint({
+            title: title,
+            message: "No dates found."
+        });
+    }
+}
+
+// Function to show dates in a popup
+function loadDates(title, dates) {
     if (dates) {
         const dateArray = dates.split(',');
 
