@@ -10,6 +10,9 @@ class AttendanceLog(Document):
 	def validate(self):
 		self.set_employee_and_shift_type()
 
+		if(not self.attendance_date):	# Mubashir Bashir 30-07-2025
+			frappe.throw("Attendance date and time is required.")
+
 	def set_employee_and_shift_type(self):
 		if(self.shift): 
 			return
