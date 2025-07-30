@@ -26,11 +26,24 @@ frappe.ui.form.on('Expense Claim', {
                 }
             });
         }
-        
-        // if (!frm.doc.employee && !frm.doc.expense_approver) {
-        //     frappe.throw(__('Please select Employee and Approver first'));
-        //     return;
-        // }
+
+        // Mubashir Bashir 30-07-2025 Start
+        frm.set_query("employee", function () {
+            return {
+                filters: {
+                    status: 'Active',
+                },
+            };
+        });
+        frm.set_query("travel_request", function () {
+            return {
+                filters: {
+                    employee: frm.doc.employee,
+                    docstatus: 1,
+                },
+            };
+        });
+        // Mubashir Bashir 30-07-2025 End
     },
     company: function (frm) {
         erpnext.accounts.dimensions.update_dimension(frm, frm.doctype);
@@ -117,7 +130,7 @@ frappe.ui.form.on('Expense Claim', {
             frm.refresh_field('expenses');
         }
     },
-    
+
 });
 
 

@@ -67,6 +67,8 @@ function hide_show_fields(frm) {
     }
     
     if (frm.doc.attendance_date || frm.doc.log){
+        console.log(frm.doc.attendance_date, frm.doc.log);
+        
         frm.set_df_property("mark_check_in", "hidden", true);
         frm.set_df_property("mark_check_out", "hidden", true);
         return;

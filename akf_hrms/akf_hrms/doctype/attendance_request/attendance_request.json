@@ -231,7 +231,6 @@
    "fieldname": "travel_request",
    "fieldtype": "Link",
    "label": "Travel Request",
-   "mandatory_depends_on": "// eval: doc.reason=='In-Station' || doc.reason=='Out-Station'",
    "options": "Travel Request"
   },
   {
@@ -355,7 +354,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-24 13:03:01.610742",
+ "modified": "2025-07-30 18:32:51.182856",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Request",

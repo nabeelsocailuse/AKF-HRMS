@@ -41,7 +41,7 @@ frappe.ui.form.on("Attendance Request", {
             return {
                 filters: {
                     employee: frm.doc.employee,
-                    docstatus: 1,
+                    // docstatus: 1,
                 },
             };
         });
