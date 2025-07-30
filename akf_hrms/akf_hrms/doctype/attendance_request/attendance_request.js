@@ -39,10 +39,10 @@ frappe.ui.form.on("Attendance Request", {
         });
         frm.set_query("travel_request", function () {
             return {
-                filters: {
-                    employee: frm.doc.employee,
-                    // docstatus: 1,
-                },
+                filters: [
+                    ["employee", "=", frm.doc.employee],
+                    ["docstatus", "!=", 2]
+                ]
             };
         });
 
