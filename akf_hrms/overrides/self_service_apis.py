@@ -127,9 +127,9 @@ def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
         attended_dates = {log.attendance_date for log in attendance_logs}
         
         request_statuses_to_exclude = [
-            'Pending', 
-            'Approved by the Line Manager', 
-            'Approved by the Head of Department'
+            'Applied', 
+            'Recommended By Line Manager', 
+            'Recommended By Head of Department'
         ]
 
         pending_request_dates = frappe.db.get_all(
@@ -324,7 +324,7 @@ def get_absent_days_dates():        #Mubashir Bashir
         
         attended_dates = {log['attendance_date'] for log in attendance_logs}
 
-        pending_request_statuses = ['Pending', 'Approved by the Line Manager', 'Approved by the Head of Department']
+        pending_request_statuses = ['Applied', 'Recommended By Line Manager', 'Recommended by Head of Department']
         pending_requests = frappe.db.get_all(
             "Attendance Request",
             filters={
