@@ -136,7 +136,7 @@ def get_attendance_logs_when_no_attendance():  # Mubashir Bashir
             "Attendance Request",
             filters={
                 'employee': employee_name,
-                'custom_approval_status': ['in', request_statuses_to_exclude],
+                'workflow_state': ['in', request_statuses_to_exclude],
                 'from_date': ['between', [start_date, today]]
             },
             fields=['from_date']
@@ -329,7 +329,7 @@ def get_absent_days_dates():        #Mubashir Bashir
             "Attendance Request",
             filters={
                 'employee': employee_name,
-                'custom_approval_status': ['in', pending_request_statuses],
+                'workflow_state': ['in', pending_request_statuses],
                 'from_date': ['between', [start_date, today]]
             },
             fields=['from_date']
