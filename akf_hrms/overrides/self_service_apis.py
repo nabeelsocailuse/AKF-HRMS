@@ -184,7 +184,7 @@ def get_late_entry_dates():     # Mubashir Bashir
             AND attendance_date BETWEEN %s AND %s 
             AND docstatus = 1 
             AND late_entry = 1
-            AND status IN ('Present', 'Half Day', 'Work From Home')
+            AND status IN ('Present', 'Work From Home')
             """,
             (employee_name, start_date, today),
             as_dict=True
@@ -251,7 +251,7 @@ def get_early_exit_dates():  # Mubashir Bashir
             AND attendance_date BETWEEN %s AND %s 
             AND docstatus = 1 
             AND early_exit = 1
-            AND status IN ('Present', 'Half Day', 'Work From Home')
+            AND status IN ('Present', 'Work From Home')
             """,
             (employee_name, start_date, today),
             as_dict=True
