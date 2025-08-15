@@ -84,7 +84,7 @@ def two_hours_three_late_comings_times_in_a_month(args):
 		having
 			hours>0
 	""", args)
-	print(f'result: {result}')
+	# print(f'result: {result}')
 	if(result):
 		hours = result[0][0]
 		

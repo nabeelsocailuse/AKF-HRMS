@@ -660,6 +660,7 @@ class LeaveApplication(Document, PWANotificationsMixin):
 
 		# => find approver
 		def set_approver_detail(user_id):
+			if self.leave_approver: return
 			self.leave_approver = user_id
 			self.leave_approver_name = get_fullname(user_id)
 
@@ -1961,11 +1962,11 @@ def record_workflow_approver_states(self):
 		})
 		self.custom_state_data =  frappe.as_json(approversList)
 
-def set_next_workflow_approver_details(self):
+def set_next_workflow_approver_details(self): # Mubashir Bashir 23-7-25
 	if self.workflow_state in ['Recommended By Line Manager', 'Recommended By Head Of Department'] :
 		next_leave_approver = frappe.get_value("Employee", {"user_id":self.leave_approver}, 'leave_approver')
 		self.leave_approver = next_leave_approver
-		self.leave_approver_name = get_fullname(next_leave_approver) 
+		self.leave_approver_name = get_fullname(next_leave_approver) 		 
 
 
 # # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application._set_next_workflow_approver
@@ -2191,8 +2192,13 @@ def update_approve_leave_open_status_to_approve():
         count += 1
         print(f"[{count}] Updating Leave Application: {app.name} for Employee: {app.employee}")
 
-
+@frappe.whitelist()
+def update_leave_application():
+	frappe.db.set_value("Leave Application", "HR-LAP-2025-02069", "leave_approver", "khubaib.bilal@alkhidmat.org")
+	frappe.db.set_value("Leave Application", "HR-LAP-2025-02069", "leave_approver_name", "Khubaib Bilal")
 # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_leave_approvers_for_applied
 # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_all_leave_approver_states
 # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_employee_details_in_leave_applications
 # bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_approve_leave_open_status_to_approve
+# bench --site erp.alkhidmat.org execute akf_hrms.overrides.leave_application.leave_application.update_leave_application
+

@@ -2,59 +2,289 @@
 
 from __future__ import unicode_literals
 
-from akf_hrms.overrides.leave_application.leave_application import get_leave_details
+# from akf_hrms.overrides.leave_application.leave_application import get_leave_details
 import frappe
 from frappe import _
 from frappe.utils import (
-	get_first_day
+	get_first_day,
+	get_last_day,
+	date_diff,
+	add_to_date
 )
 
 def execute(filters=None):
 	columns, data = [], []
-	columns = get_employee_columns()
-	data = get_employee_data(filters)
+	columns = get_columns()
+	data = get_data(filters)
 	return columns, data
 
-def get_employee_columns():
+def get_columns():
 	return [
-		_("ID") + ":Link/Employee:220",
-		_("Name") + ":Data:220",
-		_("Branch") + ":Link/Branch:220",
-		_("Department") + ":Link/Department:220",
-		_("Designation") + ":Link/Designation:120",
-		_("Status") + ":Data:120",
-		_("Casual Leave Allowed") + ":Data:220",
-		_("Casual Leave Availed") + ":Data:220",
-		_("Casual Leave Balance") + ":Data:220",
-		_("Medical Leave Allowed") + ":Data:220",
-		_("Medical Leave Availed") + ":Data:220",
-		_("Medical Leave Balance") + ":Data:220",
-		_("Earned/Recreational Leave Allowed") + ":Data:220",
-		_("Earned/Recreational Leave Availed") + ":Data:220",
-		_("Earned/Recreational Leave Balance") + ":Data:220",
-		_("Late Entry") + ":Data:120",
-		_("Early Exit") + ":Data:120",
-		_("Missing Attendance") + ":Data:120",
-		# _("Leaves Deduction") + ":Data:120",
-		_("Late Entry Deduction") + ":Data:120",
-		_("Early Exit Deduction") + ":Data:120",
-		_("Absent") + ":Data:120",
-		_("Payment Days") + ":Data:120",
-		_("Actual Payment Days") + ":Data:120",
-		_("Late Dates") + ":Data:200:Hidden",
-		_("Early Dates") + ":Data:200:Hidden",
-		_("Missing Dates") + ":Data:200:Hidden",
-		_("Late Entry Deduction Dates") + ":Data:200:Hidden",
-		_("Early Exit Deduction Dates") + ":Data:200:Hidden",
-		# _("Leaves Deduction Dates") + ":Data:200:Hidden",
-		_("Absent Dates") + ":Data:200:Hidden",
-		_("Payment Dates") + ":Data:200:Hidden"
+		{	
+			"label": "CNIC",
+			"fieldname": "custom_cnic",
+			"fieldtype": "Data",
+			"options": "",
+			"width": "180"
+		},
+		  {	
+			"label": "ID",
+			"fieldname": "name",
+			"fieldtype": "Link",
+			"options": "Employee",
+			"width": "220"
+		},
+		{	
+			"label": "Name",
+			"fieldname": "employee_name",
+			"fieldtype": "Data",
+			"options": "",
+			"width": "220",
+		},
+		{
+			"label": "Designation",
+			"fieldname": "designation",
+			"fieldtype": "Link",
+			"options": "Designation",
+			"width": "160"
+		},
+		{
+			"label": "Department",
+			"fieldname": "department",
+			"fieldtype": "Link",
+			"options": "Department",
+			"width": "160"
+		},
+		{
+			"label": "Employee Status",
+			"fieldname": "employment_type",
+			"fieldtype": "Link",
+			"options": "Employment Type",
+			"width": "160"
+		},
+		{
+			"label": "(Cur) Late Entry",
+			"fieldname": "late_entry_count",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "140"
+		},
+		{
+			"label": "(Pre) Late Ded",
+			"fieldname": "late_ded",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "140"
+		},
+		{
+			"label": "Early Exit",
+			"fieldname": "early_exit_count",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "130"
+		},
+		{
+			"label": "Early Ded",
+			"fieldname": "early_ded",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "120"
+		},
+		{
+			"label": "Missing In-Out",
+			"fieldname": "missing_in_out_count",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "130"
+		},
+		{
+			"label": "Absents",
+			"fieldname": "absents",
+			"fieldtype": "float",
+			"precision": "1",
+			"width": "100"
+		},
+		{
+			"label": "Total Days",
+			"fieldname": "total_days",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "130"
+		},
+		{
+			"label": "Total Ded",
+			"fieldname": "total_deduction",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "130"
+		},
+		{
+			"label": "Paid Days",
+			"fieldname": "paid_days",
+			"fieldtype": "float",
+			"precision": "1",
+			"width": "100"
+		},
+		{
+			"label": "Fuel Days",
+			"fieldname": "fuel_days",
+			"fieldtype": "float",
+			"precision": "1",
+			"width": "100"
+		},
+		{
+			"label": "Fuel Eligibility",
+			"fieldname": "fuel_eligibility",
+			"fieldtype": "Data",
+			"precision": "1",
+			"width": "100"
+		},
+		{
+			"label": "HR Remarks",
+			"fieldname": "hr_remarks",
+			"fieldtype": "Data",
+			"precision": "1",
+			"width": "100"
+		},
+		{
+			"label": "Late Entry Dates",
+			"fieldname": "late_dates",
+			"fieldtype": "Data",
+			"width": "130",
+			"hidden": 0
+		},
+		{
+			"label": "Early Exit Dates",
+			"fieldname": "early_dates",
+			"fieldtype": "Data",
+			"width": "130",
+			"hidden": 0
+		},
+		{
+			"label": "Missing In-Out Dates",
+			"fieldname": "missing_dates",
+			"fieldtype": "Data",
+			"width": "130",
+			"hidden": 0
+		},
+		{
+			"label": "Absent Dates",
+			"fieldname": "absent_dates",
+			"fieldtype": "Data",
+			"width": "130",
+			"hidden": 0
+		},
+		{
+			"label": "Late Ded Dates",
+			"fieldname": "late_ded_dates",
+			"fieldtype": "Data",
+			"width": "130",
+			"hidden": 0
+		},
+		  {
+			"label": "Early Ded Dates",
+			"fieldname": "early_ded_dates",
+			"fieldtype": "Data",
+			"width": "130",
+			"hidden": 0
+		},
+		{
+			"label": "Paid Dates",
+			"fieldname": "paid_dates",
+			"fieldtype": "Data",
+			"width": "130",
+			"hidden": 1
+		},
+		{
+			"label": "Casual Leave Allowed",
+			"fieldname": "casual_leaves_allowed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Casual Leave Availed",
+			"fieldname": "casual_leaves_availed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Casual Leave Balance",
+			"fieldname": "casual_leaves_balance",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Medical Leave Allowed",
+			"fieldname": "medical_leaves_allowed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Medical Leave Availed",
+			"fieldname": "medical_leaves_availed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Medical Leave Balance",
+			"fieldname": "medical_leaves_balance",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Earned Leave Allowed",
+			"fieldname": "earned_leaves_allowed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Earned Leave Availed",
+			"fieldname": "earned_leaves_availed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Earned Leave Balance",
+			"fieldname": "earned_leaves_balance",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Recreational Leave Allowed",
+			"fieldname": "recreational_leaves_allowed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Recreational Leave Availed",
+			"fieldname": "recreational_leaves_availed",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
+		{
+			"label": "Recreational Leave Balance",
+			"fieldname": "recreational_leaves_balance",
+			"fieldtype": "Float",
+			"precision": "1",
+			"width": "160"
+		},
 	]
 
 def get_conditions(filters):
 	conditions = ""
 	if filters.get("company"):
-		conditions += " e.company = %(company)s"
+		conditions += " and e.company = %(company)s"
 	if filters.get("employee"):
 		conditions += " and e.employee = %(employee)s"
 	if filters.get("branch"):
@@ -65,302 +295,365 @@ def get_conditions(filters):
 		conditions += " and e.designation = %(designation)s"
 	if filters.get("status"):
 		conditions += " and e.employment_type = %(status)s"
+	if filters.get("no_attendance"):
+		conditions += " and e.custom_no_attendance = %(no_attendance)s"
+
 	return conditions
 
-def get_employee_data(filters):
-	conditions = get_conditions(filters)
-	
+def get_data(filters):
+	curMonthDays = get_current_month(filters)
+	monthDates = get_21st_to_20th_of_month(filters)
+	Employees = get_employees(filters)
+	LeavesDetail = get_leaves_details(filters)
+	HolidayLists = get_holiday_list(filters)
+	Attendances = get_attendances(filters)
 	lateEntryDeduction = get_late_entry_deduction(filters)
 	earlyExitDeduction = get_early_exit_deduction(filters)
+	fuelEligible = get_fuel_eligibility(filters)
+
+	FROM_DATE = filters.get('from_date')
+	LeaveType = ['Casual Leave', 'Medical Leave', 'Earned', 'Recreational Leave']
+	data = []
 	
-	# Get base employee data
-	emp_record = """
-		SELECT 
-			e.name, e.employee_name, e.branch, e.department, e.designation, e.employment_type,
-			COALESCE(e.holiday_list, '') as _holiday_list
-		FROM `tabEmployee` as e
-		WHERE {condition} AND e.custom_no_attendance != 1 AND e.status = 'Active'
-	""".format(condition=conditions)
-
-	data = frappe.db.sql(emp_record, filters, as_dict=1)
-
-	for emp in data:
-		# Get leave details using the imported function
-		leave_details = get_leave_details(emp.name, filters.get('from_date'))
-		leave_allocation = leave_details.get('leave_allocation', {})
-
-<<<<<<< Updated upstream
-    for emp in data:
-        # Get leave details using the imported function
-        leave_details = get_leave_details(emp.name, filters.get('from_date'))
-        leave_allocation = leave_details.get('leave_allocation', {})
-        
-        # Initialize leave counts
-        leave_counts = {
-            'Casual Leave': {'allowed': 0, 'availed': 0, 'balance': 0},
-            'Medical Leave': {'allowed': 0, 'availed': 0, 'balance': 0},
-            'Earned Leave': {'allowed': 0, 'availed': 0, 'balance': 0},
-            'Recreational Leave': {'allowed': 0, 'availed': 0, 'balance': 0}
-        }
-=======
-		# Initialize leave counts
-		leave_counts = {
-			'Casual Leave': {'allowed': 0, 'availed': 0, 'balance': 0},
-			'Medical Leave': {'allowed': 0, 'availed': 0, 'balance': 0},
-			'Earned Leave': {'allowed': 0, 'availed': 0, 'balance': 0},
-			'Recreational Leave': {'allowed': 0, 'availed': 0, 'balance': 0}
-		}
-
-		# Update leave counts from leave_details
-		for leave_type, details in leave_allocation.items():
-			if leave_type in leave_counts:
-				leave_counts[leave_type]['allowed'] = details.get('total_leaves', 0)
-				leave_counts[leave_type]['availed'] = details.get('leaves_taken', 0)
-				leave_counts[leave_type]['balance'] = details.get('remaining_leaves', 0)
->>>>>>> Stashed changes
-
-		# Calculate combined Earned/Recreational leave
-		combined_earned_allowed = (leave_counts['Earned Leave']['allowed'] + 
-								   leave_counts['Recreational Leave']['allowed'])
-		combined_earned_availed = (leave_counts['Earned Leave']['availed'] + 
-								   leave_counts['Recreational Leave']['availed'])
-		combined_earned_balance = (leave_counts['Earned Leave']['balance'] + 
-								   leave_counts['Recreational Leave']['balance'])
-
-		# Get attendance related counts and dates
-		attendance_details = frappe.db.sql("""
-			SELECT
-				COALESCE(COUNT(*), 0) as total_attendance,
-				COALESCE(SUM(CASE WHEN leave_type = 'Leave Without Pay' THEN 1 ELSE 0 END), 0) as lwp_count, 
-				COALESCE(SUM(CASE WHEN late_entry = 1 AND status = 'Present' THEN 1 ELSE 0 END), 0) as late_count,
-				COALESCE(SUM(CASE WHEN early_exit = 1 THEN 1 ELSE 0 END), 0) as early_count,
-				COALESCE(SUM(CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) THEN 1 ELSE 0 END), 0) as missing_count,
-				GROUP_CONCAT(DISTINCT CASE WHEN late_entry = 1 AND status = 'Present' THEN attendance_date END) as late_dates,
-				GROUP_CONCAT(DISTINCT CASE WHEN early_exit = 1 THEN attendance_date END) as early_dates,
-				GROUP_CONCAT(DISTINCT CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) THEN attendance_date END) as missing_dates
-			FROM `tabAttendance`
-			WHERE employee = %s 
-			AND attendance_date BETWEEN %s AND %s
-		""", (emp.name, filters.get('from_date'), filters.get('to_date')), as_dict=1)[0]
-
-		# Get leaves deduction details
-		# leaves_deduction_details = frappe.db.sql("""
-		# 	SELECT 
-		# 		COALESCE(SUM(total_deduction), 0) as total_leaves_deduction,
-		# 		GROUP_CONCAT(DISTINCT posting_date) as leaves_deduction_dates
-		# 	FROM `tabDeduction Ledger Entry`
-		# 	WHERE employee = %s 
-		# 	AND company = %s
-		# 	AND posting_date BETWEEN %s AND %s
-		# """, (emp.name, filters.get('company'), filters.get('deduction_from_date'), filters.get('deduction_to_date')), as_dict=1)[0]
-
-		# Get holidays
-		holiday_count = 0
-		holiday_dates = []
-		if emp._holiday_list:
-			holidays = frappe.db.sql("""
-				SELECT holiday_date
-				FROM `tabHoliday`
-				WHERE parent = %s 
-				AND holiday_date BETWEEN %s AND %s
-			""", (emp._holiday_list, filters.get('from_date'), filters.get('to_date')), as_dict=1)
-			holiday_count = len(holidays)
-			holiday_dates = [h.holiday_date.strftime('%Y-%m-%d') for h in holidays]
-
-		# Get all dates in the range
-		from datetime import datetime, timedelta
-		from_date = datetime.strptime(filters.get('from_date'), '%Y-%m-%d')
-		to_date = datetime.strptime(filters.get('to_date'), '%Y-%m-%d')
-		total_days = (to_date - from_date).days + 1
+	for emp in Employees:
+		empId = emp.name
+		no_attendance = emp.no_attendance
+		# LEAVES
+		leaves_allocation = LeavesDetail.get(empId, {})
+		# emp.update({
+		# 	'casual_leaves_balance': 0,
+		# 	'medical_leaves_balance': 0,
+		# 	'earned_leaves_balance': 0,
+		# 	'recreational_leaves_balance': 0
+		# })
 		
-		# Get all dates in the range
-		all_dates = []
-		current_date = from_date
-		while current_date <= to_date:
-			all_dates.append(current_date.strftime('%Y-%m-%d'))
-			current_date += timedelta(days=1)
-
-		# Get attendance records
-		attendance_records = frappe.db.sql("""
-			SELECT attendance_date, status, leave_type
-			FROM `tabAttendance`
-			WHERE employee = %s 
-			AND attendance_date BETWEEN %s AND %s
-		""", (emp.name, filters.get('from_date'), filters.get('to_date')), as_dict=1)
-
-		# Create a dictionary of attendance records for easy lookup
-		attendance_dict = {}
-		for record in attendance_records:
-			# Convert date to string format for dictionary key
-			date_str = record.attendance_date.strftime('%Y-%m-%d')
-			attendance_dict[date_str] = {
-				'status': record.status,
-				'leave_type': record.leave_type
-			}
-
-		# Calculate absent dates and payment dates
-		absent_dates = []
-		payment_dates = []
-
-		for date in all_dates:
-			# Check if it's a holiday first
-			if date in holiday_dates:
-				payment_dates.append(date)
-				continue
-
-			# Then check attendance record for this date
-			if date in attendance_dict:
-				record = attendance_dict[date]
-				if record['status'] == 'Present' or record['status'] == 'Half Day' or (record['status'] == 'On Leave' and record['leave_type'] != 'Leave Without Pay'):
-					payment_dates.append(date)
+		if('Casual Leave' in leaves_allocation):
+			emp.update({
+				'casual_leaves_allowed': leaves_allocation['Casual Leave'].get('allocated_leaves') or 0,
+				'casual_leaves_availed': leaves_allocation['Casual Leave'].get('leaves_taken') or 0,
+				'casual_leaves_balance': leaves_allocation['Casual Leave'].get('remaining_leaves') or 0,
+			})
+		if('Medical Leave'  in leaves_allocation):
+			emp.update({
+				'medical_leaves_allowed': leaves_allocation['Medical Leave'].get('allocated_leaves') or 0,
+				'medical_leaves_availed': leaves_allocation['Medical Leave'].get('leaves_taken') or 0,
+				'medical_leaves_balance': leaves_allocation['Medical Leave'].get('remaining_leaves') or 0
+			})
+		if('Earned' in leaves_allocation):
+			emp.update({
+				'earned_leaves_allowed': leaves_allocation['Earned'].get('allocated_leaves') or 0,
+				'earned_leaves_availed': leaves_allocation['Earned'].get('leaves_taken') or 0,
+				'earned_leaves_balance': leaves_allocation['Earned'].get('remaining_leaves')
+			})
+		if('Recreational Leave'  in leaves_allocation):
+			emp.update({
+				'recreational_leaves_allowed': leaves_allocation['Recreational Leave'].get('allocated_leaves') or 0,
+				'recreational_leaves_availed': leaves_allocation['Recreational Leave'].get('leaves_taken') or 0,
+				'recreational_leaves_balance': leaves_allocation['Recreational Leave'].get('remaining_leaves') or 0
+			})
+		
+		# ATTENDANCE
+		attendance_dates = []
+		missing_dates = []
+		if(empId in Attendances):
+			att = Attendances[empId]
+			emp.update(att)
+			attendance_dates = att.get('attendance_dates') or []
+			if(attendance_dates): 
+				attendance_dates = attendance_dates.split(',')
+			# Total of deductions from paid days
+			missing_dates = att.get('missing_dates', "") or []
+			if(missing_dates): 
+				if("," in missing_dates): 
+					missing_dates = missing_dates.split(',')
 				else:
-					absent_dates.append(date)
+					missing_dates = [missing_dates]
+				
+		# HOLIDAYS
+		holiday_dates = []
+		if(emp.holiday_list in HolidayLists):
+			holiday_dates = HolidayLists[emp.holiday_list]
+
+		# Total Paid Days
+		paid_dates_list = list(set(attendance_dates + holiday_dates))
+		paid_dates_list.sort()
+
+
+	
+		# Total Absent Days
+		absent_dates_list = [date for date in monthDates if(date not in paid_dates_list)]
+		absent_dates_list.sort()
+
+		# frappe.throw(f"{absent_dates_list}")
+		# Remove missing logs
+		paid_dates_list = [date for date in paid_dates_list if(date not in missing_dates)]
+
+		# Total of deductions from paid days
+		total_deduction = 0.0
+
+		total_deduction += len(absent_dates_list)
+		total_deduction += len(missing_dates)
+
+		if(empId in lateEntryDeduction):
+			late_ded = lateEntryDeduction[empId]
+			emp.update(late_ded)
+			total_deduction +=  late_ded.get("late_ded", 0.0)
+
+		if(empId in earlyExitDeduction):
+			early_ded = earlyExitDeduction[empId]
+			emp.update(early_ded)
+			total_deduction +=  early_ded.get("early_ded", 0.0)
+		
+		fuel_days = 0.0
+		fuel_eligibility = "No"
+
+		if(empId in fuelEligible):
+			if(no_attendance):
+				fuel_days = curMonthDays
 			else:
-				# No attendance record found, mark as absent
-				absent_dates.append(date)
-
-		# Calculate absent days and payment days
-		absent_days = len(absent_dates)
-		payment_days = len(payment_dates)
-
-		# Update employee record with all calculated values
+				fuel_days = (curMonthDays - total_deduction)
+			fuel_eligibility = "Yes"
+		
 		emp.update({
-			'name': emp.name,
-			'employee_name': emp.employee_name,
-			'branch': emp.branch,
-			'department': emp.department,
-			'designation': emp.designation,
-			'status': emp.employment_type,
-			'casual_leave_allowed': leave_counts['Casual Leave']['allowed'],
-			'casual_leave_availed': leave_counts['Casual Leave']['availed'],
-			'casual_leave_balance': leave_counts['Casual Leave']['balance'],
-			'medical_leave_allowed': leave_counts['Medical Leave']['allowed'],
-			'medical_leave_availed': leave_counts['Medical Leave']['availed'],
-			'medical_leave_balance': leave_counts['Medical Leave']['balance'],
-			'earned_leave_allowed': combined_earned_allowed,
-			'earned_leave_availed': combined_earned_availed,
-			'earned_leave_balance': combined_earned_balance,
-			'late_entry': attendance_details.late_count,
-			'early_exit': attendance_details.early_count,
-			'missing_attendance': attendance_details.missing_count,
-			# 'leaves_deduction': leaves_deduction_details.total_leaves_deduction,
-			'absent': absent_days,
-			'payment_days': payment_days,
-			'actual_payment_days': payment_days,
-			'late_dates': attendance_details.get('late_dates', ''),
-			'early_dates': attendance_details.get('early_dates', ''),
-			'missing_dates': attendance_details.get('missing_dates', ''),
-			# 'leaves_deduction_dates': leaves_deduction_details.leaves_deduction_dates,
-			'absent_dates': ','.join(absent_dates),
-			'payment_dates': ','.join(payment_dates)
+				'absents': 0.0 if(no_attendance) else len(absent_dates_list),
+				'absent_dates': "" if(no_attendance) else ", ".join(absent_dates_list),
+				'total_days': curMonthDays,
+				'total_deduction': total_deduction,
+				'paid_days': curMonthDays if(no_attendance) else (curMonthDays - total_deduction),
+				# 'paid_dates': paid_dates_list,
+				"fuel_days": fuel_days,		
+				"fuel_eligibility": fuel_eligibility
 		})
-
-	# Format the final result
-	result = []
-	for emp in data:
-		employeeID = emp.name
-		lateDedDates = ''
-		earlyDedDates = ''
-		lateDedTotal = 0
-		earlyDedTotal = 0
 		
-		if(employeeID in lateEntryDeduction): 
-			lateDedTotal = lateEntryDeduction[employeeID][0] or 0
-			lateDedDates = lateEntryDeduction[employeeID][1] or ''
-		if(employeeID in earlyExitDeduction): 
-			earlyDedTotal = earlyExitDeduction[employeeID][0] or 0
-			earlyDedDates = earlyExitDeduction[employeeID][1] or ''
+	return Employees
+	
+def get_current_month(filters):
+	to_date = filters.get('to_date')
+	from_date = get_first_day(to_date)
+	to_date = get_last_day(to_date)
+	days_in_month = date_diff(to_date, from_date) + 1
+
+	return days_in_month
+
+def get_21st_to_20th_of_month(filters):
+	from_date = filters.get('from_date')
+	to_date = filters.get('to_date')
+	days_in_month = date_diff(to_date, from_date) + 1
+
+	dates_list = []
+	for day in range(days_in_month):
+		dates_list.append(add_to_date(from_date, days=day))
+
+	return dates_list
+
+def get_employees(filters=None):
+	return frappe.db.sql("""
+			SELECT 
+				e.name, 
+				e.employee_name, 
+				e.custom_cnic,
+				e.branch, 
+				   e.department, 
+				  e.designation, 
+				e.employment_type, 
+				ifnull(e.holiday_list, '') as holiday_list,
+				(e.custom_no_attendance) as no_attendance
+			FROM 
+				`tabEmployee` as e
+			WHERE 
+				e.status = 'Active'
+				{condition} 
+		""".format(condition=get_conditions(filters)), filters, as_dict=1)
+
+# bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_leaves_details
+def get_leaves_details(filters=None):
+	# filters = {
+	# 	'from_date': '2025-07-31'
+	# }
+	query = '''
+		Select 
+			employee, 
+			leave_type,
+			sum(case when transaction_type in ('Leave Allocation') then leaves else 0 end) as allocated_leaves,
+			sum(case when transaction_type in ('Leave Application') then (-1 * leaves) else 0 end) as leaves_taken,
+			sum(leaves) as remaining_leaves
+		From
+			`tabLeave Ledger Entry`
+		Where 
+			docstatus=1
+			-- and is_expired = 0
+			and is_lwp = 0
+			and leave_type in ('Casual Leave', 'Medical Leave', 'Earned', 'Recreational Leave')
+			-- and employee='AKFP-PK-CO-00014'
+			
+	'''	
+	query += ''' and company<=%(company)s ''' if(filters.get("company")) else ""	
+	query += ''' and employee<=%(employee)s ''' if(filters.get("employee")) else ""	
+	query += ''' and from_date<=%(to_date)s ''' if(filters.get("to_date")) else ""
+	query += ''' Group By employee, leave_type '''
+	
+	details = frappe.db.sql(query, filters, as_dict=1)
+	
+	response = frappe._dict()
+
+	for row in details:
+		employee = row.employee
+		leave_type = row.leave_type
 		
-		payment_days = emp.payment_days
-		actual_payment_days = payment_days - (lateDedTotal + earlyDedTotal)
-			
-		result.append([
-			emp.name,
-			emp.employee_name,
-			emp.branch,
-			emp.department,
-			emp.designation,
-			emp.status,
-			emp.casual_leave_allowed,
-			emp.casual_leave_availed,
-			emp.casual_leave_balance,
-			emp.medical_leave_allowed,
-			emp.medical_leave_availed,
-			emp.medical_leave_balance,
-			emp.earned_leave_allowed,
-			emp.earned_leave_availed,
-			emp.earned_leave_balance,
-			emp.late_entry,
-			emp.early_exit,
-			emp.missing_attendance,
-			# emp.leaves_deduction,
-			
-			lateDedTotal,
-			earlyDedTotal,
+		if(employee not in response):
+			response[employee] = {}
+		
+		response[employee][leave_type] = {k: v for k, v in row.items() if k not in ['employee', 'leave_type']}
+		
+	return response
 
-			emp.absent,
-			payment_days,
-			actual_payment_days,
-			emp.late_dates,
-			emp.early_dates,
-			emp.missing_dates,
-			lateDedDates,
-			earlyDedDates,
-			# emp.leaves_deduction_dates,
-			emp.absent_dates,
-			emp.payment_dates
-		])
+# bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_holiday_list
+def get_holiday_list(filters=None):
+	holiday_list = frappe.db.sql('''
+		SELECT 
+			(parent) as holiday_list,
+			GROUP_CONCAT(holiday_date) as holiday_dates
+		FROM 
+			`tabHoliday`
+			
+		WHERE 
+			docstatus = 0
+			and holiday_date BETWEEN %(from_date)s and %(to_date)s
+		Group By
+			parent
+	''', filters, as_dict=1)
 
-	return result
+	response = frappe._dict()
+
+	for d in holiday_list:
+		holiday_dates = (d.holiday_dates).split(",")
+		holiday_dates.sort()
+		response.update({d.holiday_list: holiday_dates})
+
+	return response
+
+def get_attendances(filters=None):
+	conditions = " and company = %(company)s" if filters.get("company") else ""
+	conditions += " and custom_branch = %(branch)s" if filters.get("branch") else ""
+	conditions += " and department = %(department)s" if filters.get("department") else ""
+	conditions += " and custom_designation = %(designation)s" if filters.get("designation") else ""
+	conditions += " and employee = %(employee)s" if filters.get("employee") else ""
+	conditions += " and attendance_date BETWEEN %(from_date)s AND %(to_date)s " if filters.get("from_date") and filters.get("to_date") else ""
+	
+	attendances = frappe.db.sql(f'''
+				SELECT
+					employee, 
+
+					COALESCE(COUNT(*), 0) as total_attendance,
+					
+					COALESCE(SUM(CASE WHEN leave_type = 'Leave Without Pay' THEN 1 ELSE 0 END), 0) as lwp_count, 
+
+					COALESCE(SUM(CASE WHEN late_entry = 1 AND status = 'Present' THEN 1 ELSE 0 END), 0) as late_entry_count,
+
+					COALESCE(SUM(CASE WHEN early_exit = 1 THEN 1 ELSE 0 END), 0) as early_exit_count,
+
+					COALESCE(SUM(CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) THEN 1 ELSE 0 END), 0) as missing_in_out_count,
+
+					GROUP_CONCAT(DISTINCT CASE WHEN late_entry = 1 AND status = 'Present' THEN attendance_date END) as late_dates,
+
+					GROUP_CONCAT(DISTINCT CASE WHEN early_exit = 1 THEN attendance_date END) as early_dates,
+
+					GROUP_CONCAT(DISTINCT CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) THEN attendance_date END) as missing_dates,
+
+					GROUP_CONCAT(attendance_date) as attendance_dates
+				
+				FROM 
+					`tabAttendance`
+				WHERE 
+					docstatus=1 
+					and status not in ("Cancelled", "Absent")
+					{conditions}
+				Group By
+					employee
+	''', filters, as_dict=1)
+	
+	response = frappe._dict()
+
+	for att in attendances:
+		response.update({att.employee: att})
+	
+	return response
 
 # bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_late_entry_deduction
 def get_late_entry_deduction(filters=None):
-	# company = filters.get("company")
-	# start_date = filters.get("from_date")
-	# end_date = filters.get("to_date")
-	# company = "Alkhidmat Foundation Pakistan"
-	# start_date = "2025-06-21"
-	# end_date = "2025-07-20"
-	data = frappe.db.sql(""" 
+	conditions = ""
+	if(filters.get("company")):
+		conditions += " and company = %(company)s "
+	if(filters.get("employee")):
+		conditions += " and employee = %(employee)s "
+	if(filters.get("deduction_from_date") and filters.get("deduction_to_date")):
+		conditions += " and posting_date between %(deduction_from_date)s and %(deduction_to_date)s "
+
+	data = frappe.db.sql(f""" 
 				Select 
-					employee, ifnull(sum(total_deduction),0) as total, 
-					GROUP_CONCAT(DISTINCT posting_date) as deduction_dates 
+					employee, 
+					 ifnull(sum(total_deduction),0) as late_ded, 
+					GROUP_CONCAT(DISTINCT posting_date) as late_ded_dates 
 				From `tabDeduction Ledger Entry` 
-				Where case_no in (1,2,3)
-					and company = %(company)s
-					and posting_date between %(from_date)s and %(to_date)s
+				Where 
+					case_no in (1,2,3)
+					and leave_type = 'Leave Without Pay'
+				{conditions}
 				Group by employee
 			   """, filters, as_dict=1)
 	
-	dleDict = frappe._dict()
+	response = frappe._dict()
 
 	for d in data:
-		dleDict.update({f'{d.employee}': [d.total, d.deduction_dates]})
+		response.update({f'{d.employee}': d})
 	
-	return dleDict
+	return response
 
 # bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_early_exit_deduction
 def get_early_exit_deduction(filters=None):
-	# company = filters.get("company")
-	# end_date = filters.get("to_date")
-	# start_date = get_first_day(end_date)
-	
-	data = frappe.db.sql(""" 
+	conditions = ""
+	if(filters.get("company")):
+		conditions += " and company = %(company)s "
+	if(filters.get("employee")):
+		conditions += " and employee = %(employee)s "
+	if(filters.get("from_date") and filters.get("to_date")):
+		conditions += " and posting_date between %(from_date)s and %(to_date)s "
+
+	data = frappe.db.sql(f""" 
 				Select 
-					employee, ifnull(sum(total_deduction),0) as total, 
-					GROUP_CONCAT(DISTINCT posting_date) as deduction_dates 
+					employee, 
+					 ifnull(sum(total_deduction),0) as early_ded, 
+					GROUP_CONCAT(DISTINCT posting_date) as early_ded_dates 
 				From `tabDeduction Ledger Entry` 
 				Where
 					case_no in (4)
-					and company = %(company)s
-					and posting_date between %(from_date)s and %(to_date)s
+					and leave_type = 'Leave Without Pay'
+					{conditions}
 				Group by employee              
 			   """, filters, as_dict=1)
 	
-	dleDict = frappe._dict()
+	response = frappe._dict()
 	
 	for d in data:
-		dleDict.update({f'{d.employee}': [d.total, d.deduction_dates]})
+		response.update({f'{d.employee}': d})
 	
-	return dleDict
+	return response
 
+def get_fuel_eligibility(filters=None):
+	data = frappe.db.sql('''Select 
+		employee
+	From 
+		`tabSalary Structure Assignment`
+	Where
+		docstatus=1
+		and ifnull(custom_fuel_allowance, 0)!=0
+		and from_date<=%(to_date)s
+	Group by 
+		employee''', filters, as_dict=1)
+	
+	response = set()
+	
+	for d in data:
+		response.add(d.employee)
+	
+	return response

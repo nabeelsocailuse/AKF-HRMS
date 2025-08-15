@@ -20,7 +20,7 @@ class AttendanceLog(Document):
 				select 
 					e.name,
 					(Select shift_type from `tabShift Assignment` where docstatus=1 and status="Active" and employee=e.name order by start_date limit 1) as shift_type
-				from `tabEmployee` e inner join `tabZK IP Detail` zk on (e.company=zk.company)
+				from `tabEmployee` e inner join `tabZK IP Detail` zk on (e.branch=zk.branch)
 				where attendance_device_id='{self.device_id}' and zk.device_ip = '{self.device_ip}'
 				group by e.attendance_device_id
 				"""
@@ -72,6 +72,7 @@ class AttendanceLog(Document):
 
 	# Mubashir Bashir 25-02-2025 Start 
 	def create_attendance(self):
+		# print(f'-> {self.employee} {self.device_id}')
 		today = datetime.today()
 		log_time = datetime.combine(today, get_time(self.log))
 

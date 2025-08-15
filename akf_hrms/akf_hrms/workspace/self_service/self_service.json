@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"yCBK0YJSlQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Self Service Dashboard\",\"col\":12}},{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"nJJs2f5Ufu\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"zn2N0061BM\",\"type\":\"card\",\"data\":{\"card_name\":\"Leaves\",\"col\":4}},{\"id\":\"y4Ebr3XjZd\",\"type\":\"card\",\"data\":{\"card_name\":\"Absent Days Report\",\"col\":4}},{\"id\":\"tx9pdL4iep\",\"type\":\"card\",\"data\":{\"card_name\":\"Material Request\",\"col\":4}},{\"id\":\"Ify1l7Via1\",\"type\":\"card\",\"data\":{\"card_name\":\"Expenses\",\"col\":4}},{\"id\":\"5r-NfJqvtZ\",\"type\":\"card\",\"data\":{\"card_name\":\"In Out Timing Report\",\"col\":4}},{\"id\":\"xpwIDCOl_m\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Current Job Openings\",\"col\":4}}]",
+ "content": "[{\"id\":\"yCBK0YJSlQ\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Self Service Dashboard\",\"col\":12}},{\"id\":\"CvpGR1Tq6N\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Self Service</span>\",\"col\":12}},{\"id\":\"56vLlTR0gd\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance\",\"col\":4}},{\"id\":\"Ia6D6kj-p3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Attendance Request\",\"col\":4}},{\"id\":\"tQVPJnYnQk\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Leave Application\",\"col\":4}},{\"id\":\"fdGIEQxoHy\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Policy\",\"col\":4}},{\"id\":\"ryDYua8MHx\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employee Profile\",\"col\":4}},{\"id\":\"nJJs2f5Ufu\",\"type\":\"card\",\"data\":{\"card_name\":\"Click here to view Employment History\",\"col\":4}},{\"id\":\"zn2N0061BM\",\"type\":\"card\",\"data\":{\"card_name\":\"Leaves\",\"col\":4}},{\"id\":\"3zhXPH1p_U\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance \",\"col\":4}},{\"id\":\"y4Ebr3XjZd\",\"type\":\"card\",\"data\":{\"card_name\":\"Absent Days Report\",\"col\":4}},{\"id\":\"tx9pdL4iep\",\"type\":\"card\",\"data\":{\"card_name\":\"Material Request\",\"col\":4}},{\"id\":\"Ify1l7Via1\",\"type\":\"card\",\"data\":{\"card_name\":\"Expenses\",\"col\":4}},{\"id\":\"YgqeLGHuyc\",\"type\":\"card\",\"data\":{\"card_name\":\"In Out Timing Report\",\"col\":4}},{\"id\":\"xpwIDCOl_m\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Current Job Openings\",\"col\":4}}]",
  "creation": "2024-10-17 11:28:57.774003",
  "custom_blocks": [
   {
@@ -155,6 +155,44 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "In Out Timing Report",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "In Out Timing Report",
+   "link_count": 0,
+   "link_to": "In Out Timing Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance ",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance Adjustment",
+   "link_count": 0,
+   "link_to": "Attendance Adjustment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Leaves",
    "link_count": 3,
    "link_type": "DocType",
@@ -190,28 +228,9 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "In Out Timing Report",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "In Out Timing Report",
-   "link_count": 0,
-   "link_to": "In Out Timing Report",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
   }
  ],
- "modified": "2025-07-15 17:20:59.482280",
+ "modified": "2025-07-29 12:02:30.392478",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Self Service",
@@ -258,7 +277,7 @@
    "role": "Line Manager"
   }
  ],
- "sequence_id": 38.0,
+ "sequence_id": 39.0,
  "shortcuts": [],
  "title": "Self Service"
 }

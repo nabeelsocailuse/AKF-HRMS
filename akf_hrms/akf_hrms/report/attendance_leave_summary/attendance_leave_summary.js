@@ -33,7 +33,20 @@ frappe.query_reports["Attendance Leave Summary"] = {
             fieldname: "employee",
             label: __("Employee"),
             fieldtype: "Link",
-            options: "Employee"
+            options: "Employee",
+            get_query(){
+                return{
+                    filters:{
+                        status: 'Active',
+                        company: frappe.query_report.get_filter_value("company"),
+                        branch: frappe.query_report.get_filter_value("branch"),
+                        // department: frappe.query_report.get_filter_value("department"),
+                        // designation: frappe.query_report.get_filter_value("designation"),
+                        // employment_type: frappe.query_report.get_filter_value("employment_type"),
+                        
+                    }
+                }
+            }
         },
         {
             fieldname: "status",
@@ -78,6 +91,12 @@ frappe.query_reports["Attendance Leave Summary"] = {
             on_change: function(report) {
                 update_dynamic_dates(report);
             }
+        },
+        {
+            fieldname: "no_attendance",
+            label: __("Is Exempted"),
+            fieldtype: "Check",
+            reqd: 0,
         },
         {
             fieldname: "from_date",
@@ -159,34 +178,29 @@ frappe.query_reports["Attendance Leave Summary"] = {
 
     formatter: function (value, row, column, data, default_formatter) {
         value = default_formatter(value, row, column, data);
-        console.log(value, row, column, data)
         // Make Late Entry, Early Exit, and Missing Attendance columns clickable
-        if (column.id === "late_entry" && data.late_dates) {
+        if (column.id === "late_entry_count" && data.late_dates) {
             value = `<a href="#" onclick="showDates('Late Entry Dates', '${data.late_dates}')">${value}</a>`;
         }
-        if (column.id === "early_exit" && data.early_dates) {
+        if (column.id === "early_exit_count" && data.early_dates) {
             value = `<a href="#" onclick="showDates('Early Exit Dates', '${data.early_dates}')">${value}</a>`;
         }
-        if (column.id === "missing_attendance" && data.missing_dates) {
+        if (column.id === "missing_in_out_count" && data.missing_dates) {
             value = `<a href="#" onclick="showDates('Missing Attendance Dates', '${data.missing_dates}')">${value}</a>`;
         }
-        if (column.id === "leaves_deduction" && data.leaves_deduction_dates) {
-            value = `<a href="#" onclick="showDates('Leaves Deduction Dates', '${data.leaves_deduction_dates}')">${value}</a>`;
+        if (column.id === "late_ded" && data.late_ded_dates) {
+            value = `<a href="#" onclick="loadDates('Late Entry Deduction Dates', '${data.late_ded_dates}')">${value}</a>`;
         }
-        
-        if (column.id === "late_entry_deduction" && data.late_entry_deduction_dates) {
-            value = `<a href="#" onclick="loadDates('Late Entry Deduction Dates', '${data.late_entry_deduction_dates}')">${value}</a>`;
-        }
-        if (column.id === "early_exit_deduction" && data.early_exit_deduction_dates) {
-            value = `<a href="#" onclick="showDates('Early Exit Deduction Dates', '${data.early_exit_deduction_dates}')">${value}</a>`;
+        if (column.id === "early_ded" && data.early_ded_dates) {
+            value = `<a href="#" onclick="showDates('Early Exit Deduction Dates', '${data.early_ded_dates}')">${value}</a>`;
         }
 
-        if (column.id === "absent" && data.absent_dates) {
+        if (column.id === "absents" && data.absent_dates) {
             value = `<a href="#" onclick="showDates('Absent Dates', '${data.absent_dates}')">${value}</a>`;
         }
-        if (column.id === "payment_days" && data.payment_dates) {
-            value = `<a href="#" onclick="showDates('Payment Dates', '${data.payment_dates}')">${value}</a>`;
-        }
+        // if (column.id === "paid_days" && data.paid_dates) {
+        //     value = `<a href="#" onclick="showDates('Paid Dates', '${data.paid_dates}')">${value}</a>`;
+        // }
         
         return value;
     }
@@ -264,6 +278,8 @@ function loadDates(title, dates) {
             title: title,
             message: formattedMessage
         });
+        
+
     } else {
         frappe.msgprint({
             title: title,

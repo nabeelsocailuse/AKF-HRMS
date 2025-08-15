@@ -75,7 +75,8 @@ frappe.ui.form.on("Leave Application", {
 					}
 					// Nabeel Saleem, 18-12-2024
 					// if (!r.exc && r.message["leave_approver"]) {}
-					if (!r.exc && r.message["leave_approver"] && !("workflow_state" in frm.doc)) {
+					// if (!r.exc && r.message["leave_approver"] && !("workflow_state" in frm.doc)) {
+					if (!r.exc && r.message["leave_approver"] && !("workflow_state" in frm.doc) && !frm.doc.leave_approver) {
 						frm.set_value("leave_approver", r.message["leave_approver"]);
 					}
 					lwps = r.message["lwps"];

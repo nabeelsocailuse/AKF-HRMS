@@ -448,15 +448,18 @@ class SalarySlip(TransactionBase):
 			),
 			as_dict=1,
 		)
-
+		print('-----------------------')
+		print(f"payroll_settings: {payroll_settings}")
 		consider_marked_attendance_on_holidays = (
 			payroll_settings.include_holidays_in_total_working_days
 			and payroll_settings.consider_marked_attendance_on_holidays
 		)
-
+		print(f"consider_marked_attendance_on_holidays: {consider_marked_attendance_on_holidays}")
+		
 		daily_wages_fraction_for_half_day = (
 			flt(payroll_settings.daily_wages_fraction_for_half_day) or 0.5
 		)
+		print(f"daily_wages_fraction_for_half_day: {daily_wages_fraction_for_half_day}")
 		# working_days = date_diff(self.end_date, self.start_date) + 1
 		# added by nabeel 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule):
@@ -464,17 +467,26 @@ class SalarySlip(TransactionBase):
 		else:
 			working_days = date_diff(self.end_date, self.start_date) + 1
 		# ended by nabeel 20-05-2025
+		print(f"daily_wages_fraction_for_half_day: {daily_wages_fraction_for_half_day}")
 		if for_preview:
 			self.total_working_days = working_days
 			self.payment_days = working_days
-			return
+			return	
+		print(f"self.total_working_days: {self.total_working_days}")
 		# holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
 		# added by nabeel 20-05-2025
 		if(self.custom_apply_21st_to_20th_salary_rule): 
-			holidays = self.get_holidays_for_employee(self.custom_start_date_21st_of_last_month, self.custom_end_date_20th_of_current_month)
+			# added by nabeel 26-07-2025
+			IsLessThanJoining = getdate(self.custom_start_date_21st_of_last_month) < getdate(self.joining_date)
+			start_date_21st_of_last_month = self.custom_start_date_21st_of_last_month
+			if(IsLessThanJoining):
+				start_date_21st_of_last_month = self.joining_date
+			# ended by nabeel 20-05-2025
+			holidays = self.get_holidays_for_employee(start_date_21st_of_last_month, self.custom_end_date_20th_of_current_month)
 		else:
 			holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
 		# ended by nabeel 20-05-2025
+		print(f"holidays: {holidays}")
 		# working_days_list = [
 		# 		add_days(getdate(self.start_date), days=day) for day in range(0, working_days)
 		# 	]
@@ -487,7 +499,7 @@ class SalarySlip(TransactionBase):
 			working_days_list = [
 				add_days(getdate(self.start_date), days=day) for day in range(0, working_days)
 			]
-
+		print(f"holworking_days_listidays: {working_days_list}")
 		if not cint(payroll_settings.include_holidays_in_total_working_days):
 			working_days_list = [i for i in working_days_list if i not in holidays]
 
@@ -524,7 +536,12 @@ class SalarySlip(TransactionBase):
 		self.total_working_days = working_days
 		
 		payment_days = self.get_payment_days(payroll_settings.include_holidays_in_total_working_days)
-
+		print('---------------------')
+		# print(f"lwp: {lwp}")
+		print(f"self.total_working_days: {self.total_working_days}")
+		print(f"payment_days: {payment_days}")
+		print(f"self.absent: {self.absent_days}")
+		print('---------------------')
 		# no attendance policy
 		if(get_no_attendance(self)): 
 			self.payment_days = flt(payment_days)
@@ -543,12 +560,15 @@ class SalarySlip(TransactionBase):
 				unmarked_days = self.get_unmarked_days(
 					payroll_settings.include_holidays_in_total_working_days, holidays
 				)
-				
+				# print(f"unmarked_days: {unmarked_days}")
 				self.absent_days += unmarked_days  # will be treated as absent
 				self.payment_days -= unmarked_days
+				
+				print(f"self.payment_days: {self.payment_days}")
 		else:
 			self.payment_days = 0
-
+		
+		
 	def get_unmarked_days(
 		self, include_holidays_in_total_working_days: bool, holidays: list | None = None
 	) -> float:
@@ -558,10 +578,11 @@ class SalarySlip(TransactionBase):
 			- self._get_days_outside_period(include_holidays_in_total_working_days, holidays)
 			- self._get_marked_attendance_days(holidays)
 		)
-		
+		# 30 - 26 - 3 = 1
+		print(f"unmarked_days: {unmarked_days}")
 		if include_holidays_in_total_working_days and holidays:
 			unmarked_days -= self._get_number_of_holidays(holidays)
-		
+		print(f"unmarked_ddaysays: {unmarked_days}")
 		return unmarked_days
 
 	def _get_days_outside_period(
@@ -588,7 +609,10 @@ class SalarySlip(TransactionBase):
 			# days += _get_days(self.start_date, add_days(self.joining_date, -1))
 			# added by nabeel 20-05-2025
 			if(self.custom_apply_21st_to_20th_salary_rule):
-				days += _get_days(self.custom_start_date_21st_of_last_month, add_days(self.joining_date, -1))	
+				# added by nabeel 26-07-2025
+				IsLessThanJoining = getdate(self.custom_start_date_21st_of_last_month) < getdate(self.joining_date)
+				if(not IsLessThanJoining):
+					days += _get_days(self.custom_start_date_21st_of_last_month, add_days(self.joining_date, -1))	
 			else:
 				days += _get_days(self.start_date, add_days(self.joining_date, -1))
 
@@ -611,15 +635,18 @@ class SalarySlip(TransactionBase):
 		if(self.custom_apply_21st_to_20th_salary_rule):
 			actual_start_date = getdate(self.custom_start_date_21st_of_last_month)
 			actual_end_date = getdate(self.custom_end_date_20th_of_current_month)
-		
+		print(f"actual_start_date: {actual_start_date}")
+		print(f"actual_end_date: {actual_end_date}")
+		print(f"holidays: {holidays}")
 		# modified by nabeel on 20-05-2025
 		# for days in range(date_diff(self.actual_end_date, self.actual_start_date) + 1):	
 		for days in range(date_diff(actual_end_date, actual_start_date) + 1):
 			date = add_days(actual_end_date, -days)
 			if date in holidays:
 				no_of_holidays += 1
-		
+		print(f"no_of_holidays: {no_of_holidays}")
 		return no_of_holidays
+		
 
 	def _get_marked_attendance_days(self, holidays: list | None = None) -> float:
 		Attendance = frappe.qb.DocType("Attendance")
@@ -648,7 +675,7 @@ class SalarySlip(TransactionBase):
 			
 		if holidays:
 			query = query.where(Attendance.attendance_date.notin(holidays))
-		
+		print(f"query.run()[0][0]: {query.run()[0][0]}")
 		return query.run()[0][0]
 
 	def get_payment_days(self, include_holidays_in_total_working_days):

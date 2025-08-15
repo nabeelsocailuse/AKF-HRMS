@@ -203,7 +203,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-29 12:30:07.846910",
+ "modified": "2025-08-07 19:32:48.887617",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Log",
@@ -237,5 +237,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "employee"
 }

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import frappe
+import json
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import (
@@ -323,8 +324,8 @@ class AttendanceRequest(Document):
 			and date_diff(getdate(self.half_day_date), getdate(attendance_date)) == 0
 		):
 			return "Half Day"
-		elif self.reason == "Work From Home":
-			return "Work From Home"
+		# elif self.reason == "Work From Home":
+		# 	return "Work From Home"
 		else:
 			return "Present"
 
@@ -473,11 +474,10 @@ class AttendanceRequest(Document):
 # /////////////////////////////////////
 # /////////////////////////////////////
 # /////////////////////////////////////
-import frappe
-import json
+
 
 @frappe.whitelist()
-def update_all_attendance_request_approver_states():
+def update_all_attendance_request_approver_states(): #Mubashir Bashir 23-07-2025
     attendance_request_apps = frappe.get_all(
         "Attendance Request",
         filters={"workflow_state": "Recommended By Head Of Department"},
@@ -523,7 +523,7 @@ def update_all_attendance_request_approver_states():
     print("All applicable Attendance Requests updated.")
 
 
-def update_attendance_request_approvers_for_applied():
+def update_attendance_request_approvers_for_applied(): #Mubashir Bashir 23-07-2025
     attendance_request_apps = frappe.get_all(
         "Attendance Request",
         filters={"workflow_state": "Recommended By Line Manager"},
@@ -548,11 +548,10 @@ def update_attendance_request_approvers_for_applied():
         print(f"[{count}] Updating Attendance Request: {app.name} for Employee: {app.employee}")
     frappe.db.commit()
 
-@frappe.whitelist()
+@frappe.whitelist()	#Mubashir Bashir 23-07-2025
 def update_employee_details_in_attendace_requests():
     valid_states = ["Applied", "Recommended By Line Manager", "Recommended By Head Of Department"]
 
-    # Get all matching Leave Applications
     attendance_apps = frappe.get_all(
         "Attendance Request",
         filters={"workflow_state": ["in", valid_states]},
@@ -574,11 +573,6 @@ def update_employee_details_in_attendace_requests():
             frappe.db.set_value("Attendance Request", app.name, "directly_reports_to_hod", employee.custom_directly_reports_to_hod)
             frappe.db.set_value("Attendance Request", app.name, "department", employee.department)			
 
-            # attendance_doc.current_role = employee.custom_current_role
-            # attendance_doc.directly_reports_to_hod = employee.reports_to
-            # attendance_doc.department = employee.department
-
-            # attendance_doc.save(ignore_permissions=True)
             updated += 1
 
         except Exception as e:
@@ -602,4 +596,3 @@ def update_employee_details_in_attendace_requests():
 # bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.update_attendance_request_approvers_for_applied
 # bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.update_all_attendance_request_approver_states
 # bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.update_employee_details_in_attendace_requests
-

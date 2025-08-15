@@ -22,12 +22,12 @@ def _insert_attedance_log(kwargs):
 			"device_ip": device_ip,
 			"device_port": device_port,
 			"attendance_date": attendance_date,
+			"log_type": "IN",		
 			"log_from": "Live",
 			"log": log
 		})
 		args = set_employee_and_shift_type(args)
-		frappe.get_doc(args).save(ignore_permissions=True)
-		frappe.db.commit()
+		
 
 	except frappe.DoesNotExistError as e:
 		frappe.log_error(f"Employee not found {device_id}:{device_port} : {str(e)}", "Attendance Error (_insert_attedance_log)")
@@ -48,15 +48,17 @@ def set_employee_and_shift_type(args):
 					e.attendance_device_id
 			""", as_dict=1)
 	if(not result):
-		raise frappe.DoesNotExistError(f"Employee with device-id: {args.device_id}, & device-ip: {args.device_ip}. Not found!")
-	
-	for d in result:
-		args.update({
-			"employee":  d.name,
-			"shift": d.shift_type
-		})
-	
-	return args
+		frappe.log_error(f"Employee with device-id: {args.device_id}, & device-ip: {args.device_ip}. Not found in ZK IP!", "Attendance Error (_insert_attedance_log)")
+		# raise frappe.DoesNotExistError(f"Employee with device-id: {args.device_id}, & device-ip: {args.device_ip}. Not found in ZK IP!")
+	else:
+		for d in result:
+			args.update({
+				"employee":  d.name,
+				"shift": d.shift_type
+			})
+		frappe.get_doc(args).save(ignore_permissions=True)
+		frappe.db.commit()
+	# return args
 
 
 """ from __future__ import unicode_literals
