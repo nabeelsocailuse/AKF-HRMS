@@ -588,13 +588,14 @@ def get_late_entry_deduction(filters=None):
 		conditions += " and employee = %(employee)s "
 	if(filters.get("deduction_from_date") and filters.get("deduction_to_date")):
 		conditions += " and posting_date between %(deduction_from_date)s and %(deduction_to_date)s "
-
+		conditions += " and posting_date not in (select attendance_date from `tabAttendance` where docstatus=1 and employee=d.employee and %(deduction_from_date)s and %(deduction_to_date)s) "
+	
 	data = frappe.db.sql(f""" 
 				Select 
 					employee, 
 					 ifnull(sum(total_deduction),0) as late_ded, 
 					GROUP_CONCAT(DISTINCT posting_date) as late_ded_dates 
-				From `tabDeduction Ledger Entry` 
+				From `tabDeduction Ledger Entry` d
 				Where 
 					case_no in (1,2,3)
 					and leave_type = 'Leave Without Pay'
@@ -618,13 +619,14 @@ def get_early_exit_deduction(filters=None):
 		conditions += " and employee = %(employee)s "
 	if(filters.get("from_date") and filters.get("to_date")):
 		conditions += " and posting_date between %(from_date)s and %(to_date)s "
-
+		conditions += " and posting_date not in (select attendance_date from `tabAttendance` where docstatus=1 and employee=d.employee and %(from_date)s and %(to_date)s) "
+	
 	data = frappe.db.sql(f""" 
 				Select 
 					employee, 
 					 ifnull(sum(total_deduction),0) as early_ded, 
 					GROUP_CONCAT(DISTINCT posting_date) as early_ded_dates 
-				From `tabDeduction Ledger Entry` 
+				From `tabDeduction Ledger Entry` d
 				Where
 					case_no in (4)
 					and leave_type = 'Leave Without Pay'
