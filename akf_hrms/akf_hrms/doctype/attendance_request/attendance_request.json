@@ -31,7 +31,6 @@
   "from_time",
   "mark_check_out",
   "to_time",
-  "check_out",
   "travel_request",
   "posting_date_travel_request",
   "reason_section",
@@ -234,13 +233,11 @@
    "options": "Travel Request"
   },
   {
-   "depends_on": "eval: doc.reason!=\"Check In/Out Miss\" && doc.reason!=\"\";",
    "fieldname": "mark_check_in",
    "fieldtype": "Button",
    "label": "Mark Check In"
   },
   {
-   "depends_on": "eval: doc.reason!=\"Check In/Out Miss\" && doc.reason!=\"\";",
    "fieldname": "mark_check_out",
    "fieldtype": "Button",
    "label": "Mark Check Out"
@@ -264,16 +261,12 @@
   {
    "fieldname": "from_time",
    "fieldtype": "Time",
-   "label": "From Time",
-   "mandatory_depends_on": "eval: doc.reason==\"Check In/Out Miss\";",
-   "read_only_depends_on": "eval: doc.reason!=\"Check In/Out Miss\";"
+   "label": "From Time"
   },
   {
    "fieldname": "to_time",
    "fieldtype": "Time",
-   "label": "To Time",
-   "mandatory_depends_on": "eval: doc.reason==\"Check In/Out Miss\";",
-   "read_only_depends_on": "eval: doc.reason!=\"Check In/Out Miss\";"
+   "label": "To Time"
   },
   {
    "allow_on_submit": 1,
@@ -331,13 +324,6 @@
   },
   {
    "default": "0",
-   "fieldname": "check_out",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Check Out"
-  },
-  {
-   "default": "0",
    "fetch_from": "employee.custom_directly_reports_to_hod",
    "fetch_if_empty": 1,
    "fieldname": "directly_reports_to_hod",
@@ -354,7 +340,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-30 18:32:51.182856",
+ "modified": "2025-08-20 11:50:49.800174",
  "modified_by": "Administrator",
  "module": "Akf Hrms",
  "name": "Attendance Request",

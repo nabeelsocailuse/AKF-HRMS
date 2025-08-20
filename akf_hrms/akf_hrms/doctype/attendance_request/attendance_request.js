@@ -61,7 +61,7 @@ frappe.ui.form.on("Attendance Request", {
     refresh: function(frm) {
         frm.trigger("show_attendance_warnings");
         frm.trigger("triggerOpenStreetMap");
-        triggerCheckInOutBtn(frm);
+        frm.trigger("toggle_fields"); // Mubashir Bashir 20-8-2025
 
         if (frm.is_new()) {
 			frm.set_value('custom_state_data', null);
@@ -211,7 +211,6 @@ frappe.ui.form.on("Attendance Request", {
 
     from_date: function (frm) {
         frm.set_value("to_date", frm.doc.from_date);
-        get_check_in_out_miss_time(frm); // Mubashir 17-June-2025
     },
 
     employee: function (frm) {        
@@ -286,16 +285,19 @@ frappe.ui.form.on("Attendance Request", {
         frm.set_value('from_time', null);
         frm.set_value('to_time', null);
         frm.set_value('travel_request', null);
-        show_field(frm, 'mark_check_in');
-        hide_field(frm, 'mark_check_out');
-        get_check_in_out_miss_time(frm); // Mubashir 17-June-2025        
+        frm.trigger("toggle_fields");      
     },
     mark_check_in: function(frm){
-        hide_field(frm, 'mark_check_in');
-        show_field(frm, 'mark_check_out');
-        setTimeout(() => {
-            get_current_time(frm, 'from_time', 'mark_check_in');
-        }, 20);
+        frappe.call({
+            method: "akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.get_current_time",
+            callback(r) {
+                frm.set_value('from_time', r.message);
+                frm.set_df_property('from_time', 'read_only', 1);
+                frm.toggle_display('mark_check_in', false);
+                frm.toggle_display('mark_check_out', true);
+                frm.toggle_display('from_time', true);
+            }
+        });
 	},
 	mark_check_out: function(frm) {
         const [hours, minutes, seconds] = frm.doc.from_time.split(':').map(Number);
@@ -306,11 +308,15 @@ frappe.ui.form.on("Attendance Request", {
         const diffInMinutes = diffInMs / (1000 * 60);
         
         if (diffInMinutes > 1) {
-            hide_field(frm, 'mark_check_out');
-            show_field(frm, 'to_time');
-            setTimeout(() => {
-                get_current_time(frm, 'to_time', 'mark_check_out');
-            }, 20);
+            frappe.call({
+                method: "akf_hrms.akf_hrms.doctype.attendance_request.attendance_request.get_current_time",
+                callback(r) {
+                    frm.set_value('to_time', r.message);
+                    frm.set_df_property('to_time', 'read_only', 1);
+                    frm.toggle_display('mark_check_out', false);
+                    frm.toggle_display('to_time', true);
+                }
+            });
         } else {
             frappe.msgprint(__('Time interval is too short!'));
         }
@@ -318,22 +324,46 @@ frappe.ui.form.on("Attendance Request", {
 
 
     before_save: function(frm) {
-        if (frm.doc.reason && frm.doc.reason !== "Check In/Out Miss") {
-            if (!frm.doc.from_time) {
-                frappe.throw(__("Please mark check in using the 'Mark Check In' button"));
-                return false;
-            }
+        if (!frm.doc.from_time) {
+            frappe.throw(__("Check In time is missing."));
+            return false;
         }
     },
 
     before_submit: function(frm) {
-        if (frm.doc.reason && frm.doc.reason !== "Check In/Out Miss") {
-            if (!frm.doc.check_out) {
-                frappe.throw(__("Please mark check out using the 'Mark Check Out' button"));
-                return false;
-            }
+        if (!frm.doc.to_time) {
+            frappe.throw(__("Check Out time is missing."));
+            return false;
         }
     },
+    // Mubashir Bashir 20-8-2025 start
+    toggle_fields(frm) {
+        const hasAdjustRole = frappe.user_roles.includes("Time Adjustment");
+
+        // Reset visibility
+        frm.toggle_display(['mark_check_in','mark_check_out','from_time','to_time'], false);
+
+        if (!frm.doc.reason) return;
+
+        // Case 1: Check In/Out Miss
+        if (frm.doc.reason === "Check In/Out Miss") {
+            frm.toggle_display(['from_time','to_time'], true);
+            get_check_in_out_miss_time(frm);
+        }
+        // Case 2: In Station / Out Station / Work From Home
+        else {
+            if (hasAdjustRole) {
+                // Time Adjustment role → open fields, no buttons
+                frm.toggle_display(['from_time','to_time'], true);
+                frm.set_df_property('from_time', 'read_only', false);
+                frm.set_df_property('to_time', 'read_only', false);
+            } else {
+                // Normal users → buttons only
+                frm.toggle_display('mark_check_in', true);
+            }
+        }
+    }
+    // Mubashir Bashir 20-8-2025 end
 });
 
 
@@ -437,53 +467,6 @@ function setupOpenStreetMap() {
         // .bindPopup('<b>Hello world!</b><br />I am a popup.').openPopup();
         map.panTo(new window.L.LatLng(latitude, longitude));
     }, 1000);
-}
-
-
-
-function triggerCheckInOutBtn(frm){
-    if(!frm.doc.__islocal){
-        if(frm.doc.from_time!=undefined){
-            hide_field(frm, 'mark_check_in');
-            show_field(frm, 'mark_check_out');
-            // show_field(frm, 'to_time');
-        }
-        if(frm.doc.to_time!=undefined && frm.doc.check_out){
-            hide_field(frm, 'mark_check_out');
-        }
-    }else{
-        if(frm.doc.from_time!=undefined){
-            hide_field(frm, 'mark_check_in');
-        }
-        if(frm.doc.to_time!=undefined){
-            hide_field(frm, 'mark_check_out');
-        }
-    }
-    if (frm.doc.reason && frm.doc.reason !== "Check In/Out Miss") {
-        if (frm.doc.check_out) {
-            show_field(frm, 'to_time');
-        }
-        else {
-            hide_field(frm, 'to_time');
-        }
-    }
-}
-function get_current_time(frm, fieldname, btnname){    
-    frm.call('get_current_time').then(r => {
-        frm.set_value(fieldname, r.message);
-        if (btnname === 'mark_check_out') {
-            frm.doc.check_out = true;
-            frm.save();
-        }
-    });
-}
-
-function hide_field(frm, fieldname){
-	frm.set_df_property(fieldname, 'hidden', 1)
-}
-
-function show_field(frm, fieldname){
-	frm.set_df_property(fieldname, 'hidden', 0)
 }
 
 // Mubashir Bashir 13-03-2025 Start

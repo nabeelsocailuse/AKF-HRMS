@@ -77,9 +77,8 @@ class AttendanceRequest(Document):
 			
 	
 	def mark_check_out_on_submit(self):
-		if(self.reason not in ["", "Check In/Out Miss"]):
-			if (not self.check_out):
-				frappe.throw(_("Please mark check out using the 'Mark Check Out' button"), title="To Time Missing")
+		if (not self.to_time):
+			frappe.throw(_("Please mark check out using the 'Mark Check Out' button"), title="To Time Missing")
 	
 	def validate_from_time_and_to_time(self):
 		if(self.reason in ["Check In/Out Miss"]):
@@ -361,12 +360,6 @@ class AttendanceRequest(Document):
 					)
 		return attendance_warnings
 
-	@frappe.whitelist()
-	def get_current_time(self):
-		cur_time = get_datetime()
-		return str(cur_time).split(" ")[1]
-
-
 	# Mubashir Bashir 11-03-2025 Start
 	@frappe.whitelist()
 	def set_next_workflow_approver(self):
@@ -469,6 +462,10 @@ class AttendanceRequest(Document):
 
 	# Mubashir Bashir 11-03-2025 End
 
+# Mubashir Bashir 20-8-2025
+@frappe.whitelist()
+def get_current_time():
+    return frappe.utils.nowtime()
 
 
 # /////////////////////////////////////
