@@ -140,23 +140,31 @@ class AttendanceRequest(Document):
 			exc=OverlappingAttendanceRequestError,
 		)
 		
-	# Mubashir Bashir 4-56-25 Start
+	# Mubashir Bashir 21-8-25 Start
 	def validate_travel_dates(self):
-		if not self.travel_request: return
+		if not self.travel_request:
+			return
+
 		query = f"""
-					SELECT departure_date, arrival_date
-					FROM `tabTravel Itinerary`
-					WHERE parent = '{self.travel_request}'
-				"""
+			SELECT departure_date, arrival_date
+			FROM `tabTravel Itinerary`
+			WHERE parent = '{self.travel_request}'
+		"""
 		result = frappe.db.sql(query, as_dict=1)
-		if(result):
-			departure_date=getdate(result[0].departure_date)
-			arrival_date=getdate(result[0].arrival_date)
-		else:
+
+		if not result:
 			frappe.throw(f"No date found for travel request: {self.travel_request}")
-		if (not departure_date<= getdate(self.from_date) <= arrival_date):
-			frappe.throw(_("Attendance Request Date should be between Departure Date and Arrival Date"))
-	# Mubashir Bashir 4-56-25 End
+
+		valid = False
+		for row in result:
+
+			if getdate(row.departure_date) <= getdate(self.from_date) <= getdate(row.arrival_date):
+				valid = True
+				break
+
+		if not valid:
+			frappe.throw(_("Attendance Request Date should be between any Itinerary's Departure Date and Arrival Date"))
+	# Mubashir Bashir 21-8-25 End
 
 	def on_cancel(self):
 		attendance_list = frappe.get_all(
