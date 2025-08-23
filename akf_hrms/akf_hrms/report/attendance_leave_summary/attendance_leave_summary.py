@@ -475,12 +475,19 @@ def get_data(filters):
             att = Attendances[empId]
             emp.update(att)
 
+            missing_dates = att.get('missing_dates', "") or []
+            if missing_dates:
+                missing_dates = missing_dates.split(',') if isinstance(missing_dates, str) else missing_dates
+                missing_dates = [getdate(d) for d in missing_dates]
+                missing_dates = [d for d in missing_dates if d in eligible_month_dates and d not in holiday_dates]
+                missing_in_out_count = len(missing_dates)
+
             #Normalizing attendance dates to date objects
             attendance_dates = att.get('attendance_dates') or []
             if attendance_dates:
                 attendance_dates = attendance_dates.split(',') if isinstance(attendance_dates, str) else attendance_dates
                 attendance_dates = [getdate(d) for d in attendance_dates]
-                attendance_dates = [d for d in attendance_dates if d in eligible_month_dates]
+                attendance_dates = [d for d in attendance_dates if d in eligible_month_dates and d not in holiday_dates]
 
             late_dates = att.get('late_dates', "") or []
             if late_dates:
@@ -510,18 +517,11 @@ def get_data(filters):
                 cur_app_early_dates = [d for d in cur_app_early_dates if d in eligible_month_dates and d not in holiday_dates]
                 cur_app_early_exit_count = len(cur_app_early_dates)
 
-            missing_dates = att.get('missing_dates', "") or []
-            if missing_dates:
-                missing_dates = missing_dates.split(',') if isinstance(missing_dates, str) else missing_dates
-                missing_dates = [getdate(d) for d in missing_dates]
-                missing_dates = [d for d in missing_dates if d in eligible_month_dates and d not in holiday_dates]
-                missing_in_out_count = len(missing_dates)
-
         if empId in Previous_Attendances:
             prev_att_list = Previous_Attendances[empId]
             for att in prev_att_list:
                 att_date = getdate(att.attendance_date)
-                if att_date in eligible_month_dates and att_date not in holiday_dates:
+                if att_date not in holiday_dates:
                     if att.late_entry == 1:
                         pre_late_dates.append(att_date)
                         pre_late_entry_count += 1
@@ -534,7 +534,7 @@ def get_data(filters):
         paid_dates_list.sort()
         paid_dates_list = [d for d in paid_dates_list if d not in missing_dates]
 
-        absent_dates_list = [d for d in eligible_month_dates if d not in paid_dates_list]
+        absent_dates_list = [d for d in eligible_month_dates if d not in attendance_dates and d not in holiday_dates]
         absent_dates_list.sort()
 
         # --- Deductions ---
@@ -748,8 +748,7 @@ def get_attendances(filters=None):
 				FROM 
 					`tabAttendance`
 				WHERE 
-					docstatus=1 
-					and status not in ("Cancelled", "Absent")
+					docstatus=1
 					{conditions}
 				Group By
 					employee

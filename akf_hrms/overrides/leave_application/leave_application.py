@@ -1948,8 +1948,14 @@ def record_workflow_approver_states(self):
 
 		nxt = frappe.db.get_value("Employee", prev.reports_to, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
 		if(self.custom_directly_reports_to_hod) and (self.workflow_state=="Applied"):
-			nxt = frappe.db.get_value("Employee", {"custom_hod": 1,"department": self.department}, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
+			nxt = frappe.db.get_value("Employee", {"custom_hod": 1, "user_id": self.leave_approver}, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
+			# nxt = frappe.db.get_value("Employee", {"custom_hod": 1,"department": self.department}, ["name", "employee_name", "designation", "custom_current_role"], as_dict=1)
 		
+		if not nxt:
+			frappe.throw(
+				"No next approver found. Please check the employee's reporting manager & department HOD."
+			)
+			
 		self.custom_next_workflow_approver = prev.reports_to
 		
 		approversList.update({

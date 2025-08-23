@@ -67,6 +67,7 @@ def get_data(filters):
 	for employee_id in sorted(attendnace_map):
 		""" get single employee data from employee map """
 		employee_data = employee_map.get(employee_id)
+		if not employee_data: continue     # Mubashir 23-8-25
 		# Date of joining
 		# date_of_joining = employee_data.date_of_joining
 		# Current date

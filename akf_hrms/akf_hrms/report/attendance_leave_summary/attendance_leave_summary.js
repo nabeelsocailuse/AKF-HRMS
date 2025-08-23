@@ -182,20 +182,20 @@ frappe.query_reports["Attendance Leave Summary"] = {
         if (column.id === "late_entry_count" && data.late_dates) {
             value = `<a href="#" onclick="showDates('(Cur) Late Entry Dates', '${data.late_dates}')">${value}</a>`;
         }
-        if (column.id === "cur_app_late_entry_count" && data.cur_app_late_entry_count) {
-            value = `<a href="#" onclick="showDates('(Cur) App Late Entry Dates', '${data.cur_app_late_entry_count}')">${value}</a>`;
+        if (column.id === "cur_app_late_entry_count" && data.cur_app_late_dates) {
+            value = `<a href="#" onclick="showDates('(Cur) App Late Entry Dates', '${data.cur_app_late_dates}')">${value}</a>`;
         }
         if (column.id === "pre_late_entry_count" && data.pre_late_dates) {
             value = `<a href="#" onclick="showDates('(Pre) Late Entry Dates', '${data.pre_late_dates}')">${value}</a>`;
         }
-        if (column.id === "pre_app_late_entry_count" && data.pre_app_late_entry_count) {
-            value = `<a href="#" onclick="showDates('(Pre) App Late Entry Dates', '${data.pre_app_late_entry_count}')">${value}</a>`;
+        if (column.id === "pre_app_late_entry_count" && data.pre_app_late_dates) {
+            value = `<a href="#" onclick="showDates('(Pre) App Late Entry Dates', '${data.pre_app_late_dates}')">${value}</a>`;
         }
         if (column.id === "early_exit_count" && data.early_dates) {
             value = `<a href="#" onclick="showDates('Early Exit Dates', '${data.early_dates}')">${value}</a>`;
         }
-        if (column.id === "cur_app_early_exit_count" && data.cur_app_early_exit_count) {
-            value = `<a href="#" onclick="showDates('(Cur) App Early Exit Dates', '${data.cur_app_early_exit_count}')">${value}</a>`;
+        if (column.id === "cur_app_early_exit_count" && data.cur_app_early_dates) {
+            value = `<a href="#" onclick="showDates('(Cur) App Early Exit Dates', '${data.cur_app_early_dates}')">${value}</a>`;
         }
         if (column.id === "missing_in_out_count" && data.missing_dates) {
             value = `<a href="#" onclick="showDates('Missing Attendance Dates', '${data.missing_dates}')">${value}</a>`;
