@@ -384,8 +384,8 @@ def get_data(filters):
 
     Attendances = get_attendances(filters)
     Previous_Attendances = get_prev_attendances(filters)
-    lateEntryDeduction = get_late_entry_deduction(filters)
-    earlyExitDeduction = get_early_exit_deduction(filters)
+    # lateEntryDeduction = get_late_entry_deduction(filters)
+    # earlyExitDeduction = get_early_exit_deduction(filters)
     fuelEligible = get_fuel_eligibility(filters)
     FROM_DATE = getdate(filters.get('from_date'))
     TO_DATE = getdate(filters.get('to_date'))
@@ -396,6 +396,7 @@ def get_data(filters):
     for emp in Employees:
         empId = emp.name
         no_attendance = emp.no_attendance
+        employment_type = emp.employment_type
         joining_date = getdate(emp.get("date_of_joining")) if emp.get("date_of_joining") else None
 
         # --- Calculate eligible dates for this employee ---
@@ -538,7 +539,7 @@ def get_data(filters):
         absent_dates_list.sort()
 
         # --- Deductions ---
-        if(no_attendance):
+        if(no_attendance or employment_type == "Volunteer"):
             total_deduction = 0.0
             late_ded = 0.0
             early_ded = 0.0
@@ -547,23 +548,23 @@ def get_data(filters):
             total_deduction += len(absent_dates_list)
             total_deduction += len(missing_dates)
 
-            if(empId in lateEntryDeduction):
-                late_ded_dict = lateEntryDeduction[empId] or {}
-                emp.update(late_ded_dict)
-                late_ded = late_ded_dict.get("late_ded", 0.0)
-                leave_balance = (
-                    emp.get('casual_leaves_balance', 0) +
-                    emp.get('medical_leaves_balance', 0) +
-                    emp.get('earned_leaves_balance', 0)
-                )
-                late_ded_after_leaves = max(late_ded - leave_balance, 0)
-                emp['late_ded_after_leaves'] = late_ded_after_leaves
-                total_deduction += late_ded_after_leaves
+            early_ded = get_early_exit_deduction_runtime(empId, filters.get("from_date"), filters.get("to_date"), holiday_dates)
+            emp.update(early_ded)
+            total_deduction += early_ded.get("early_ded", 0.0)
 
-            if(empId in earlyExitDeduction):
-                early_ded = earlyExitDeduction[empId]
-                emp.update(early_ded)
-                total_deduction += early_ded.get("early_ded", 0.0)
+            late_ded = get_late_entry_deduction_runtime(empId, filters.get("deduction_from_date"), filters.get("deduction_to_date"), holiday_dates)
+            emp.update(late_ded)
+            late_ded_value = late_ded.get("late_ded", 0.0)
+
+            leave_balance = (
+                emp.get('casual_leaves_balance', 0) +
+                emp.get('medical_leaves_balance', 0) +
+                emp.get('earned_leaves_balance', 0)
+            )
+            late_ded_after_leaves = max(late_ded_value - leave_balance, 0)
+            emp['late_ded_after_leaves'] = late_ded_after_leaves
+            total_deduction += late_ded_after_leaves
+
 
         # --- Fuel Days ---
         fuel_days = 0.0
@@ -595,7 +596,7 @@ def get_data(filters):
             'absent_dates': "" if(no_attendance) else ", ".join([d.strftime("%Y-%m-%d") for d in absent_dates_list]),
             'total_days': eligible_cur_month_days,
             'total_deduction': total_deduction,
-            'paid_days': eligible_cur_month_days if(no_attendance) else (eligible_cur_month_days - total_deduction),
+            'paid_days': 0 if employment_type == "Volunteer" else (eligible_cur_month_days if(no_attendance) else (eligible_cur_month_days - total_deduction)),
             "fuel_days": fuel_days,
             "fuel_eligibility": fuel_eligibility
         })
@@ -801,68 +802,6 @@ def get_prev_attendances(filters=None):
     return response
 # Mubashir 21-8-25 End
 
-# bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_late_entry_deduction
-def get_late_entry_deduction(filters=None):
-	conditions = ""
-	if(filters.get("company")):
-		conditions += " and company = %(company)s "
-	if(filters.get("employee")):
-		conditions += " and employee = %(employee)s "
-	if(filters.get("deduction_from_date") and filters.get("deduction_to_date")):
-		conditions += " and posting_date between %(deduction_from_date)s and %(deduction_to_date)s "
-		# conditions += " and posting_date not in (select attendance_date from `tabAttendance` where docstatus=1 and employee=d.employee and %(deduction_from_date)s and %(deduction_to_date)s) "
-	
-	data = frappe.db.sql(f""" 
-				Select 
-					employee, 
-					 ifnull(sum(total_deduction),0) as late_ded, 
-					GROUP_CONCAT(DISTINCT posting_date) as late_ded_dates 
-				From `tabDeduction Ledger Entry` d
-				Where 
-					case_no in (1,2,3)
-				{conditions}
-				Group by employee
-			   """, filters, as_dict=1)
-	
-	response = frappe._dict()
-
-	for d in data:
-		response.update({f'{d.employee}': d})
-	
-	return response
-
-# bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_early_exit_deduction
-def get_early_exit_deduction(filters=None):
-	conditions = ""
-	if(filters.get("company")):
-		conditions += " and company = %(company)s "
-	if(filters.get("employee")):
-		conditions += " and employee = %(employee)s "
-	if(filters.get("from_date") and filters.get("to_date")):
-		conditions += " and posting_date between %(from_date)s and %(to_date)s "
-		# conditions += " and posting_date not in (select attendance_date from `tabAttendance` where docstatus=1 and employee=d.employee and %(from_date)s and %(to_date)s) "
-	
-	data = frappe.db.sql(f""" 
-				Select 
-					employee, 
-					 ifnull(sum(total_deduction),0) as early_ded, 
-					GROUP_CONCAT(DISTINCT posting_date) as early_ded_dates 
-				From `tabDeduction Ledger Entry` d
-				Where
-					case_no in (4)
-					{conditions}
-				Group by employee              
-			   """, filters, as_dict=1)
-	
-	response = frappe._dict()
-	
-	for d in data:
-		response.update({f'{d.employee}': d})
-	
-	# frappe.msgprint(frappe.as_json(response))
-	
-	return response
-
 def get_fuel_eligibility(filters=None):
 	data = frappe.db.sql('''Select 
 		employee
@@ -870,8 +809,8 @@ def get_fuel_eligibility(filters=None):
 		`tabSalary Structure Assignment`
 	Where
 		docstatus=1
-		and ifnull(custom_fuel_allowance, 0)!=0
-		and from_date<=%(to_date)s
+		AND (custom_fuel_eligibility = 1 OR ifnull(custom_fuel_allowance, 0)!=0)
+		AND from_date<=%(to_date)s
 	Group by 
 		employee''', filters, as_dict=1)
 	
@@ -881,3 +820,157 @@ def get_fuel_eligibility(filters=None):
 		response.add(d.employee)
 	
 	return response
+
+
+# Mubashir Bashir 25-8-25 Start
+def get_early_exit_deduction_runtime(employee, from_date, to_date, holiday_dates):
+	holiday_dates_str = ",".join([f"'{d}'" for d in holiday_dates]) or "''"
+
+	query = f"""
+		SELECT
+			attendance_date,
+			TIMESTAMPDIFF(
+				MINUTE,
+				custom_out_times,
+				custom_end_time
+			) / 60.0 AS hours_diff
+		FROM `tabAttendance`
+		WHERE employee = %s
+		  AND docstatus = 1
+		  AND early_exit = 1
+		  AND attendance_date BETWEEN %s AND %s
+		  AND attendance_date NOT IN ({holiday_dates_str})
+		  AND attendance_adjustment IS NULL
+		  AND leave_application IS NULL
+		  AND attendance_request IS NULL
+	"""
+
+	records = frappe.db.sql(query, (employee, from_date, to_date), as_dict=True)
+
+	deduction = 0.0
+	deduction_dates = []
+
+	for rec in records:
+		hours_diff = rec.hours_diff
+		if hours_diff is None or hours_diff <= 0:
+			continue
+		if hours_diff <= 4:
+			deduction += 0.5
+		else:
+			deduction += 1.0
+		deduction_dates.append(rec.attendance_date.strftime("%Y-%m-%d"))
+
+	return {"early_ded": deduction, "early_ded_dates": ", ".join(deduction_dates)}
+
+def get_late_entry_deduction_runtime(employee, deduction_from_date, deduction_to_date, holiday_dates):
+	holiday_dates_str = ",".join([f"'{d}'" for d in holiday_dates]) or "''"
+
+	query = f"""
+		SELECT
+			attendance_date,
+			TIMESTAMPDIFF(
+				MINUTE,
+				custom_start_time,
+				custom_in_times
+			) / 60.0 AS hours_diff
+		FROM `tabAttendance`
+		WHERE employee = %s
+		  AND docstatus = 1
+		  AND late_entry = 1
+		  AND attendance_date BETWEEN %s AND %s
+		  AND attendance_date NOT IN ({holiday_dates_str})
+		  AND attendance_adjustment IS NULL
+		  AND leave_application IS NULL
+		  AND attendance_request IS NULL
+	"""
+
+	records = frappe.db.sql(query, (employee, deduction_from_date, deduction_to_date), as_dict=True)
+
+	deduction = 0.0
+	deduction_dates = []
+	less_than_2hr_dates = []
+
+	for rec in records:
+		hours_diff = rec.hours_diff
+		if hours_diff is None or hours_diff <= 0:
+			continue
+
+		if hours_diff > 4:
+			deduction += 1.0
+			deduction_dates.append(rec.attendance_date.strftime("%Y-%m-%d"))
+		elif 2 < hours_diff <= 4:
+			deduction += 0.5
+			deduction_dates.append(rec.attendance_date.strftime("%Y-%m-%d"))
+		elif 0 < hours_diff <= 2:
+			less_than_2hr_dates.append(rec.attendance_date.strftime("%Y-%m-%d"))
+
+	# For every 3 days late (<=2hr), 1 deduction
+	if less_than_2hr_dates:
+		deduction += (len(less_than_2hr_dates) // 3)
+		deduction_dates.extend(less_than_2hr_dates)
+
+	return {"late_ded": deduction, "late_ded_dates": ", ".join(deduction_dates)}
+
+# Mubashir Bashir 25-8-25 End 
+
+# # bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_late_entry_deduction
+# def get_late_entry_deduction(filters=None):
+# 	conditions = ""
+# 	if(filters.get("company")):
+# 		conditions += " and company = %(company)s "
+# 	if(filters.get("employee")):
+# 		conditions += " and employee = %(employee)s "
+# 	if(filters.get("deduction_from_date") and filters.get("deduction_to_date")):
+# 		conditions += " and posting_date between %(deduction_from_date)s and %(deduction_to_date)s "
+# 		# conditions += " and posting_date not in (select attendance_date from `tabAttendance` where docstatus=1 and employee=d.employee and %(deduction_from_date)s and %(deduction_to_date)s) "
+	
+# 	data = frappe.db.sql(f""" 
+# 				Select 
+# 					employee, 
+# 					 ifnull(sum(total_deduction),0) as late_ded, 
+# 					GROUP_CONCAT(DISTINCT posting_date) as late_ded_dates 
+# 				From `tabDeduction Ledger Entry` d
+# 				Where 
+# 					case_no in (1,2,3)
+# 				{conditions}
+# 				Group by employee
+# 			   """, filters, as_dict=1)
+	
+# 	response = frappe._dict()
+
+# 	for d in data:
+# 		response.update({f'{d.employee}': d})
+	
+# 	return response
+
+# # bench --site erp.alkhidmat.org execute akf_hrms.akf_hrms.report.attendance_leave_summary.attendance_leave_summary.get_early_exit_deduction
+# def get_early_exit_deduction(filters=None):
+# 	conditions = ""
+# 	if(filters.get("company")):
+# 		conditions += " and company = %(company)s "
+# 	if(filters.get("employee")):
+# 		conditions += " and employee = %(employee)s "
+# 	if(filters.get("from_date") and filters.get("to_date")):
+# 		conditions += " and posting_date between %(from_date)s and %(to_date)s "
+# 		# conditions += " and posting_date not in (select attendance_date from `tabAttendance` where docstatus=1 and employee=d.employee and %(from_date)s and %(to_date)s) "
+	
+# 	data = frappe.db.sql(f""" 
+# 				Select 
+# 					employee, 
+# 					 ifnull(sum(total_deduction),0) as early_ded, 
+# 					GROUP_CONCAT(DISTINCT posting_date) as early_ded_dates 
+# 				From `tabDeduction Ledger Entry` d
+# 				Where
+# 					case_no in (4)
+# 					{conditions}
+# 				Group by employee              
+# 			   """, filters, as_dict=1)
+	
+# 	response = frappe._dict()
+	
+# 	for d in data:
+# 		response.update({f'{d.employee}': d})
+	
+# 	# frappe.msgprint(frappe.as_json(response))
+	
+# 	return response
