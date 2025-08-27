@@ -730,13 +730,13 @@ def get_attendances(filters=None):
 
 					COALESCE(SUM(CASE WHEN early_exit = 1 THEN 1 ELSE 0 END), 0) as early_exit_count,
 
-					COALESCE(SUM(CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) THEN 1 ELSE 0 END), 0) as missing_in_out_count,
+					COALESCE(SUM(CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) AND leave_application IS NULL THEN 1 ELSE 0 END), 0) as missing_in_out_count,
 
 					GROUP_CONCAT(DISTINCT CASE WHEN late_entry = 1 AND status = 'Present' THEN attendance_date END) as late_dates,
 
 					GROUP_CONCAT(DISTINCT CASE WHEN early_exit = 1 THEN attendance_date END) as early_dates,
 
-					GROUP_CONCAT(DISTINCT CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) THEN attendance_date END) as missing_dates,
+					GROUP_CONCAT(DISTINCT CASE WHEN (custom_in_times IS NULL OR custom_out_times IS NULL) AND leave_application IS NULL THEN attendance_date END) as missing_dates,
 
 					GROUP_CONCAT(attendance_date) as attendance_dates,
 
